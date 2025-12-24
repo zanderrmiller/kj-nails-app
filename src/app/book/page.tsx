@@ -113,6 +113,30 @@ function formatPhoneNumber(value: string): string {
   return `(${truncated.slice(0, 3)}) ${truncated.slice(3, 6)}-${truncated.slice(6)}`;
 }
 
+// Helper function to calculate end time from start time and duration
+function calculateEndTime(startTime: string, durationMinutes: number): string {
+  const AVAILABLE_TIMES = [
+    '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+    '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+    '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM',
+  ];
+  
+  const startIndex = AVAILABLE_TIMES.indexOf(startTime);
+  if (startIndex === -1) return startTime;
+  
+  // Calculate slots needed (each slot is 30 minutes)
+  const slotsNeeded = Math.ceil(durationMinutes / 30);
+  const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
+  
+  return AVAILABLE_TIMES[endIndex];
+}
+
+// Helper function to format date as "Month Day"
+function formatDateForDisplay(dateString: string): string {
+  const date = new Date(dateString + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+}
+
 // Calendar component - shows 60 days from today with month navigation
 function Calendar({ selectedDate, onDateSelect, availableTimeSlotsMap }: { selectedDate: string; onDateSelect: (date: string) => void; availableTimeSlotsMap: { [date: string]: Array<{ time: string; available: boolean; reason: string | null }> } }) {
   const [displayMonth, setDisplayMonth] = useState(0); // 0 = current month, 1 = next month, 2 = month after, etc.
@@ -257,23 +281,24 @@ export default function BookPage() {
   // Step 6: Time
   const [selectedTime, setSelectedTime] = useState('');
 
+  // Function to fetch availability
+  const fetchAvailability = async () => {
+    try {
+      // Add cache busting parameter to force fresh data
+      const response = await fetch(`/api/availability-60-days?t=${Date.now()}`);
+      const data = await response.json();
+
+      if (data.success && data.dates) {
+        setAvailableTimeSlotsMap(data.dates);
+      }
+    } catch (error) {
+      console.error('Failed to fetch 60-day availability:', error);
+    }
+  };
+
   // Preload all 60 days of availability on mount (single API call instead of 60)
   useEffect(() => {
-    const fetchAllTimeSlots = async () => {
-      try {
-        // Add cache busting parameter to force fresh data
-        const response = await fetch(`/api/availability-60-days?t=${Date.now()}`);
-        const data = await response.json();
-
-        if (data.success && data.dates) {
-          setAvailableTimeSlotsMap(data.dates);
-        }
-      } catch (error) {
-        console.error('Failed to fetch 60-day availability:', error);
-      }
-    };
-
-    fetchAllTimeSlots();
+    fetchAvailability();
   }, []);
 
   // Customer info
@@ -283,6 +308,22 @@ export default function BookPage() {
   const [nailArtPrice, setNailArtPrice] = useState(0);
   const [nailArtImages, setNailArtImages] = useState<File[]>([]);
   const [nailArtNotes, setNailArtNotes] = useState('');
+
+  // Modal state
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalTitle, setModalTitle] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState<{
+    name: string;
+    phone: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    duration: number;
+    service: string;
+    addons: string[];
+  } | null>(null);
 
   // Calculate totals
   const baseService = BASE_SERVICES.find((s) => s.id === selectedBase);
@@ -329,12 +370,18 @@ export default function BookPage() {
     e.preventDefault();
 
     if (!selectedBase || !selectedDate || !selectedTime || !customerName || !customerPhone) {
-      alert('Please fill in all required fields');
+      setModalTitle('Missing Information');
+      setModalMessage('Please fill in all required fields');
+      setIsSuccess(false);
+      setShowModal(true);
       return;
     }
 
     if (!smsConsent) {
-      alert('Please consent to receive text messages to book your appointment');
+      setModalTitle('Consent Required');
+      setModalMessage('Please consent to receive text message updates to book your appointment');
+      setIsSuccess(false);
+      setShowModal(true);
       return;
     }
 
@@ -419,7 +466,36 @@ export default function BookPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        alert('Appointment booked! You will receive a confirmation text soon.');
+        const endTime = calculateEndTime(selectedTime, totalDuration);
+        const formattedDate = formatDateForDisplay(selectedDate);
+        
+        // Build add-ons list for display
+        const addonsDisplay: string[] = [];
+        if (hasRemoval) addonsDisplay.push('Removal');
+        if (hasNailArt) addonsDisplay.push('Nail Art');
+        if (selectedDesign) {
+          const design = NAIL_DESIGN.find(d => d.id === selectedDesign);
+          if (design) addonsDisplay.push(design.name);
+        }
+        
+        setModalTitle('Booking Request Sent');
+        setModalMessage('Your appointment request has been submitted. Thank you for booking with me!');
+        setBookingDetails({
+          name: customerName,
+          phone: customerPhone,
+          date: formattedDate,
+          startTime: selectedTime,
+          endTime: endTime,
+          duration: totalDuration,
+          service: baseService?.name || '',
+          addons: addonsDisplay,
+        });
+        setIsSuccess(true);
+        setShowModal(true);
+        
+        // Refetch availability after successful booking
+        await fetchAvailability();
+        
         // Reset form
         setHasRemoval(false);
         setSelectedBase('');
@@ -434,11 +510,19 @@ export default function BookPage() {
         setNailArtImages([]);
         setNailArtNotes('');
       } else {
-        alert(data.error || 'Failed to book appointment');
+        setModalTitle('Booking Failed');
+        setModalMessage(data.error || 'Failed to book appointment. Please try again.');
+        setIsSuccess(false);
+        setBookingDetails(null);
+        setShowModal(true);
       }
     } catch (error) {
       console.error('Booking error:', error);
-      alert('An error occurred while booking. Please try again.');
+      setModalTitle('Error');
+      setModalMessage('An error occurred while booking. Please try again.');
+      setIsSuccess(false);
+      setBookingDetails(null);
+      setShowModal(true);
     }
   };
 
@@ -498,7 +582,7 @@ export default function BookPage() {
 
           {/* Add-Ons Section (shown when base service selected) */}
           {selectedBase && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-900 rounded-lg border-2 border-gray-700">
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-950 rounded-lg border-2 border-gray-700">
               <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Add-Ons</h2>
 
               {/* Add-Ons Grid */}
@@ -565,7 +649,7 @@ export default function BookPage() {
 
               {/* Nail Art Details (shown when selected) */}
               {hasNailArt && (
-                <div className="bg-gray-800 p-3 rounded-lg border-2 border-gray-700 space-y-3">
+                <div className="bg-gray-950 p-3 rounded-lg border-2 border-gray-700 space-y-3">
                   <div>
                     <label className="block">
                       <span className="text-white font-semibold mb-2 block text-sm">Upload Inspiration Pictures</span>
@@ -797,6 +881,66 @@ export default function BookPage() {
           )}
         </form>
       </div>
+
+      {/* Confirmation Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-black rounded-lg shadow-lg p-8 max-w-md w-full max-h-[80vh] flex flex-col overflow-y-auto border-2 border-gray-700">
+            <h2 className={`text-2xl font-bold mb-4 ${isSuccess ? 'text-white' : 'text-red-400'}`}>
+              {modalTitle}
+            </h2>
+            <p className="text-gray-300 text-base mb-6 leading-relaxed">
+              {modalMessage}
+            </p>
+            
+            {/* Booking Details for Success */}
+            {isSuccess && bookingDetails && (
+              <div className="space-y-4 mb-6">
+                <div className="bg-gray-900 rounded-lg p-4 border border-gray-700 space-y-3">
+                  <div>
+                    <p className="text-gray-400 text-sm">Name</p>
+                    <p className="text-white font-semibold text-lg">{bookingDetails.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Phone Number</p>
+                    <p className="text-white font-semibold text-lg">{bookingDetails.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Appointment Time</p>
+                    <p className="text-white font-semibold text-lg">
+                      {bookingDetails.date} • {bookingDetails.startTime} - {bookingDetails.endTime}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Service</p>
+                    <p className="text-white font-semibold text-lg">{bookingDetails.service}</p>
+                  </div>
+                  {bookingDetails.addons.length > 0 && (
+                    <div>
+                      <p className="text-gray-400 text-sm">Add-Ons</p>
+                      <p className="text-white font-semibold text-lg">{bookingDetails.addons.join(', ')}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Disclaimer */}
+                <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    <span className="underline font-semibold">Note</span>: You will receive a text once your appointment is confirmed with Kinsey, along with a rescheduling link if needed.
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <button
+              onClick={() => setShowModal(false)}
+              className="w-full py-3 rounded-lg font-bold text-lg bg-white text-black hover:bg-gray-200 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

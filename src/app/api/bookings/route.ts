@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  sendCustomerPendingNotification,
-  sendOwnerNewBookingNotification,
-} from '../lib/twilio-client';
+// import {
+//   sendCustomerPendingNotification,
+//   sendOwnerNewBookingNotification,
+// } from '../lib/twilio-client';
 
 const AVAILABLE_TIMES = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -133,42 +133,42 @@ export async function POST(request: NextRequest) {
 
     console.log('Booking created:', booking);
 
-    // Send SMS notifications
-    try {
-      // Send pending notification to customer
-      await sendCustomerPendingNotification(
-        body.customerPhone,
-        body.customerName,
-        body.date,
-        body.time,
-        booking.id.substring(0, 8).toUpperCase()
-      );
+    // SMS notifications disabled - Twilio not verified yet
+    // try {
+    //   // Send pending notification to customer
+    //   await sendCustomerPendingNotification(
+    //     body.customerPhone,
+    //     body.customerName,
+    //     body.date,
+    //     body.time,
+    //     booking.id.substring(0, 8).toUpperCase()
+    //   );
 
-      // Send new booking notification to owner
-      const ownerPhone = process.env.OWNER_PHONE_NUMBER;
-      if (ownerPhone) {
-        const confirmationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin?booking=${booking.id}`;
-        await sendOwnerNewBookingNotification(
-          ownerPhone,
-          body.customerName,
-          body.customerPhone,
-          body.date,
-          body.time,
-          body.baseService.name,
-          body.totalDuration,
-          body.totalPrice,
-          confirmationLink
-        );
-      }
-    } catch (smsError) {
-      console.error('Error sending SMS notifications:', smsError);
-      // Don't fail the booking if SMS fails
-    }
+    //   // Send new booking notification to owner
+    //   const ownerPhone = process.env.OWNER_PHONE_NUMBER;
+    //   if (ownerPhone) {
+    //     const confirmationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin?booking=${booking.id}`;
+    //     await sendOwnerNewBookingNotification(
+    //       ownerPhone,
+    //       body.customerName,
+    //       body.customerPhone,
+    //       body.date,
+    //       body.time,
+    //       body.baseService.name,
+    //       body.totalDuration,
+    //       body.totalPrice,
+    //       confirmationLink
+    //     );
+    //   }
+    // } catch (smsError) {
+    //   console.error('Error sending SMS notifications:', smsError);
+    //   // Don't fail the booking if SMS fails
+    // }
 
     return NextResponse.json(
       {
         success: true,
-        message: 'Booking confirmed. You will receive a confirmation text soon.',
+        message: 'Booking confirmed. Your appointment has been scheduled.',
         bookingId: booking.id,
       },
       { status: 201 }
@@ -207,7 +207,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { bookingId, time, date, duration, total_price, customer_name, customer_phone, service_id, nail_art_notes, nail_art_image_urls } = body;
+    const { bookingId, time, date, duration, total_price, customer_name, customer_phone, service_id, nail_art_notes, admin_notes, nail_art_image_urls } = body;
 
     if (!bookingId) {
       return NextResponse.json({ error: 'Missing booking ID' }, { status: 400 });
@@ -234,6 +234,7 @@ export async function PUT(request: NextRequest) {
     const newPhone = customer_phone || currentBooking.customer_phone;
     const newServiceId = service_id || currentBooking.service_id;
     const newNailArtNotes = nail_art_notes !== undefined ? nail_art_notes : currentBooking.nail_art_notes;
+    const newAdminNotes = admin_notes !== undefined ? admin_notes : currentBooking.admin_notes;
     const newNailArtImageUrls = nail_art_image_urls !== undefined ? nail_art_image_urls : currentBooking.nail_art_image_urls;
 
     // Update the booking
@@ -248,6 +249,7 @@ export async function PUT(request: NextRequest) {
         customer_phone: newPhone,
         service_id: newServiceId,
         nail_art_notes: newNailArtNotes,
+        admin_notes: newAdminNotes,
         nail_art_image_urls: newNailArtImageUrls,
       })
       .eq('id', bookingId);

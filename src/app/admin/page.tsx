@@ -421,6 +421,13 @@ function AdminNavMenu({ activeTab, setActiveTab }: { activeTab: 'calendar' | 'ap
             className="md:hidden fixed top-20 left-0 right-0 bg-black z-50 flex flex-col w-full"
             onClick={(e) => e.stopPropagation()}
           >
+            <Link
+              href="/"
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition"
+              onClick={() => setIsOpen(false)}
+            >
+              Home
+            </Link>
             <button
               onClick={() => {
                 setActiveTab('appointments');
@@ -444,44 +451,49 @@ function AdminNavMenu({ activeTab, setActiveTab }: { activeTab: 'calendar' | 'ap
                 setActiveTab('gallery');
                 setIsOpen(false);
               }}
-              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition text-left"
+              className="text-white font-bold text-lg py-4 px-4 hover:text-pink-600 transition text-left"
             >
-              Art Gallery
+              Gallery
             </button>
-            <Link
-              href="/"
-              className="text-white font-bold text-lg py-4 px-4 hover:text-pink-600 transition"
-              onClick={() => setIsOpen(false)}
-            >
-              Home
-            </Link>
           </div>
         </>
       )}
 
       {/* Desktop Sidebar Menu */}
       {isOpen && (
-        <div className="hidden md:flex fixed inset-0 z-40">
-          {/* Backdrop */}
-          <div
-            className="flex-1 bg-black bg-opacity-50"
-            onClick={() => setIsOpen(false)}
-          />
+        <div 
+          className="hidden md:flex fixed inset-0 z-40"
+          onClick={() => setIsOpen(false)}
+        >
           {/* Sidebar */}
-          <div className="w-72 bg-black shadow-lg flex flex-col z-50">
-            <button
-              onClick={() => setIsOpen(false)}
-              className="self-end p-6 text-2xl font-bold text-white hover:text-pink-600"
-            >
-              ✕
-            </button>
-            <div className="flex-1 flex flex-col justify-center px-8 gap-6">
+          <div 
+            className="ml-auto w-72 bg-black shadow-lg flex flex-col z-50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top section aligned with navbar */}
+            <div className="flex justify-between items-center px-8 border-b border-gray-700" style={{ height: '80px' }}>
+              <Link
+                href="/"
+                className="text-white font-bold text-2xl hover:text-gray-400 transition"
+                onClick={() => setIsOpen(false)}
+              >
+                Home
+              </Link>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-2xl font-bold text-white hover:text-gray-400"
+              >
+                ✕
+              </button>
+            </div>
+            {/* Menu items */}
+            <div className="flex flex-col px-8 gap-6 pt-6">
               <button
                 onClick={() => {
                   setActiveTab('appointments');
                   setIsOpen(false);
                 }}
-                className="text-white font-bold text-2xl hover:text-pink-600 transition py-4 text-left"
+                className="text-white font-bold text-2xl hover:text-gray-400 transition py-4 text-left"
               >
                 Appointments
               </button>
@@ -490,7 +502,7 @@ function AdminNavMenu({ activeTab, setActiveTab }: { activeTab: 'calendar' | 'ap
                   setActiveTab('calendar');
                   setIsOpen(false);
                 }}
-                className="text-white font-bold text-2xl hover:text-pink-600 transition py-4 text-left"
+                className="text-white font-bold text-2xl hover:text-gray-400 transition py-4 text-left"
               >
                 Calendar
               </button>
@@ -499,19 +511,10 @@ function AdminNavMenu({ activeTab, setActiveTab }: { activeTab: 'calendar' | 'ap
                   setActiveTab('gallery');
                   setIsOpen(false);
                 }}
-                className="text-white font-bold text-2xl hover:text-pink-600 transition py-4 text-left"
+                className="text-white font-bold text-2xl hover:text-gray-400 transition py-4 text-left"
               >
-                Art Gallery
+                Gallery
               </button>
-            </div>
-            <div className="px-8 pb-8">
-              <Link
-                href="/"
-                className="text-white font-bold text-2xl hover:text-pink-600 transition py-4 block"
-                onClick={() => setIsOpen(false)}
-              >
-                Home
-              </Link>
             </div>
           </div>
         </div>
@@ -540,7 +543,11 @@ export default function AdminPage() {
   const [editPhone, setEditPhone] = useState('');
   const [editService, setEditService] = useState('');
   const [editNailArtNotes, setEditNailArtNotes] = useState('');
+  const [editAdminNotes, setEditAdminNotes] = useState('');
   const [editNailArtImageUrls, setEditNailArtImageUrls] = useState<string[]>([]);
+  const [isEditingAdminNotes, setIsEditingAdminNotes] = useState(false);
+  const [tempAdminNotes, setTempAdminNotes] = useState('');
+  const [adminNotesHasChanges, setAdminNotesHasChanges] = useState(false);
   const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
   const [blockedTimes, setBlockedTimes] = useState<Set<string>>(new Set());
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
@@ -730,6 +737,7 @@ export default function AdminPage() {
     setEditPhone(booking.customer_phone);
     setEditService(booking.service_id);
     setEditNailArtNotes(booking.nail_art_notes || '');
+    setEditAdminNotes(booking.admin_notes || '');
     setEditNailArtImageUrls(booking.nail_art_image_urls || []);
   };
 
@@ -789,6 +797,7 @@ export default function AdminPage() {
           customer_phone: editPhone,
           service_id: editService,
           nail_art_notes: editNailArtNotes,
+          admin_notes: editAdminNotes,
           nail_art_image_urls: editNailArtImageUrls,
         }),
       });
@@ -900,6 +909,7 @@ export default function AdminPage() {
             customer_phone: editPhone,
             service_id: editService,
             nail_art_notes: editNailArtNotes,
+            admin_notes: editAdminNotes,
             nail_art_image_urls: editNailArtImageUrls,
           });
         }
@@ -940,6 +950,33 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error updating booking:', error);
       alert('An error occurred while updating the appointment');
+    }
+  };
+
+  const handleSaveAdminNotes = async (notes: string) => {
+    if (!selectedAppointment) return;
+
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: selectedAppointment.id,
+          admin_notes: notes,
+        }),
+      });
+
+      if (response.ok) {
+        const updatedAppointment = {
+          ...selectedAppointment,
+          admin_notes: notes,
+        };
+        setSelectedAppointment(updatedAppointment);
+        setBookings(bookings.map(b => b.id === selectedAppointment.id ? updatedAppointment : b));
+        setAdminNotesHasChanges(false);
+      }
+    } catch (error) {
+      console.error('Error saving admin notes:', error);
     }
   };
 
@@ -1125,7 +1162,7 @@ export default function AdminPage() {
                               <div className="flex-1 text-left min-w-0 flex flex-col justify-between">
                                 <div>
                                   <div className="font-bold text-white text-lg leading-tight">{apt.customer_name}</div>
-                                  <div className="text-sm text-gray-300 font-semibold leading-tight">{format24to12Hour(apt.booking_time)} - {calculateEndTime(apt.booking_time, apt.duration)}</div>
+                                  <div className="text-sm text-gray-300 font-semibold leading-tight">{new Date(`${apt.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {format24to12Hour(apt.booking_time)} - {calculateEndTime(apt.booking_time, apt.duration)}</div>
                                   <div className="text-sm text-gray-400 leading-tight">{toReadableTitle(apt.service_id)}</div>
                                   {apt.addons && apt.addons.length > 0 && (
                                     <div className="text-sm text-gray-400 mt-0.5 leading-tight">
@@ -1139,10 +1176,7 @@ export default function AdminPage() {
                                 </div>
                               </div>
 
-                              {/* Right side - Picture placeholder (hidden on mobile, shows on larger screens) */}
-                              <div className="hidden sm:flex ml-2 flex-shrink-0 items-center justify-center w-12 h-12 bg-gray-700 rounded border border-gray-600">
-                                <span className="text-xs text-gray-400">📸</span>
-                              </div>
+                              {/* Right side - Picture placeholder removed */}
                             </button>
                           );
                         })}
@@ -1286,7 +1320,7 @@ export default function AdminPage() {
 
                           {/* Date & Time */}
                           <div>
-                            <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">Appointment</p>
+                            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Appointment</p>
                             <p className="text-xs font-semibold text-pink-600">
                               {new Date(`${booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {format24to12Hour(booking.booking_time)} - {calculateEndTime(booking.booking_time, booking.duration)}
                             </p>
@@ -1295,8 +1329,8 @@ export default function AdminPage() {
                           {/* Service and Price */}
                           <div className="flex items-center justify-between pt-1">
                             <div className="flex-1">
-                              <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">Service</p>
-                              <p className="text-xs text-gray-900">{toReadableTitle(booking.service_id)}</p>
+                              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Service</p>
+                              <p className="text-xs text-gray-300">{toReadableTitle(booking.service_id)}</p>
                             </div>
                             <div className="text-right">
                               <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">Price</p>
@@ -1320,7 +1354,7 @@ export default function AdminPage() {
             onClick={() => setSelectedAppointment(null)}
           >
             <div 
-              className="bg-gray-900 rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border border-gray-700"
+              className="bg-gray-900 rounded-lg shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-gray-700"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="bg-gray-800 border-b-2 border-gray-700 p-6 flex items-center justify-between flex-shrink-0">
@@ -1363,8 +1397,37 @@ export default function AdminPage() {
                   <div>
                     <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Time</p>
                     <p className="text-sm font-semibold text-white">
-                      {format24to12Hour(selectedAppointment.booking_time)} - {calculateEndTime(selectedAppointment.booking_time, selectedAppointment.duration)} ({selectedAppointment.duration} min)
+                      {new Date(`${selectedAppointment.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {format24to12Hour(selectedAppointment.booking_time)} - {calculateEndTime(selectedAppointment.booking_time, selectedAppointment.duration)} ({selectedAppointment.duration} min)
                     </p>
+                  </div>
+
+                  {/* Admin Notes */}
+                  <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700 mt-4">
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Admin Notes</p>
+                    <div className="space-y-2">
+                      <textarea
+                        value={selectedAppointment.admin_notes || ''}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          setSelectedAppointment({
+                            ...selectedAppointment,
+                            admin_notes: newValue,
+                          });
+                          setAdminNotesHasChanges(newValue !== (selectedAppointment.admin_notes || ''));
+                        }}
+                        placeholder="Add internal notes about this appointment..."
+                        className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-sm text-white resize-none bg-gray-700"
+                        rows={3}
+                      />
+                      {adminNotesHasChanges && (
+                        <button
+                          onClick={() => handleSaveAdminNotes(selectedAppointment.admin_notes || '')}
+                          className="w-full px-3 py-2 bg-gray-700 text-white text-sm font-semibold rounded hover:bg-gray-600 transition"
+                        >
+                          Save Notes
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Add-ons */}
@@ -1402,44 +1465,36 @@ export default function AdminPage() {
 
                     {/* Inspiration Pictures */}
                     <div className="bg-gray-800 p-4 rounded-lg border-2 border-dashed border-gray-700 mt-4">
+                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Uploaded Pictures</p>
                       {selectedAppointment.nail_art_image_urls && selectedAppointment.nail_art_image_urls.length > 0 ? (
-                        <div>
-                          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Uploaded Pictures</p>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {selectedAppointment.nail_art_image_urls.map((url, idx) => (
-                              <div key={idx} className="relative group cursor-pointer" onClick={(e) => e.stopPropagation()}>
-                                <img
-                                  src={url}
-                                  alt={`Nail art ${idx + 1}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedImageUrl(url);
-                                  }}
-                                  className="w-full h-24 object-cover rounded border-2 border-gray-700 group-hover:opacity-75 transition"
-                                />
-                                <div
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedImageUrl(url);
-                                  }}
-                                  className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-                                >
-                                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
-                                  </svg>
-                                </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {selectedAppointment.nail_art_image_urls.map((url, idx) => (
+                            <div key={idx} className="relative group cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                              <img
+                                src={url}
+                                alt={`Nail art ${idx + 1}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedImageUrl(url);
+                                }}
+                                className="w-full h-24 object-cover rounded border-2 border-gray-700 group-hover:opacity-75 transition"
+                              />
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedImageUrl(url);
+                                }}
+                                className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                              >
+                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                                </svg>
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center min-h-48">
-                          <svg className="w-16 h-16 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <p className="text-center text-gray-600 font-semibold">Inspiration Pictures</p>
-                          <p className="text-center text-gray-500 text-xs mt-2">No pictures uploaded for this appointment</p>
-                        </div>
+                        <p className="text-sm text-gray-500">No pictures</p>
                       )}
                     </div>
                 </div>
@@ -1471,7 +1526,7 @@ export default function AdminPage() {
             onClick={() => setEditingBooking(null)}
           >
             <div 
-              className="bg-gray-900 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-gray-700"
+              className="bg-gray-900 rounded-lg shadow-2xl max-w-4xl w-full max-h-[80vh] flex flex-col overflow-hidden border border-gray-700"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -1568,8 +1623,9 @@ export default function AdminPage() {
                         <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Price ($)</label>
                         <input
                           type="number"
-                          value={editPrice}
-                          onChange={(e) => setEditPrice(parseFloat(e.target.value) || 0)}
+                          inputMode="decimal"
+                          value={editPrice === 0 ? '' : editPrice}
+                          onChange={(e) => setEditPrice(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                           step="0.01"
                           min="0"
                           className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-lg bg-gray-800"

@@ -36,13 +36,13 @@ export default function Home() {
           <div className="flex flex-row gap-3 justify-center mb-8 flex-wrap">
             <Link
               href="/book"
-              className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-bold text-sm sm:text-base transition text-center flex-1 sm:flex-initial"
+              className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold text-sm sm:text-base transition text-center flex-1 sm:flex-initial"
             >
               Book Appointment
             </Link>
             <Link
               href="/art"
-              className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-bold text-sm sm:text-base transition text-center flex-1 sm:flex-initial"
+              className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold text-sm sm:text-base transition text-center flex-1 sm:flex-initial"
             >
               View Gallery
             </Link>

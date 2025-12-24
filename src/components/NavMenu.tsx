@@ -27,11 +27,18 @@ export default function NavMenu() {
             onClick={(e) => e.stopPropagation()}
           >
             <Link
+              href="/"
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition"
+              onClick={() => setIsOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
               href="/book"
               className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition"
               onClick={() => setIsOpen(false)}
             >
-              Book an Appointment
+              Book Appointment
             </Link>
             <Link
               href="/art"
@@ -46,31 +53,43 @@ export default function NavMenu() {
 
       {/* Desktop Sidebar Menu */}
       {isOpen && (
-        <div className="hidden md:flex fixed inset-0 z-40">
-          {/* Backdrop */}
-          <div
-            className="flex-1 bg-black bg-opacity-50"
-            onClick={() => setIsOpen(false)}
-          />
+        <div 
+          className="hidden md:flex fixed inset-0 z-40"
+          onClick={() => setIsOpen(false)}
+        >
           {/* Sidebar */}
-          <div className="w-72 bg-black shadow-lg flex flex-col z-50">
-            <button
-              onClick={() => setIsOpen(false)}
-              className="self-end p-6 text-2xl font-bold text-white hover:text-pink-600"
-            >
-              ✕
-            </button>
-            <div className="flex-1 flex flex-col justify-center px-8 gap-6">
+          <div 
+            className="ml-auto w-72 bg-black shadow-lg flex flex-col z-50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top section aligned with navbar */}
+            <div className="flex justify-between items-center px-8 border-b border-gray-700" style={{ height: '80px' }}>
               <Link
-                href="/book"
-                className="text-white font-bold text-2xl hover:text-pink-600 transition py-4"
+                href="/"
+                className="text-white font-bold text-2xl hover:text-gray-400 transition"
                 onClick={() => setIsOpen(false)}
               >
-                Book an Appointment
+                Home
+              </Link>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-2xl font-bold text-white hover:text-gray-400"
+              >
+                ✕
+              </button>
+            </div>
+            {/* Menu items */}
+            <div className="flex flex-col px-8 gap-6 pt-6">
+              <Link
+                href="/book"
+                className="text-white font-bold text-2xl hover:text-gray-400 transition py-4"
+                onClick={() => setIsOpen(false)}
+              >
+                Book Appointment
               </Link>
               <Link
                 href="/art"
-                className="text-white font-bold text-2xl hover:text-pink-600 transition py-4"
+                className="text-white font-bold text-2xl hover:text-gray-400 transition py-4"
                 onClick={() => setIsOpen(false)}
               >
                 Gallery
