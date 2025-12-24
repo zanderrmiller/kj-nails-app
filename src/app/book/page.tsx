@@ -277,6 +277,7 @@ export default function BookPage() {
   // Customer info
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [smsConsent, setSmsConsent] = useState(false);
   const [nailArtPrice, setNailArtPrice] = useState(0);
   const [nailArtImages, setNailArtImages] = useState<File[]>([]);
   const [nailArtNotes, setNailArtNotes] = useState('');
@@ -327,6 +328,11 @@ export default function BookPage() {
 
     if (!selectedBase || !selectedDate || !selectedTime || !customerName || !customerPhone) {
       alert('Please fill in all required fields');
+      return;
+    }
+
+    if (!smsConsent) {
+      alert('Please consent to receive text messages to book your appointment');
       return;
     }
 
@@ -421,6 +427,7 @@ export default function BookPage() {
         setSelectedTime('');
         setCustomerName('');
         setCustomerPhone('');
+        setSmsConsent(false);
         setNailArtPrice(0);
         setNailArtImages([]);
         setNailArtNotes('');
@@ -688,6 +695,20 @@ export default function BookPage() {
                   />
                 </div>
 
+                {/* SMS Consent */}
+                <div className="flex items-start gap-3 pt-2">
+                  <input
+                    type="checkbox"
+                    id="smsConsent"
+                    checked={smsConsent}
+                    onChange={(e) => setSmsConsent(e.target.checked)}
+                    className="mt-1 w-5 h-5 text-pink-600 border-gray-300 rounded focus:ring-pink-500 cursor-pointer"
+                  />
+                  <label htmlFor="smsConsent" className="text-sm text-gray-700 cursor-pointer">
+                    I consent to receive text message updates about my appointment, including confirmation, reminders, and any changes from KJ Nails. *
+                  </label>
+                </div>
+
               </div>
             </div>
           )}
@@ -753,14 +774,18 @@ export default function BookPage() {
           {selectedBase && selectedDate && selectedTime && (
             <button
               type="submit"
-              disabled={!customerName || !customerPhone}
+              disabled={!customerName || !customerPhone || !smsConsent}
               className={`w-full py-4 rounded-lg font-bold text-lg transition ${
-                customerName && customerPhone
+                customerName && customerPhone && smsConsent
                   ? 'bg-pink-600 text-white hover:bg-pink-700 cursor-pointer'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {customerName && customerPhone ? 'Confirm Booking' : 'Enter Your Name & Phone to Continue'}
+              {customerName && customerPhone && smsConsent 
+                ? 'Confirm Booking' 
+                : customerName && customerPhone
+                  ? 'Check SMS Consent to Continue'
+                  : 'Enter Your Name & Phone to Continue'}
             </button>
           )}
         </form>
