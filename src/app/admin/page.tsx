@@ -1033,7 +1033,7 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-black text-white">
       {/* Navigation - Same as home page */}
-      <nav className="sticky top-0 z-50 bg-black border-b border-gray-900 flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
+      <nav className="sticky top-0 z-50 bg-black border-b border-gray-900 flex justify-between items-center md:justify-start" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
         <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
           <Image
             src="/images/clear logo.png"
@@ -1044,6 +1044,17 @@ export default function AdminPage() {
             priority
           />
         </Link>
+        <div style={{margin: 0, height: '100%', display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'center'}} className="md:hidden">
+          <button
+            onClick={() => setActiveTab(activeTab === 'calendar' ? 'appointments' : 'calendar')}
+            className="p-2 hover:opacity-75 transition"
+            title="Calendar"
+          >
+            <svg className={`w-8 h-8 ${activeTab === 'calendar' ? 'text-gray-500' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </button>
+        </div>
         <div style={{margin: 0, height: '100%', marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '16px'}}>
           <AdminNavMenu activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
