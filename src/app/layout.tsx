@@ -20,8 +20,13 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "KJ Nails - Professional Nail Art",
   description: "Book your nail art appointment with KJ Nails. Professional nail art services with quality designs.",
+  manifest: "/manifest.json",
   icons: {
-    icon: "/images/clear logo.png",
+    icon: [
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon.ico", type: "image/x-icon" }
+    ],
+    apple: "/apple-touch-icon.png",
   },
 };
 
