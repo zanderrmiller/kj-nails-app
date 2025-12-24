@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import NavMenu from '@/components/NavMenu';
 
 // Base service options
 const BASE_SERVICES = [
@@ -154,7 +156,7 @@ function Calendar({ selectedDate, onDateSelect, availableTimeSlotsMap }: { selec
   const canGoNext = displayMonth < 2;
 
   return (
-    <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+    <div className="bg-black p-4 rounded-lg border-2 border-gray-700">
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -163,21 +165,21 @@ function Calendar({ selectedDate, onDateSelect, availableTimeSlotsMap }: { selec
           disabled={!canGoPrev}
           className={`px-2 py-1 text-lg font-bold transition ${
             canGoPrev
-              ? 'text-pink-600 hover:text-pink-700 cursor-pointer'
-              : 'text-gray-300 cursor-not-allowed'
+              ? 'text-gray-400 hover:text-gray-300 cursor-pointer'
+              : 'text-gray-700 cursor-not-allowed'
           }`}
         >
           &lt;
         </button>
-        <h3 className="text-lg font-semibold text-gray-900 flex-1 text-center">{monthName}</h3>
+        <h3 className="text-lg font-semibold text-white flex-1 text-center">{monthName}</h3>
         <button
           type="button"
           onClick={() => setDisplayMonth(displayMonth + 1)}
           disabled={!canGoNext}
           className={`px-2 py-1 text-lg font-bold transition ${
             canGoNext
-              ? 'text-pink-600 hover:text-pink-700 cursor-pointer'
-              : 'text-gray-300 cursor-not-allowed'
+              ? 'text-gray-400 hover:text-gray-300 cursor-pointer'
+              : 'text-gray-700 cursor-not-allowed'
           }`}
         >
           &gt;
@@ -187,7 +189,7 @@ function Calendar({ selectedDate, onDateSelect, availableTimeSlotsMap }: { selec
       {/* Day headers */}
       <div className="grid grid-cols-7 gap-2 mb-3">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className="text-center font-semibold text-gray-600 text-sm">
+          <div key={day} className="text-center font-semibold text-gray-400 text-sm">
             {day}
           </div>
         ))}
@@ -217,10 +219,10 @@ function Calendar({ selectedDate, onDateSelect, availableTimeSlotsMap }: { selec
               disabled={!canBook}
               className={`p-2 rounded-lg font-semibold text-sm transition w-full h-full flex items-center justify-center ${
                 isSelected
-                  ? 'bg-pink-600 text-white border-2 border-pink-600'
+                  ? 'bg-gray-700 text-white border-2 border-gray-600'
                   : canBook
-                  ? 'bg-white text-gray-900 border-2 border-gray-200 hover:border-pink-300 hover:bg-pink-50 cursor-pointer'
-                  : 'bg-gray-100 text-gray-400 border-2 border-gray-100 cursor-not-allowed'
+                  ? 'bg-black text-white border-2 border-gray-700 hover:border-gray-500 hover:bg-gray-800 cursor-pointer'
+                  : 'bg-gray-900 text-gray-600 border-2 border-gray-900 cursor-not-allowed'
               }`}
             >
               {day}
@@ -441,37 +443,42 @@ export default function BookPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="text-3xl font-bold text-pink-600">
-              KJ Nails
-            </Link>
-            <Link href="/" className="text-gray-600 hover:text-pink-600">
-              ← Back to Home
-            </Link>
+      <header className="bg-black shadow" style={{padding: 0, margin: 0}}>
+        <div className="flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
+          <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
+            <Image
+              src="/images/clear logo.png"
+              alt="KJ Nails Logo"
+              width={200}
+              height={200}
+              style={{display: 'block', height: '64px', width: 'auto', margin: 0, padding: 0}}
+              priority
+            />
+          </Link>
+          <div style={{margin: 0, height: '100%', marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '16px'}}>
+            <NavMenu />
           </div>
         </div>
       </header>
 
       {/* Booking Form */}
       <div className="max-w-4xl mx-auto px-2 sm:px-4 lg:px-8 py-6 sm:py-12">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">Book Your Appointment</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6 sm:mb-8 text-center">Book Your Appointment</h1>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-4 sm:p-8">
+        <form onSubmit={handleSubmit} className="bg-black rounded-lg shadow-lg p-4 sm:p-8 border border-gray-700">
           {/* Service Selection */}
           <div className="mb-4 sm:mb-6">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Select Your Nail Service</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">Select Your Nail Service</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2">
               {BASE_SERVICES.map((svc) => (
                 <label
                   key={svc.id}
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedBase === svc.id
-                      ? 'border-pink-600 bg-pink-50'
-                      : 'border-gray-200 hover:border-pink-300'
+                      ? 'border-gray-400 bg-gray-800'
+                      : 'border-gray-600 hover:border-gray-400'
                   }`}
                 >
                   <input
@@ -482,8 +489,8 @@ export default function BookPage() {
                     onChange={(e) => setSelectedBase(e.target.value)}
                     className="hidden"
                   />
-                  <div className="font-semibold text-gray-900 text-sm">{svc.name}</div>
-                  <div className="text-xs text-gray-600">${svc.basePrice} • {svc.duration}m</div>
+                  <div className="font-semibold text-white text-sm">{svc.name}</div>
+                  <div className="text-xs text-gray-400">${svc.basePrice} • {svc.duration}m</div>
                 </label>
               ))}
             </div>
@@ -491,8 +498,8 @@ export default function BookPage() {
 
           {/* Add-Ons Section (shown when base service selected) */}
           {selectedBase && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-b from-pink-50 to-white rounded-lg border-2 border-pink-200">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Add-Ons</h2>
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-900 rounded-lg border-2 border-gray-700">
+              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Add-Ons</h2>
 
               {/* Add-Ons Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2 mb-4">
@@ -500,8 +507,8 @@ export default function BookPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasRemoval
-                      ? 'border-pink-600 bg-pink-50'
-                      : 'border-gray-200 hover:border-pink-300'
+                      ? 'border-gray-400 bg-gray-800'
+                      : 'border-gray-600 hover:border-gray-400'
                   }`}
                 >
                   <input
@@ -510,16 +517,16 @@ export default function BookPage() {
                     onChange={(e) => setHasRemoval(e.target.checked)}
                     className="hidden"
                   />
-                  <div className="font-semibold text-gray-900 text-sm">Removal Service</div>
-                  <div className="text-xs text-gray-600">${REMOVAL_SERVICE.price} • {REMOVAL_SERVICE.duration}m</div>
+                  <div className="font-semibold text-white text-sm">Removal Service</div>
+                  <div className="text-xs text-gray-400">${REMOVAL_SERVICE.price} • {REMOVAL_SERVICE.duration}m</div>
                 </label>
 
                 {/* Nail Art Add-On */}
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasNailArt
-                      ? 'border-pink-600 bg-pink-50'
-                      : 'border-gray-200 hover:border-pink-300'
+                      ? 'border-gray-400 bg-gray-800'
+                      : 'border-gray-600 hover:border-gray-400'
                   }`}
                 >
                   <input
@@ -533,16 +540,16 @@ export default function BookPage() {
                     }}
                     className="hidden"
                   />
-                  <div className="font-semibold text-gray-900 text-sm">Nail Art</div>
-                  <div className="text-xs text-gray-600">$2-5 per Nail{(baseService?.type === 'acrylic' || baseService?.type === 'rebase') && ' • 60m'}</div>
+                  <div className="font-semibold text-white text-sm">Nail Art</div>
+                  <div className="text-xs text-gray-400">$2-5 per Nail{(baseService?.type === 'acrylic' || baseService?.type === 'rebase') && ' • 60m'}</div>
                 </label>
 
                 {/* Ombre or French Add-On */}
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedDesign !== ''
-                      ? 'border-pink-600 bg-pink-50'
-                      : 'border-gray-200 hover:border-pink-300'
+                      ? 'border-gray-400 bg-gray-800'
+                      : 'border-gray-600 hover:border-gray-400'
                   }`}
                 >
                   <input
@@ -551,23 +558,23 @@ export default function BookPage() {
                     onChange={(e) => setSelectedDesign(e.target.checked ? NAIL_DESIGN[0].id : '')}
                     className="hidden"
                   />
-                  <div className="font-semibold text-gray-900 text-sm">Ombre or French</div>
-                  <div className="text-xs text-gray-600">${NAIL_DESIGN[0]?.price || 15}{(baseService?.type === 'acrylic' || baseService?.type === 'rebase') && ' • 60m'}</div>
+                  <div className="font-semibold text-white text-sm">Ombre or French</div>
+                  <div className="text-xs text-gray-400">${NAIL_DESIGN[0]?.price || 15}{(baseService?.type === 'acrylic' || baseService?.type === 'rebase') && ' • 60m'}</div>
                 </label>
               </div>
 
               {/* Nail Art Details (shown when selected) */}
               {hasNailArt && (
-                <div className="bg-white p-3 rounded-lg border-2 border-pink-200 space-y-3">
+                <div className="bg-gray-800 p-3 rounded-lg border-2 border-gray-700 space-y-3">
                   <div>
                     <label className="block">
-                      <span className="text-gray-700 font-semibold mb-2 block text-sm">Upload Inspiration Pictures</span>
+                      <span className="text-white font-semibold mb-2 block text-sm">Upload Inspiration Pictures</span>
                       <input
                         type="file"
                         multiple
                         accept="image/*"
                         onChange={(e) => setNailArtImages(Array.from(e.target.files || []))}
-                        className="w-full p-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-pink-600 text-sm text-gray-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-pink-50 file:text-pink-600 hover:file:bg-pink-100"
+                        className="w-full p-2 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-sm text-gray-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600"
                       />
                       {nailArtImages.length > 0 && (
                         <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -576,9 +583,9 @@ export default function BookPage() {
                               <img
                                 src={URL.createObjectURL(file)}
                                 alt={`Preview ${idx + 1}`}
-                                className="w-full h-20 object-cover rounded border-2 border-pink-300"
+                                className="w-full h-20 object-cover rounded border-2 border-gray-600"
                               />
-                              <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                              <span className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
                                 onClick={() => setNailArtImages(nailArtImages.filter((_, i) => i !== idx))}
                               >
                                 ✕
@@ -592,19 +599,19 @@ export default function BookPage() {
 
                   <div>
                     <label className="block">
-                      <span className="text-gray-700 font-semibold mb-2 block text-sm">Nail Art Notes</span>
+                      <span className="text-white font-semibold mb-2 block text-sm">Nail Art Notes</span>
                       <textarea
                         value={nailArtNotes}
                         onChange={(e) => setNailArtNotes(e.target.value)}
                         placeholder="Describe your nail art design, style preferences, colors, patterns, or any special requests..."
-                        className="w-full p-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-pink-600 text-sm resize-none text-gray-900"
+                        className="w-full p-2 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-sm resize-none text-white bg-gray-700"
                         rows={4}
                       />
                     </label>
                   </div>
 
-                  <div className="bg-blue-50 border-l-4 border-blue-400 p-2">
-                    <p className="text-xs text-blue-800">
+                  <div className="bg-gray-700 border-l-4 border-gray-500 p-2">
+                    <p className="text-xs text-gray-300">
                       <span className="font-semibold">Note:</span> Kinsey will reach out and discuss final pricing.
                     </p>
                   </div>
@@ -616,22 +623,22 @@ export default function BookPage() {
           {/* Date Selection */}
           {selectedBase && (
             <div className="mb-4 sm:mb-8">
-              <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-4">Select Date</h2>
+              <h2 className="text-lg sm:text-2xl font-semibold text-white mb-3 sm:mb-4">Select Date</h2>
               <Calendar selectedDate={selectedDate} onDateSelect={(date) => {
                 setSelectedDate(date);
                 setSelectedTime('');
               }} availableTimeSlotsMap={availableTimeSlotsMap} />
-              <p className="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">Available for the next 60 days</p>
+              <p className="text-xs sm:text-sm text-gray-400 mt-2 sm:mt-3">Available for the next 60 days</p>
             </div>
           )}
 
           {/* Time Selection */}
           {selectedBase && selectedDate && (
             <div className="mb-4 sm:mb-8">
-              <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-4">Select Time</h2>
+              <h2 className="text-lg sm:text-2xl font-semibold text-white mb-3 sm:mb-4">Select Time</h2>
               {timeSlotsLoading ? (
                 <div className="text-center py-4">
-                  <p className="text-xs sm:text-sm text-gray-600">Loading available times...</p>
+                  <p className="text-xs sm:text-sm text-gray-400">Loading available times...</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2">
@@ -640,10 +647,10 @@ export default function BookPage() {
                       <label
                         className={`p-2 md:p-3 border-2 rounded-lg text-center text-sm md:text-base transition block ${
                           !slot.available
-                            ? 'border-gray-300 bg-white text-gray-500 cursor-not-allowed opacity-50'
+                            ? 'border-gray-600 bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
                             : selectedTime === slot.time
-                            ? 'border-pink-600 bg-pink-600 text-white cursor-pointer'
-                            : 'bg-white border-gray-300 text-gray-900 hover:border-pink-400 hover:bg-pink-50 cursor-pointer'
+                            ? 'border-gray-400 bg-gray-700 text-white cursor-pointer'
+                            : 'bg-black border-gray-600 text-white hover:border-gray-400 hover:bg-gray-800 cursor-pointer'
                         }`}
                       >
                         <input
@@ -672,26 +679,26 @@ export default function BookPage() {
           {/* Customer Info */}
           {selectedBase && selectedDate && selectedTime && (
             <div className="mb-4 sm:mb-8">
-              <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-4">Your Information</h2>
+              <h2 className="text-lg sm:text-2xl font-semibold text-white mb-3 sm:mb-4">Your Information</h2>
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Name *</label>
+                  <label className="block text-white font-semibold mb-2">Name *</label>
                   <input
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Your name"
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-pink-600 text-gray-900"
+                    className="w-full p-3 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-white bg-gray-800"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Phone Number *</label>
+                  <label className="block text-white font-semibold mb-2">Phone Number *</label>
                   <input
                     type="tel"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(formatPhoneNumber(e.target.value))}
                     placeholder="(555) 123-4567"
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-pink-600 text-gray-900"
+                    className="w-full p-3 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-white bg-gray-800"
                   />
                 </div>
 
@@ -702,9 +709,9 @@ export default function BookPage() {
                     id="smsConsent"
                     checked={smsConsent}
                     onChange={(e) => setSmsConsent(e.target.checked)}
-                    className="mt-1 w-5 h-5 text-pink-600 border-gray-300 rounded focus:ring-pink-500 cursor-pointer"
+                    className="mt-1 w-5 h-5 accent-gray-400 border-gray-600 rounded focus:ring-gray-400 cursor-pointer"
                   />
-                  <label htmlFor="smsConsent" className="text-sm text-gray-700 cursor-pointer">
+                  <label htmlFor="smsConsent" className="text-sm text-gray-300 cursor-pointer">
                     I consent to receive text message updates about my appointment, including confirmation, reminders, and any changes from KJ Nails. *
                   </label>
                 </div>
@@ -715,32 +722,32 @@ export default function BookPage() {
 
           {/* Summary */}
           {selectedBase && selectedDate && selectedTime && (
-            <div className="mb-8 p-6 bg-gray-50 rounded-lg border-2 border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Appointment Summary</h3>
-              <div className="space-y-2 text-gray-700">
+            <div className="mb-8 p-6 bg-gray-900 rounded-lg border-2 border-gray-700">
+              <h3 className="text-xl font-semibold text-white mb-4">Appointment Summary</h3>
+              <div className="space-y-2 text-gray-300">
                 <div className="flex justify-between">
                   <span>Service:</span>
-                  <span className="font-semibold">{baseService?.name}</span>
+                  <span className="font-semibold text-white">{baseService?.name}</span>
                 </div>
                 {hasRemoval && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">+ Removal</span>
-                    <span className="font-semibold">${REMOVAL_SERVICE.price}</span>
+                    <span className="text-gray-400">+ Removal</span>
+                    <span className="font-semibold text-gray-300">${REMOVAL_SERVICE.price}</span>
                   </div>
                 )}
                 {hasNailArt && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">+ Nail Art</span>
-                    <span className="font-semibold">${nailArtPrice.toFixed(2)}</span>
+                    <span className="text-gray-400">+ Nail Art</span>
+                    <span className="font-semibold text-gray-300">${nailArtPrice.toFixed(2)}</span>
                   </div>
                 )}
                 {selectedDesign && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">+ {NAIL_DESIGN.find((d) => d.id === selectedDesign)?.name}</span>
-                    <span className="font-semibold">${NAIL_DESIGN.find((d) => d.id === selectedDesign)?.price}</span>
+                    <span className="text-gray-400">+ {NAIL_DESIGN.find((d) => d.id === selectedDesign)?.name}</span>
+                    <span className="font-semibold text-gray-300">${NAIL_DESIGN.find((d) => d.id === selectedDesign)?.price}</span>
                   </div>
                 )}
-                <div className="flex justify-between pt-4 border-t border-gray-300">
+                <div className="flex justify-between pt-4 border-t border-gray-700">
                   <span>Duration:</span>
                   <span className="font-semibold">
                     {Math.floor(totalDuration / 60) > 0 && (
@@ -762,9 +769,9 @@ export default function BookPage() {
                     {formatDateMonthDay(selectedDate)} {selectedTime} - {minutesToTime(timeToMinutes(selectedTime) + totalDuration)}
                   </span>
                 </div>
-                <div className="flex justify-between pt-4 border-t-2 border-gray-300 text-lg font-bold">
+                <div className="flex justify-between pt-4 border-t-2 border-gray-700 text-lg font-bold text-white">
                   <span>Total Price:</span>
-                  <span className="text-pink-600">${totalPrice.toFixed(2)}</span>
+                  <span className="text-gray-300">${totalPrice.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -777,8 +784,8 @@ export default function BookPage() {
               disabled={!customerName || !customerPhone || !smsConsent}
               className={`w-full py-4 rounded-lg font-bold text-lg transition ${
                 customerName && customerPhone && smsConsent
-                  ? 'bg-pink-600 text-white hover:bg-pink-700 cursor-pointer'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  ? 'bg-white text-black hover:bg-gray-200 cursor-pointer'
+                  : 'bg-gray-700 text-gray-500 cursor-not-allowed'
               }`}
             >
               {customerName && customerPhone && smsConsent 

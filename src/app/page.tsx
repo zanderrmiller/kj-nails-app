@@ -1,138 +1,110 @@
+'use client';
+
 import Link from 'next/link';
+import Image from 'next/image';
+import NavMenu from '@/components/NavMenu';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-pink-600">KJ Nails</h1>
-            <nav className="hidden md:flex gap-8">
-              <Link href="#services" className="text-gray-600 hover:text-pink-600">
-                Services
-              </Link>
-              <Link href="/book" className="text-gray-600 hover:text-pink-600">
-                Book Now
-              </Link>
-              <Link href="/admin" className="text-gray-600 hover:text-pink-600">
-                Admin
-              </Link>
-            </nav>
+    <main className="min-h-screen bg-slate-950 text-white">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 bg-black border-b border-gray-900 flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
+        <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
+          <Image
+            src="/images/clear logo.png"
+            alt="KJ Nails Logo"
+            width={200}
+            height={200}
+            style={{display: 'block', height: '64px', width: 'auto', margin: 0, padding: 0}}
+            priority
+          />
+        </Link>
+        <div style={{margin: 0, height: '100%', marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '16px'}}>
+          <NavMenu />
+        </div>
+      </nav>
+
+      {/* Hero Section - Services Overview */}
+      <section className="bg-black py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Welcome Section */}
+          <div className="mb-6">
+            <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 text-center">Welcome to KJ Nails!</h1>
           </div>
-        </div>
-      </header>
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-        <div className="text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Beautiful Nails, Professional Service
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Book your appointment today and experience premium nail care
-          </p>
-          <Link
-            href="/book"
-            className="inline-block bg-pink-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-pink-700 transition"
-          >
-            Book an Appointment
-          </Link>
-        </div>
-      </section>
+          {/* Book Appointment & View Gallery Buttons */}
+          <div className="flex flex-row gap-3 justify-center mb-8 flex-wrap">
+            <Link
+              href="/book"
+              className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-bold text-sm sm:text-base transition text-center flex-1 sm:flex-initial"
+            >
+              Book Appointment
+            </Link>
+            <Link
+              href="/art"
+              className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-bold text-sm sm:text-base transition text-center flex-1 sm:flex-initial"
+            >
+              View Gallery
+            </Link>
+          </div>
 
-      {/* Services Section */}
-      <section id="services" className="bg-gray-50 py-12 md:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h3 className="text-3xl font-bold text-gray-900 mb-12 text-center">Our Services</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Service Card - Manicure */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Manicure</h4>
-              <p className="text-gray-600 mb-4">Professional nail care and design</p>
-              <p className="text-2xl font-bold text-pink-600">$25 - $45</p>
-              <p className="text-sm text-gray-500 mt-2">30 - 60 min</p>
-            </div>
-
-            {/* Service Card - Pedicure */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Pedicure</h4>
-              <p className="text-gray-600 mb-4">Relaxing foot treatment and polish</p>
-              <p className="text-2xl font-bold text-pink-600">$35 - $55</p>
-              <p className="text-sm text-gray-500 mt-2">45 - 90 min</p>
-            </div>
-
-            {/* Service Card - Gel */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Gel Polish</h4>
-              <p className="text-gray-600 mb-4">Long-lasting gel manicure & design</p>
-              <p className="text-2xl font-bold text-pink-600">$40 - $60</p>
-              <p className="text-sm text-gray-500 mt-2">60 - 75 min</p>
-            </div>
-
-            {/* Service Card - Extensions */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Nail Extensions</h4>
-              <p className="text-gray-600 mb-4">Acrylic or dip powder extensions</p>
-              <p className="text-2xl font-bold text-pink-600">$45 - $75</p>
-              <p className="text-sm text-gray-500 mt-2">90 - 120 min</p>
-            </div>
-
-            {/* Service Card - Design */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Custom Design</h4>
-              <p className="text-gray-600 mb-4">Art and nail design services</p>
-              <p className="text-2xl font-bold text-pink-600">+$10 - $25</p>
-              <p className="text-sm text-gray-500 mt-2">30 - 45 min</p>
-            </div>
-
-            {/* Service Card - Removal */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Removal</h4>
-              <p className="text-gray-600 mb-4">Safe removal of extensions</p>
-              <p className="text-2xl font-bold text-pink-600">$15 - $25</p>
-              <p className="text-sm text-gray-500 mt-2">15 - 30 min</p>
+          {/* Services Table */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-8 text-center">Services</h2>
+            <div className="space-y-3">
+              {[
+                { name: 'Acrylic Sets - Short', price: '$50' },
+                { name: 'Acrylic Sets - Long', price: '$60' },
+                { name: 'Gel Manicure', price: '$35' },
+                { name: 'Rebase', price: '$40' },
+              ].map((service) => (
+                <div
+                  key={service.name}
+                  className="flex justify-between items-center border-b border-gray-700 pb-3"
+                >
+                  <span className="text-white text-lg">{service.name}</span>
+                  <span className="text-white font-bold text-lg">{service.price}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="bg-pink-600 py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-3xl font-bold text-white mb-6">Ready to Book?</h3>
-          <Link
-            href="/book"
-            className="inline-block bg-white text-pink-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
-          >
-            Schedule Your Appointment
-          </Link>
+          {/* Add-ons Table */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-white mb-8 text-center">Add Ons</h2>
+            <div className="space-y-3">
+              {[
+                { name: 'Nail Art', price: '$2-5 Per Nail' },
+                { name: 'Ombre or French', price: '$15' },
+                { name: 'Removal', price: '$20' },
+              ].map((addon) => (
+                <div
+                  key={addon.name}
+                  className="flex justify-between items-center border-b border-gray-700 pb-3"
+                >
+                  <span className="text-white text-lg">{addon.name}</span>
+                  <span className="text-white font-bold text-lg">{addon.price}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* About Me Section */}
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-4 text-center">About Me</h2>
+            <p className="text-white text-lg leading-relaxed text-center">
+              I'm Kinsey, a passionate nail artist offering professional nail services from the comfort of my home studio in Evans, CO.<br /><br />
+              You'll find a full list of services and pricing above, along with examples of my work on the Gallery page. If you're interested in booking a service, head over to the Bookings page to check my calendar for availability.<br /><br />
+              I look forward to meeting you and making your nails shine!
+            </p>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-gray-300 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <h4 className="text-white font-semibold mb-4">KJ Nails</h4>
-              <p className="text-sm">Professional nail care and design services</p>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Hours</h4>
-              <p className="text-sm">Mon - Fri: 9am - 7pm</p>
-              <p className="text-sm">Sat: 10am - 6pm</p>
-              <p className="text-sm">Sun: Closed</p>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Contact</h4>
-              <p className="text-sm">Phone: (555) 123-4567</p>
-              <p className="text-sm">Email: info@kjnails.com</p>
-            </div>
-          </div>
-          <div className="border-t border-gray-700 pt-8 text-center text-sm">
-            <p>&copy; 2025 KJ Nails. All rights reserved.</p>
-          </div>
+      <footer className="bg-slate-950 border-t border-slate-800 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
+          <p>&copy; 2025 KJ Nails. All rights reserved.</p>
         </div>
       </footer>
     </main>

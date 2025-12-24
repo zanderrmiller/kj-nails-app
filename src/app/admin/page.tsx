@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import GalleryManagement from './GalleryManagement';
 
 const AVAILABLE_TIMES = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -118,7 +120,7 @@ function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, 
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+    <div className="bg-gray-900 p-4 rounded-lg border-2 border-gray-700">
       <div className="flex items-center justify-between mb-4">
         <button
           type="button"
@@ -126,21 +128,21 @@ function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, 
           disabled={!canGoPrev}
           className={`px-2 py-1 text-lg font-bold transition ${
             canGoPrev
-              ? 'text-pink-600 hover:text-pink-700 cursor-pointer'
-              : 'text-gray-300 cursor-not-allowed'
+              ? 'text-gray-400 hover:text-gray-300 cursor-pointer'
+              : 'text-gray-700 cursor-not-allowed'
           }`}
         >
           ←
         </button>
-        <h3 className="text-lg font-semibold text-gray-900 flex-1 text-center">{monthName}</h3>
+        <h3 className="text-lg font-semibold text-white flex-1 text-center">{monthName}</h3>
         <button
           type="button"
           onClick={() => setDisplayMonth(Math.min(3, displayMonth + 1))}
           disabled={!canGoNext}
           className={`px-2 py-1 text-lg font-bold transition ${
             canGoNext
-              ? 'text-pink-600 hover:text-pink-700 cursor-pointer'
-              : 'text-gray-300 cursor-not-allowed'
+              ? 'text-gray-400 hover:text-gray-300 cursor-pointer'
+              : 'text-gray-700 cursor-not-allowed'
           }`}
         >
           →
@@ -149,7 +151,7 @@ function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, 
 
       <div className="grid grid-cols-7 gap-1 mb-2">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className="text-center font-semibold text-gray-600 text-xs h-6">
+          <div key={day} className="text-center font-semibold text-gray-400 text-xs h-6">
             {day}
           </div>
         ))}
@@ -166,23 +168,30 @@ function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, 
           const isSelected = selectedDate === dateString;
           const isBlocked = blockedDates.has(dateString);
           const hasAppointments = dayAppointments.length > 0;
+          
+          // Check if the date is in the past
+          const cellDate = new Date(year, month, day);
+          cellDate.setHours(0, 0, 0, 0);
+          const todayDate = new Date();
+          todayDate.setHours(0, 0, 0, 0);
+          const isPast = cellDate < todayDate;
 
           return (
             <div
               key={day}
               onClick={() => onDateSelect(dateString)}
               className={`min-h-16 sm:min-h-24 p-1 rounded-lg border-2 transition cursor-pointer flex flex-col items-center justify-center sm:items-start sm:justify-start ${
-                isBlocked
-                  ? 'border-red-400 bg-red-100'
+                isBlocked || isPast
+                  ? 'border-gray-800 bg-black'
                   : hasAppointments
-                  ? 'border-blue-400 bg-blue-50'
+                  ? 'border-gray-600 bg-gray-700'
                   : isSelected
-                  ? 'border-pink-600 bg-pink-50'
-                  : 'border-gray-200 hover:border-pink-300 hover:bg-pink-50'
+                  ? 'border-gray-500 bg-gray-700'
+                  : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800'
               }`}
             >
               <div className="flex items-center sm:items-start justify-center sm:justify-between gap-1 w-full">
-                <div className="font-semibold text-base sm:text-base text-gray-900">{day}</div>
+                <div className={`font-semibold text-base sm:text-base ${isBlocked || isPast ? 'text-gray-700' : 'text-white'}`}>{day}</div>
                 {isBlocked && (
                   <button
                     type="button"
@@ -190,14 +199,14 @@ function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, 
                       e.stopPropagation();
                       onUnblockDay(dateString);
                     }}
-                    className="text-xs font-bold text-red-600 hover:text-red-700 hover:underline hidden sm:block"
+                    className="text-xs font-bold text-gray-600 hover:text-gray-500 hover:underline hidden sm:block"
                   >
                     ✕
                   </button>
                 )}
               </div>
-              {isBlocked ? (
-                <div className="text-xs text-red-700 font-semibold mt-1 hidden sm:block">BLOCKED</div>
+              {isBlocked || isPast ? (
+                <div className="text-xs text-gray-600 font-semibold mt-1 hidden sm:block">{isBlocked ? 'BLOCKED' : 'PAST'}</div>
               ) : (
                 <div className="hidden sm:block text-xs space-y-0.5 mt-1">
                   {dayAppointments.sort((a, b) => a.booking_time.localeCompare(b.booking_time)).slice(0, 2).map((apt) => (
@@ -205,7 +214,7 @@ function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, 
                       key={apt.id}
                       type="button"
                       onClick={() => onDateSelect(dateString)}
-                      className="bg-blue-100 text-blue-700 px-1 py-0.5 rounded text-xs truncate block w-full text-left hover:bg-blue-200"
+                      className="bg-gray-700 text-gray-300 px-1 py-0.5 rounded text-xs truncate block w-full text-left hover:bg-gray-600"
                     >
                       {format24to12Hour(apt.booking_time)} - {calculateEndTime(apt.booking_time, apt.duration)}
                     </button>
@@ -214,7 +223,7 @@ function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, 
                     <button
                       type="button"
                       onClick={() => onDateSelect(dateString)}
-                      className="text-gray-600 text-xs hover:underline"
+                      className="text-gray-400 text-xs hover:underline"
                     >
                       +{dayAppointments.length - 2} more
                     </button>
@@ -282,7 +291,7 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
   return (
     <div className="space-y-4">
       {/* Calendar Grid */}
-      <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+      <div className="bg-gray-900 p-4 rounded-lg border-2 border-gray-700">
         {/* Month Navigation */}
         <div className="flex items-center justify-between mb-4">
           <button
@@ -291,21 +300,21 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
             disabled={!canGoPrev}
             className={`px-2 py-1 text-lg font-bold transition ${
               canGoPrev
-                ? 'text-pink-600 hover:text-pink-700 cursor-pointer'
-                : 'text-gray-300 cursor-not-allowed'
+                ? 'text-gray-400 hover:text-gray-300 cursor-pointer'
+                : 'text-gray-700 cursor-not-allowed'
             }`}
           >
             &lt;
           </button>
-          <h3 className="text-lg font-semibold text-gray-900 flex-1 text-center">{monthName}</h3>
+          <h3 className="text-lg font-semibold text-white flex-1 text-center">{monthName}</h3>
           <button
             type="button"
             onClick={() => setDisplayMonth(displayMonth + 1)}
             disabled={!canGoNext}
             className={`px-2 py-1 text-lg font-bold transition ${
               canGoNext
-                ? 'text-pink-600 hover:text-pink-700 cursor-pointer'
-                : 'text-gray-300 cursor-not-allowed'
+                ? 'text-gray-400 hover:text-gray-300 cursor-pointer'
+                : 'text-gray-700 cursor-not-allowed'
             }`}
           >
             &gt;
@@ -315,7 +324,7 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
         {/* Day headers */}
         <div className="grid grid-cols-7 gap-2 mb-3">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-            <div key={day} className="text-center font-semibold text-gray-600 text-sm">
+            <div key={day} className="text-center font-semibold text-gray-400 text-sm">
               {day}
             </div>
           ))}
@@ -345,10 +354,10 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
                 disabled={!canBook}
                 className={`p-2 rounded-lg font-semibold text-sm transition w-full h-full flex items-center justify-center ${
                   isSelected
-                    ? 'bg-pink-600 text-white border-2 border-pink-600'
+                    ? 'bg-gray-700 text-white border-2 border-gray-600'
                     : canBook
-                    ? 'bg-white text-gray-900 border-2 border-gray-200 hover:border-pink-300 hover:bg-pink-50 cursor-pointer'
-                    : 'bg-gray-100 text-gray-400 border-2 border-gray-100 cursor-not-allowed'
+                    ? 'bg-gray-800 text-white border-2 border-gray-700 hover:border-gray-600 hover:bg-gray-700 cursor-pointer'
+                    : 'bg-gray-900 text-gray-600 border-2 border-gray-900 cursor-not-allowed'
                 }`}
               >
                 {day}
@@ -360,8 +369,8 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
 
       {/* Time Slots for Selected Date */}
       {selectedDate && timeSlotsForSelectedDate.length > 0 && (
-        <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-          <label className="block text-xs font-semibold text-gray-600 uppercase mb-3">Available Times</label>
+        <div className="bg-gray-900 p-4 rounded-lg border-2 border-gray-700">
+          <label className="block text-xs font-semibold text-gray-400 uppercase mb-3">Available Times</label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {timeSlotsForSelectedDate.map((slot) => (
               <button
@@ -372,10 +381,10 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
                 title={slot.reason ? `${slot.reason}` : ''}
                 className={`py-2 px-2 rounded-lg text-xs font-semibold transition ${
                   !slot.available
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
                     : selectedTime === slot.time
-                    ? 'bg-pink-600 text-white border-2 border-pink-600'
-                    : 'bg-white border-2 border-gray-300 text-gray-900 hover:border-pink-400 hover:bg-pink-50 cursor-pointer'
+                    ? 'bg-gray-700 text-white border-2 border-gray-600'
+                    : 'bg-gray-800 border-2 border-gray-700 text-white hover:border-gray-600 hover:bg-gray-700 cursor-pointer'
                 }`}
               >
                 {slot.time}
@@ -388,6 +397,129 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
   );
 }
 
+// Admin Navigation Menu Component
+function AdminNavMenu({ activeTab, setActiveTab }: { activeTab: 'calendar' | 'appointments' | 'gallery'; setActiveTab: (tab: 'calendar' | 'appointments' | 'gallery') => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex flex-col gap-1.5 justify-center items-center p-2"
+        style={{ width: '50px', height: '50px' }}
+      >
+        <div style={{ width: '28px', height: '3px', backgroundColor: 'white' }}></div>
+        <div style={{ width: '28px', height: '3px', backgroundColor: 'white' }}></div>
+        <div style={{ width: '28px', height: '3px', backgroundColor: 'white' }}></div>
+      </button>
+
+      {/* Mobile Dropdown Menu */}
+      {isOpen && (
+        <>
+          <div className="md:hidden fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div
+            className="md:hidden fixed top-20 left-0 right-0 bg-black z-50 flex flex-col w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => {
+                setActiveTab('appointments');
+                setIsOpen(false);
+              }}
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition text-left"
+            >
+              Appointments
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('calendar');
+                setIsOpen(false);
+              }}
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition text-left"
+            >
+              Calendar
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('gallery');
+                setIsOpen(false);
+              }}
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition text-left"
+            >
+              Art Gallery
+            </button>
+            <Link
+              href="/"
+              className="text-white font-bold text-lg py-4 px-4 hover:text-pink-600 transition"
+              onClick={() => setIsOpen(false)}
+            >
+              Home
+            </Link>
+          </div>
+        </>
+      )}
+
+      {/* Desktop Sidebar Menu */}
+      {isOpen && (
+        <div className="hidden md:flex fixed inset-0 z-40">
+          {/* Backdrop */}
+          <div
+            className="flex-1 bg-black bg-opacity-50"
+            onClick={() => setIsOpen(false)}
+          />
+          {/* Sidebar */}
+          <div className="w-72 bg-black shadow-lg flex flex-col z-50">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="self-end p-6 text-2xl font-bold text-white hover:text-pink-600"
+            >
+              ✕
+            </button>
+            <div className="flex-1 flex flex-col justify-center px-8 gap-6">
+              <button
+                onClick={() => {
+                  setActiveTab('appointments');
+                  setIsOpen(false);
+                }}
+                className="text-white font-bold text-2xl hover:text-pink-600 transition py-4 text-left"
+              >
+                Appointments
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('calendar');
+                  setIsOpen(false);
+                }}
+                className="text-white font-bold text-2xl hover:text-pink-600 transition py-4 text-left"
+              >
+                Calendar
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('gallery');
+                  setIsOpen(false);
+                }}
+                className="text-white font-bold text-2xl hover:text-pink-600 transition py-4 text-left"
+              >
+                Art Gallery
+              </button>
+            </div>
+            <div className="px-8 pb-8">
+              <Link
+                href="/"
+                className="text-white font-bold text-2xl hover:text-pink-600 transition py-4 block"
+                onClick={() => setIsOpen(false)}
+              >
+                Home
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function AdminPage() {
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0];
@@ -396,7 +528,8 @@ export default function AdminPage() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [loading, setLoading] = useState(true);
   const [saveMessage, setSaveMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'calendar' | 'appointments'>('calendar');
+  const [activeTab, setActiveTab] = useState<'calendar' | 'appointments' | 'gallery'>('appointments');
+  const [appointmentFilter, setAppointmentFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [selectedAppointment, setSelectedAppointment] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [editTime, setEditTime] = useState('');
@@ -839,73 +972,54 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow">
+      <main className="min-h-screen bg-black">
+        <header className="bg-black border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex justify-between items-center">
-              <Link href="/" className="text-3xl font-bold text-pink-600">
+              <Link href="/" className="text-3xl font-bold text-white">
                 KJ Nails
               </Link>
-              <Link href="/" className="text-gray-600 hover:text-pink-600">
+              <Link href="/" className="text-gray-400 hover:text-white">
                 ← Back to Home
               </Link>
             </div>
           </div>
         </header>
         <div className="max-w-7xl mx-auto px-4 py-8 text-center">
-          <p className="text-gray-600">Loading admin dashboard...</p>
+          <p className="text-gray-400">Loading admin dashboard...</p>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="text-3xl font-bold text-pink-600">
-              KJ Nails
-            </Link>
-            <Link href="/" className="text-gray-600 hover:text-pink-600">
-              ← Back to Home
-            </Link>
-          </div>
+    <main className="min-h-screen bg-black text-white">
+      {/* Navigation - Same as home page */}
+      <nav className="sticky top-0 z-50 bg-black border-b border-gray-900 flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
+        <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
+          <Image
+            src="/images/clear logo.png"
+            alt="KJ Nails Logo"
+            width={200}
+            height={200}
+            style={{display: 'block', height: '64px', width: 'auto', margin: 0, padding: 0}}
+            priority
+          />
+        </Link>
+        <div style={{margin: 0, height: '100%', marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '16px'}}>
+          <AdminNavMenu activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
-      </header>
+      </nav>
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-6 sm:py-12">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center">Operator Dashboard</h1>
 
         {saveMessage && (
-          <div className="mb-6 p-4 bg-green-100 border-2 border-green-300 text-green-700 rounded-lg text-center">
+          <div className="mb-6 p-4 bg-gray-800 border-2 border-gray-600 text-gray-300 rounded-lg text-center">
             {saveMessage}
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b-2 border-gray-200">
-          <button
-            onClick={() => setActiveTab('calendar')}
-            className={`py-2 px-4 font-semibold transition ${
-              activeTab === 'calendar'
-                ? 'text-pink-600 border-b-2 border-pink-600 -mb-0.5'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            90-Day Planner
-          </button>
-          <button
-            onClick={() => setActiveTab('appointments')}
-            className={`py-2 px-4 font-semibold transition ${
-              activeTab === 'appointments'
-                ? 'text-pink-600 border-b-2 border-pink-600 -mb-0.5'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            All Appointments ({bookings.length})
-          </button>
-        </div>
+        {/* Hide old tabs section since we're using dropdown */}
 
         {/* Calendar Tab */}
         {activeTab === 'calendar' && (
@@ -917,9 +1031,9 @@ export default function AdminPage() {
 
             {/* Hour Grid with Appointments */}
             {selectedDate && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="bg-gray-900 rounded-lg shadow-lg p-6 border border-gray-700">
                 <div className="flex items-center justify-between mb-4 gap-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-white">
                     {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                   </h3>
                   
@@ -927,7 +1041,7 @@ export default function AdminPage() {
                     {!blockedDates.has(selectedDate) && (
                       <button
                         onClick={blockEntireDay}
-                        className="py-1 px-3 text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition"
+                        className="py-1 px-3 text-sm font-semibold text-gray-400 hover:text-gray-300 hover:bg-gray-800 rounded transition"
                       >
                         Block Entire Day
                       </button>
@@ -935,7 +1049,7 @@ export default function AdminPage() {
                     {blockedDates.has(selectedDate) && (
                       <button
                         onClick={unblockEntireDay}
-                        className="py-1 px-3 text-sm font-semibold text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition"
+                        className="py-1 px-3 text-sm font-semibold text-gray-400 hover:text-gray-300 hover:bg-gray-800 rounded transition"
                       >
                         Unblock Entire Day
                       </button>
@@ -944,15 +1058,15 @@ export default function AdminPage() {
                 </div>
 
                 {/* Hour Grid */}
-                <div className="mb-6 border-2 border-gray-300 rounded-lg overflow-hidden">
+                <div className="mb-6 border-2 border-gray-700 rounded-lg overflow-hidden">
                   {/* Grid Header and Content */}
-                  <div className="grid grid-cols-[120px_1fr] divide-x-2 divide-gray-300 min-h-96">
+                  <div className="grid grid-cols-[120px_1fr] divide-x-2 divide-gray-700 min-h-96">
                     {/* Time Labels Column */}
-                    <div className="bg-gray-100 divide-y-2 divide-gray-300">
+                    <div className="bg-gray-800 divide-y-2 divide-gray-700">
                       {AVAILABLE_TIMES.map((time) => (
                         <div 
                           key={`time-${time}`} 
-                          className="h-16 flex items-center justify-center text-xs font-semibold text-gray-700 bg-gray-50"
+                          className="h-16 flex items-center justify-center text-xs font-semibold text-gray-400 bg-gray-800"
                         >
                           {time}
                         </div>
@@ -960,13 +1074,13 @@ export default function AdminPage() {
                     </div>
 
                     {/* Appointment and Block Grid */}
-                    <div className="relative bg-white">
+                    <div className="relative bg-gray-950">
                       {/* Background grid lines */}
                       <div className="absolute inset-0 pointer-events-none">
                         {AVAILABLE_TIMES.map((time, idx) => (
                           <div
                             key={`line-${time}`}
-                            className="border-b border-gray-200 absolute w-full"
+                            className="border-b border-gray-800 absolute w-full"
                             style={{
                               top: `${(idx / AVAILABLE_TIMES.length) * 100}%`,
                               height: `${(100 / AVAILABLE_TIMES.length)}%`,
@@ -979,8 +1093,8 @@ export default function AdminPage() {
                       <div className="relative h-full" style={{ minHeight: `${AVAILABLE_TIMES.length * 64}px` }}>
                         {/* Render Day Blocked first (as background) */}
                         {blockedDates.has(selectedDate) && (
-                          <div className="absolute inset-0 bg-red-200 border-2 border-red-400 flex items-center justify-center">
-                            <span className="font-bold text-red-800">ENTIRE DAY BLOCKED</span>
+                          <div className="absolute inset-0 bg-gray-800 border-2 border-gray-600 flex items-center justify-center">
+                            <span className="font-bold text-gray-400">ENTIRE DAY BLOCKED</span>
                           </div>
                         )}
 
@@ -999,8 +1113,8 @@ export default function AdminPage() {
                               onClick={() => setSelectedAppointment(selectedAppointment?.id === apt.id ? null : apt)}
                               className={`absolute left-1 right-1 rounded-lg border-2 p-3 flex items-start justify-between transition overflow-hidden ${
                                 selectedAppointment?.id === apt.id
-                                  ? 'border-pink-600 bg-pink-200'
-                                  : 'border-pink-400 bg-pink-100 hover:bg-pink-150'
+                                  ? 'border-gray-500 bg-gray-700'
+                                  : 'border-gray-600 bg-gray-800 hover:bg-gray-700'
                               }`}
                               style={{
                                 top: `${topPercent}%`,
@@ -1010,24 +1124,24 @@ export default function AdminPage() {
                               {/* Left side - Info */}
                               <div className="flex-1 text-left min-w-0 flex flex-col justify-between">
                                 <div>
-                                  <div className="font-bold text-pink-900 text-lg leading-tight">{apt.customer_name}</div>
-                                  <div className="text-sm text-pink-800 font-semibold leading-tight">{format24to12Hour(apt.booking_time)} - {calculateEndTime(apt.booking_time, apt.duration)}</div>
-                                  <div className="text-sm text-pink-700 leading-tight">{toReadableTitle(apt.service_id)}</div>
+                                  <div className="font-bold text-white text-lg leading-tight">{apt.customer_name}</div>
+                                  <div className="text-sm text-gray-300 font-semibold leading-tight">{format24to12Hour(apt.booking_time)} - {calculateEndTime(apt.booking_time, apt.duration)}</div>
+                                  <div className="text-sm text-gray-400 leading-tight">{toReadableTitle(apt.service_id)}</div>
                                   {apt.addons && apt.addons.length > 0 && (
-                                    <div className="text-sm text-pink-700 mt-0.5 leading-tight">
+                                    <div className="text-sm text-gray-400 mt-0.5 leading-tight">
                                       Add Ons: {Array.isArray(apt.addons) ? apt.addons.map(toReadableTitle).join(', ') : apt.addons}
                                     </div>
                                   )}
-                                  <div className="text-sm text-pink-700 leading-tight">{apt.customer_phone}</div>
+                                  <div className="text-sm text-gray-400 leading-tight">{apt.customer_phone}</div>
                                 </div>
-                                <div className="text-sm text-pink-700 leading-tight mt-1">
+                                <div className="text-sm text-gray-300 leading-tight mt-1">
                                   ${typeof apt.total_price === 'string' ? parseFloat(apt.total_price).toFixed(2) : apt.total_price?.toFixed(2) || '0.00'}
                                 </div>
                               </div>
 
                               {/* Right side - Picture placeholder (hidden on mobile, shows on larger screens) */}
-                              <div className="hidden sm:flex ml-2 flex-shrink-0 items-center justify-center w-12 h-12 bg-pink-200 rounded border border-pink-400">
-                                <span className="text-xs text-pink-600">📸</span>
+                              <div className="hidden sm:flex ml-2 flex-shrink-0 items-center justify-center w-12 h-12 bg-gray-700 rounded border border-gray-600">
+                                <span className="text-xs text-gray-400">📸</span>
                               </div>
                             </button>
                           );
@@ -1054,8 +1168,8 @@ export default function AdminPage() {
                               onClick={() => toggleBlockTime(time)}
                               className={`absolute left-1 right-1 rounded-lg border-2 transition ${
                                 isBlocked
-                                  ? 'border-red-400 bg-red-100 hover:bg-red-150'
-                                  : 'border-gray-400 bg-gray-100 hover:bg-gray-150'
+                                  ? 'border-gray-600 bg-gray-700 hover:bg-gray-600'
+                                  : 'border-gray-700 bg-gray-800 hover:bg-gray-700'
                               }`}
                               style={{
                                 top: `${topPercent}%`,
@@ -1063,7 +1177,7 @@ export default function AdminPage() {
                               }}
                               title={time}
                             >
-                              <span className="text-xs font-semibold text-gray-700">{isBlocked ? '🔒' : ''}</span>
+                              <span className="text-xs font-semibold text-gray-400">{isBlocked ? '🔒' : ''}</span>
                             </button>
                           );
                         })}
@@ -1109,31 +1223,63 @@ export default function AdminPage() {
 
         {/* Appointments Tab */}
         {activeTab === 'appointments' && (
-          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+          <div className="bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-white">Appointments</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setAppointmentFilter('upcoming')}
+                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    appointmentFilter === 'upcoming'
+                      ? 'bg-gray-700 text-white border-2 border-gray-600'
+                      : 'bg-gray-800 text-gray-400 border-2 border-gray-700 hover:border-gray-600'
+                  }`}
+                >
+                  Upcoming
+                </button>
+                <button
+                  onClick={() => setAppointmentFilter('past')}
+                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    appointmentFilter === 'past'
+                      ? 'bg-gray-700 text-white border-2 border-gray-600'
+                      : 'bg-gray-800 text-gray-400 border-2 border-gray-700 hover:border-gray-600'
+                  }`}
+                >
+                  Past
+                </button>
+              </div>
+            </div>
             {bookings.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">No appointments yet</p>
+              <p className="text-center text-gray-400 py-8">No appointments yet</p>
             ) : (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">All Appointments</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {bookings
-                    .sort((a, b) => {
-                      const dateTimeA = new Date(`${a.booking_date}T${a.booking_time}`);
-                      const dateTimeB = new Date(`${b.booking_date}T${b.booking_time}`);
-                      return dateTimeA.getTime() - dateTimeB.getTime();
-                    })
-                    .map((booking) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {bookings
+                  .filter((booking) => {
+                    const bookingDateTime = new Date(`${booking.booking_date}T${booking.booking_time}`);
+                    const now = new Date();
+                    if (appointmentFilter === 'upcoming') {
+                      return bookingDateTime >= now;
+                    } else {
+                      return bookingDateTime < now;
+                    }
+                  })
+                  .sort((a, b) => {
+                    const dateTimeA = new Date(`${a.booking_date}T${a.booking_time}`);
+                    const dateTimeB = new Date(`${b.booking_date}T${b.booking_time}`);
+                    return dateTimeA.getTime() - dateTimeB.getTime();
+                  })
+                  .map((booking) => (
                       <div
                         key={booking.id}
                         onClick={() => setSelectedAppointment(booking)}
-                        className="border-2 border-gray-300 rounded-lg p-4 hover:border-pink-600 hover:shadow-lg hover:bg-pink-50 transition cursor-pointer"
+                        className="border-2 border-gray-700 rounded-lg p-4 hover:border-gray-600 hover:shadow-lg hover:bg-gray-800 transition cursor-pointer bg-gray-800"
                       >
                         <div className="space-y-2">
                           {/* Name and Phone */}
                           <div>
-                            <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">Name</p>
+                            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Name</p>
                             <div className="flex items-baseline gap-2">
-                              <p className="text-base font-bold text-gray-900">{booking.customer_name}</p>
+                              <p className="text-base font-bold text-white">{booking.customer_name}</p>
                               <p className="text-xs text-gray-500">{booking.customer_phone}</p>
                             </div>
                           </div>
@@ -1163,7 +1309,6 @@ export default function AdminPage() {
                       </div>
                     ))}
                 </div>
-              </div>
             )}
           </div>
         )}
@@ -1171,18 +1316,18 @@ export default function AdminPage() {
         {/* Selected Appointment Details Modal - Outside tabs so it shows on both calendar and appointments view */}
         {selectedAppointment && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
             onClick={() => setSelectedAppointment(null)}
           >
             <div 
-              className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col"
+              className="bg-gray-900 rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border border-gray-700"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-white border-b-2 border-gray-200 p-6 flex items-center justify-between flex-shrink-0">
-                <h4 className="font-bold text-xl text-gray-900">Appointment Details</h4>
+              <div className="bg-gray-800 border-b-2 border-gray-700 p-6 flex items-center justify-between flex-shrink-0">
+                <h4 className="font-bold text-xl text-white">Appointment Details</h4>
                 <button
                   onClick={() => setSelectedAppointment(null)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                  className="text-gray-400 hover:text-gray-300 text-2xl font-bold"
                 >
                   ✕
                 </button>
@@ -1193,45 +1338,45 @@ export default function AdminPage() {
                   {/* Name and Phone - One Row */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">Name</p>
-                      <p className="text-sm font-bold text-gray-900">{selectedAppointment.customer_name}</p>
+                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Name</p>
+                      <p className="text-sm font-bold text-white">{selectedAppointment.customer_name}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">Phone</p>
-                      <p className="text-xs text-gray-900">{selectedAppointment.customer_phone}</p>
+                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Phone</p>
+                      <p className="text-xs text-gray-300">{selectedAppointment.customer_phone}</p>
                     </div>
                   </div>
 
                   {/* Service and Price - One Row */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">Service</p>
-                      <p className="text-sm text-gray-900">{toReadableTitle(selectedAppointment.service_id)}</p>
+                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Service</p>
+                      <p className="text-sm text-gray-300">{toReadableTitle(selectedAppointment.service_id)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">Price</p>
-                      <p className="text-sm font-bold text-green-600">${typeof selectedAppointment.total_price === 'string' ? parseFloat(selectedAppointment.total_price).toFixed(2) : selectedAppointment.total_price.toFixed(2)}</p>
+                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Price</p>
+                      <p className="text-sm font-bold text-gray-300">${typeof selectedAppointment.total_price === 'string' ? parseFloat(selectedAppointment.total_price).toFixed(2) : selectedAppointment.total_price.toFixed(2)}</p>
                     </div>
                   </div>
 
                   {/* Time and Duration */}
                   <div>
-                    <p className="text-xs text-pink-600 font-semibold uppercase tracking-wide mb-1">Time</p>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Time</p>
+                    <p className="text-sm font-semibold text-white">
                       {format24to12Hour(selectedAppointment.booking_time)} - {calculateEndTime(selectedAppointment.booking_time, selectedAppointment.duration)} ({selectedAppointment.duration} min)
                     </p>
                   </div>
 
                   {/* Add-ons */}
                   {selectedAppointment.addons && selectedAppointment.addons.length > 0 && (
-                    <div className="bg-pink-50 p-4 rounded-lg border-2 border-pink-200 mt-4">
-                      <p className="text-xs text-pink-600 font-semibold uppercase tracking-wide mb-3">Add Ons</p>
+                    <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700 mt-4">
+                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Add Ons</p>
                       <div className="space-y-2">
                         {Array.isArray(selectedAppointment.addons) ? (
                           selectedAppointment.addons.map((addon, idx) => (
                             <div key={idx} className="flex items-center">
-                              <span className="text-pink-600 mr-2">✓</span>
-                              <span className="font-semibold text-pink-900">
+                              <span className="text-gray-400 mr-2">✓</span>
+                              <span className="font-semibold text-gray-300">
                                 {typeof addon === 'string' ? toReadableTitle(addon) : (typeof addon === 'object' && addon !== null && 'name' in addon) ? (addon as any).name : JSON.stringify(addon)}
                               </span>
                             </div>
@@ -1256,10 +1401,10 @@ export default function AdminPage() {
                     )}
 
                     {/* Inspiration Pictures */}
-                    <div className="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-300 mt-4">
+                    <div className="bg-gray-800 p-4 rounded-lg border-2 border-dashed border-gray-700 mt-4">
                       {selectedAppointment.nail_art_image_urls && selectedAppointment.nail_art_image_urls.length > 0 ? (
                         <div>
-                          <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mb-3">Uploaded Pictures</p>
+                          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Uploaded Pictures</p>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {selectedAppointment.nail_art_image_urls.map((url, idx) => (
                               <div key={idx} className="relative group cursor-pointer" onClick={(e) => e.stopPropagation()}>
@@ -1270,7 +1415,7 @@ export default function AdminPage() {
                                     e.stopPropagation();
                                     setSelectedImageUrl(url);
                                   }}
-                                  className="w-full h-24 object-cover rounded border-2 border-blue-200 group-hover:opacity-75 transition"
+                                  className="w-full h-24 object-cover rounded border-2 border-gray-700 group-hover:opacity-75 transition"
                                 />
                                 <div
                                   onClick={(e) => {
@@ -1301,16 +1446,16 @@ export default function AdminPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 p-6 border-t-2 border-gray-200 flex-shrink-0 bg-white">
+              <div className="flex gap-2 p-6 border-t-2 border-gray-700 flex-shrink-0 bg-gray-800">
                 <button
                   onClick={() => handleEditBooking(selectedAppointment)}
-                  className="flex-1 py-3 px-4 bg-pink-600 text-white rounded-lg font-bold hover:bg-pink-700 transition"
+                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
                 >
                   Edit Appointment
                 </button>
                 <button
                   onClick={() => handleDeleteBooking(selectedAppointment)}
-                  className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition"
+                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
                 >
                   Delete Appointment
                 </button>
@@ -1326,15 +1471,15 @@ export default function AdminPage() {
             onClick={() => setEditingBooking(null)}
           >
             <div 
-              className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+              className="bg-gray-900 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-gray-700"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-pink-600 to-pink-700 text-white p-6 flex items-center justify-between flex-shrink-0">
+              <div className="bg-gray-800 text-white p-6 flex items-center justify-between flex-shrink-0 border-b border-gray-700">
                 <h3 className="text-2xl font-bold">Edit Appointment</h3>
                 <button
                   onClick={() => setEditingBooking(null)}
-                  className="text-white hover:text-pink-100 text-3xl font-bold"
+                  className="text-gray-400 hover:text-gray-300 text-3xl font-bold"
                 >
                   ✕
                 </button>
@@ -1345,7 +1490,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Left: Calendar and Time Selection */}
                   <div className="lg:col-span-2">
-                    <h4 className="font-bold text-lg text-gray-900 mb-4">Select Date & Time</h4>
+                    <h4 className="font-bold text-lg text-white mb-4">Select Date & Time</h4>
                     <EditCalendar 
                       selectedDate={editDate}
                       onDateSelect={(date) => {
@@ -1360,39 +1505,39 @@ export default function AdminPage() {
 
                   {/* Right: Duration and Price */}
                   <div>
-                    <h4 className="font-bold text-lg text-gray-900 mb-4">Details</h4>
+                    <h4 className="font-bold text-lg text-white mb-4">Details</h4>
                     
                     <div className="space-y-4">
                       {/* Name - Editable */}
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">Name</label>
+                        <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Name</label>
                         <input
                           type="text"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-pink-600 text-gray-900 font-semibold text-sm"
+                          className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-sm bg-gray-800"
                         />
                       </div>
 
                       {/* Phone - Editable */}
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">Phone</label>
+                        <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Phone</label>
                         <input
                           type="tel"
                           value={editPhone}
                           onChange={(e) => setEditPhone(e.target.value)}
                           placeholder="(xxx) xxx-xxxx"
-                          className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-pink-600 text-gray-900 font-semibold text-sm"
+                          className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-sm bg-gray-800"
                         />
                       </div>
 
                       {/* Service - Editable Dropdown */}
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">Service</label>
+                        <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Service</label>
                         <select
                           value={editService}
                           onChange={(e) => setEditService(e.target.value)}
-                          className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-pink-600 text-gray-900 font-semibold text-sm bg-white"
+                          className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-sm bg-gray-800"
                         >
                           {editService && <option value={editService}>{toReadableTitle(editService)} (Current)</option>}
                           <option value="gel-manicure">Gel Manicure</option>
@@ -1404,11 +1549,11 @@ export default function AdminPage() {
 
                       {/* Duration - Dropdown */}
                       <div>
-                        <label className="block text-xs font-semibold text-pink-600 uppercase mb-2">Duration (minutes)</label>
+                        <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Duration (minutes)</label>
                         <select
                           value={editDuration}
                           onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
-                          className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-pink-600 text-gray-900 font-semibold text-sm bg-white"
+                          className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-sm bg-gray-800"
                         >
                           {[30, 60, 90, 120, 150, 180, 210].map((duration) => (
                             <option key={duration} value={duration}>
@@ -1420,22 +1565,22 @@ export default function AdminPage() {
 
                       {/* Price */}
                       <div>
-                        <label className="block text-xs font-semibold text-green-600 uppercase mb-2">Price ($)</label>
+                        <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Price ($)</label>
                         <input
                           type="number"
                           value={editPrice}
                           onChange={(e) => setEditPrice(parseFloat(e.target.value) || 0)}
                           step="0.01"
                           min="0"
-                          className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-600 text-gray-900 font-semibold text-lg"
+                          className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-lg bg-gray-800"
                         />
                       </div>
 
                       {/* Summary */}
                       {editDate && editTime && (
-                        <div className="bg-blue-50 p-3 rounded-lg border-2 border-blue-200 mt-4">
-                          <p className="text-xs font-semibold text-blue-600 uppercase mb-2">Summary</p>
-                          <div className="text-xs text-blue-900 space-y-1">
+                        <div className="bg-gray-800 p-3 rounded-lg border-2 border-gray-700 mt-4">
+                          <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Summary</p>
+                          <div className="text-xs text-gray-300 space-y-1">
                             <p><span className="font-bold">Time:</span> {editTime} - {calculateEndTime(editTime, editDuration)}</p>
                             <p><span className="font-bold">Duration:</span> {editDuration}m</p>
                             <p><span className="font-bold">Price:</span> ${editPrice.toFixed(2)}</p>
@@ -1447,30 +1592,30 @@ export default function AdminPage() {
                 </div>
 
                 {/* Nail Art Section - Below main grid */}
-                <div className="mt-6 bg-pink-50 p-4 rounded-lg border-2 border-pink-200">
-                  <h4 className="font-bold text-lg text-gray-900 mb-4">Nail Art Details (Optional)</h4>
+                <div className="mt-6 bg-gray-800 p-4 rounded-lg border-2 border-gray-700">
+                  <h4 className="font-bold text-lg text-white mb-4">Nail Art Details (Optional)</h4>
                   
                   <div className="space-y-4">
                     {/* Nail Art Notes */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">Nail Art Notes</label>
+                      <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Nail Art Notes</label>
                       <textarea
                         value={editNailArtNotes}
                         onChange={(e) => setEditNailArtNotes(e.target.value)}
                         placeholder="Describe nail art design, style preferences, colors, patterns, or any special requests..."
-                        className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-pink-600 text-sm text-gray-900 resize-none"
+                        className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-sm text-white resize-none bg-gray-700"
                         rows={3}
                       />
                     </div>
 
                     {/* Nail Art Images */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 uppercase mb-3">Inspiration Pictures</label>
+                      <label className="block text-xs font-semibold text-gray-400 uppercase mb-3">Inspiration Pictures</label>
                       
                       {/* File Upload Input */}
                       <div className="mb-4">
                         <label className="block">
-                          <span className="text-xs font-semibold text-gray-700 mb-2 block">Upload New Pictures</span>
+                          <span className="text-xs font-semibold text-gray-400 mb-2 block">Upload New Pictures</span>
                           <input
                             type="file"
                             multiple
@@ -1481,7 +1626,7 @@ export default function AdminPage() {
                                 e.target.value = ''; // Reset input
                               }
                             }}
-                            className="w-full p-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-pink-600 text-sm text-gray-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-pink-50 file:text-pink-600 hover:file:bg-pink-100"
+                            className="w-full p-2 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-sm text-gray-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-700 file:text-gray-400 hover:file:bg-gray-600"
                           />
                         </label>
                       </div>
@@ -1489,20 +1634,20 @@ export default function AdminPage() {
                       {/* Display existing images */}
                       {editNailArtImageUrls.length > 0 && (
                         <div className="mb-4">
-                          <p className="text-xs font-semibold text-gray-700 mb-2">Current Images:</p>
+                          <p className="text-xs font-semibold text-gray-400 mb-2">Current Images:</p>
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                             {editNailArtImageUrls.map((url, idx) => (
                               <div key={idx} className="relative group">
                                 <img
                                   src={url}
                                   alt={`Nail art ${idx + 1}`}
-                                  className="w-full h-24 object-cover rounded border-2 border-pink-200 cursor-pointer"
+                                  className="w-full h-24 object-cover rounded border-2 border-gray-700 cursor-pointer"
                                   onClick={() => setSelectedImageUrl(url)}
                                 />
                                 <button
                                   type="button"
                                   onClick={() => setEditNailArtImageUrls(editNailArtImageUrls.filter((_, i) => i !== idx))}
-                                  className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition font-bold text-sm"
+                                  className="absolute -top-2 -right-2 bg-gray-700 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition font-bold text-sm"
                                 >
                                   ✕
                                 </button>
@@ -1521,22 +1666,27 @@ export default function AdminPage() {
               </div>
 
               {/* Footer Actions */}
-              <div className="flex gap-3 p-6 border-t-2 border-gray-200 bg-gray-50 flex-shrink-0">
+              <div className="flex gap-3 p-6 border-t-2 border-gray-700 bg-gray-800 flex-shrink-0">
                 <button
                   onClick={() => setEditingBooking(null)}
-                  className="flex-1 py-3 px-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-900 hover:bg-gray-100 transition"
+                  className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveBooking}
-                  className="flex-1 py-3 px-4 bg-gradient-to-r from-pink-600 to-pink-700 text-white rounded-lg font-semibold hover:from-pink-700 hover:to-pink-800 transition"
+                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
                 >
                   Save Changes
                 </button>
               </div>
             </div>
           </div>
+        )}
+
+        {/* Gallery Tab */}
+        {activeTab === 'gallery' && (
+          <GalleryManagement />
         )}
 
       </div>
