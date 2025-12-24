@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import sharp from 'sharp';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,11 +42,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert File to Buffer
-    const buffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(buffer);
+    let buffer = await file.arrayBuffer();
+    let uint8Array = new Uint8Array(buffer);
+
+    // Compress image using sharp (80% quality for good balance)
+    try {
+      const compressedBuffer = await sharp(uint8Array)
+        .withMetadata() // Preserve orientation and metadata
+        .toFormat('webp', { quality: 80 })
+        .toBuffer();
+      
+      uint8Array = new Uint8Array(compressedBuffer);
+      console.log(`Image compressed: ${(buffer.byteLength / 1024).toFixed(2)}KB → ${(compressedBuffer.byteLength / 1024).toFixed(2)}KB`);
+    } catch (compressionError) {
+      console.warn('Compression failed, using original image:', compressionError);
+      // If compression fails, use the original image
+    }
 
     const timestamp = Date.now();
-    const filename = `${timestamp}-${file.name}`;
+    const filename = `${timestamp}-${file.name.split('.')[0]}.webp`;
     const bucket = 'gallery-images';
 
     console.log(`Uploading file: ${filename} to bucket: ${bucket}`);
@@ -54,7 +69,7 @@ export async function POST(request: NextRequest) {
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(filename, uint8Array, {
-        contentType: file.type,
+        contentType: 'image/webp',
       });
 
     if (uploadError) {

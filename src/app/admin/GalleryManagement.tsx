@@ -15,6 +15,7 @@ export default function GalleryManagement() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch gallery images
@@ -169,18 +170,29 @@ export default function GalleryManagement() {
             {images.map((image) => (
               <div
                 key={image.id}
-                className="group relative bg-gray-800 rounded-lg overflow-hidden aspect-square"
+                className="group relative bg-gray-800 rounded-lg overflow-hidden aspect-square cursor-pointer"
               >
                 <Image
                   src={image.image_url}
                   alt="Gallery"
                   fill
                   className="object-cover"
+                  onClick={() => setSelectedImageUrl(image.image_url)}
                 />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                {/* Desktop hover delete button */}
+                <div className="hidden sm:flex absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                   <button
                     onClick={() => handleDelete(image.id)}
                     className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
+                {/* Mobile visible delete button */}
+                <div className="sm:hidden absolute top-2 right-2">
+                  <button
+                    onClick={() => handleDelete(image.id)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-semibold"
                   >
                     Delete
                   </button>
@@ -193,6 +205,36 @@ export default function GalleryManagement() {
           </div>
         )}
       </div>
+
+      {/* Image Modal */}
+      {selectedImageUrl && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedImageUrl(null)}
+        >
+          <div
+            className="relative bg-white rounded-lg shadow-2xl max-w-2xl max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedImageUrl(null)}
+              className="absolute top-4 right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition z-10"
+            >
+              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Image */}
+            <img
+              src={selectedImageUrl}
+              alt="Full size gallery"
+              className="w-full h-auto"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
