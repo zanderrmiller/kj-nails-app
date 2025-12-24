@@ -15,6 +15,7 @@ export default function ArtPage() {
   const [models, setModels] = useState<GalleryImage[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [touchStart, setTouchStart] = useState<{ time: number; id: string | null }>({ time: 0, id: null });
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -33,6 +34,103 @@ export default function ArtPage() {
 
     fetchImages();
   }, []);
+
+  // Prevent scrolling when modal is open
+  useEffect(() => {
+    if (selectedId !== null) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedId]);
+
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  const handleImageClick = (imageId: string) => {
+    // Only open modal on desktop
+    if (!isMobile) {
+      setSelectedId(imageId);
+    }
+  };
+
+  const handleSaveImage = async () => {
+    console.log('Save button clicked');
+    const selectedImage = models.find((m) => m.id === selectedId);
+    console.log('Selected image:', selectedImage);
+    if (!selectedImage) return;
+
+    try {
+      console.log('Starting download for:', selectedImage.image_url);
+      // Fetch the image blob
+      const response = await fetch(selectedImage.image_url, {
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch image');
+      }
+      
+      const blob = await response.blob();
+      console.log('Blob created:', blob);
+      
+      // Create a blob URL and trigger download
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `kj-nails-${Date.now()}.webp`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      console.log('Download triggered');
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      alert('Unable to download image. Try right-clicking the image to save it.');
+    }
+  };
+
+  const handleShareImage = async () => {
+    const selectedImage = models.find((m) => m.id === selectedId);
+    if (!selectedImage) return;
+
+    const shareText = 'Check out this nail art from KJ Nails!';
+    const shareUrl = `${window.location.origin}/art`;
+
+    // Check if native Web Share API is available
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'KJ Nails Gallery',
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (error) {
+        // User cancelled the share dialog, don't show error
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error sharing:', error);
+        }
+        return;
+      }
+    }
+
+    // Fallback: copy link to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Link copied to clipboard!');
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      // Final fallback: show the URL for manual copy
+      alert(`Share this link:\n${shareUrl}`);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -68,19 +166,22 @@ export default function ArtPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {models.map((model) => (
-              <button
+              <div
                 key={model.id}
-                onClick={() => setSelectedId(model.id)}
-                className="group relative overflow-hidden rounded-lg aspect-square bg-slate-800 hover:ring-2 hover:ring-pink-500 transition cursor-pointer"
+                className="group relative overflow-hidden rounded-lg aspect-square bg-slate-800 cursor-pointer select-none"
               >
-                <Image
+                <img
                   src={model.image_url}
                   alt="Gallery"
-                  fill
-                  className="object-cover group-hover:scale-105 transition duration-300"
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  onClick={() => handleImageClick(model.id)}
+                  draggable="false"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition" />
-              </button>
+                <div 
+                  className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition pointer-events-none" 
+                  onClick={() => handleImageClick(model.id)}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -89,23 +190,33 @@ export default function ArtPage() {
       {/* Lightbox Modal */}
       {selectedId !== null && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-2 sm:p-4"
           onClick={() => setSelectedId(null)}
         >
-          <div className="relative max-w-2xl w-full h-[80vh]" onClick={(e) => e.stopPropagation()}>
-            <Image
-              src={models.find((m) => m.id === selectedId)!.image_url}
-              alt="Full view"
-              fill
-              className="object-contain"
-            />
+          <div className="relative max-w-2xl w-full h-[85vh] sm:h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Close Button */}
             <button
               onClick={() => setSelectedId(null)}
-              className="absolute -top-10 right-0 text-white text-2xl font-bold hover:text-gray-400 transition"
+              className="absolute top-3 right-3 sm:top-2 sm:right-2 z-10 bg-black/60 hover:bg-black/80 rounded-full p-3 sm:p-2 transition"
+              aria-label="Close"
             >
-              ✕
+              <svg className="w-7 h-7 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-            <div className="absolute bottom-4 left-0 right-0 text-center text-gray-300">
+
+            {/* Image Container */}
+            <div className="flex-1 flex items-center justify-center overflow-hidden">
+              <Image
+                src={models.find((m) => m.id === selectedId)!.image_url}
+                alt="Full view"
+                fill
+                className="object-contain"
+              />
+            </div>
+
+            {/* Counter */}
+            <div className="py-2 px-3 text-center text-xs sm:text-sm text-gray-300 bg-black/30">
               {models.findIndex((m) => m.id === selectedId) + 1} / {models.length}
             </div>
           </div>
