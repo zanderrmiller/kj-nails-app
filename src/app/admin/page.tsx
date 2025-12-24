@@ -22,6 +22,7 @@ interface Booking {
   total_price: number;
   addons: string[];
   nail_art_notes?: string;
+  admin_notes?: string;
   nail_art_images_count?: number;
   nail_art_image_urls?: string[];
 }
