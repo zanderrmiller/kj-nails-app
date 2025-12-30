@@ -276,14 +276,46 @@ function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, 
 }
 
 // Calendar component for edit modal - shows available times per date
-function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selectedTime, onTimeSelect }: { 
+function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selectedTime, onTimeSelect, durationMinutes = 0 }: { 
   selectedDate: string; 
   onDateSelect: (date: string) => void; 
   availableTimeSlotsMap: { [date: string]: Array<{ time: string; available: boolean; reason: string | null }> };
   selectedTime: string;
   onTimeSelect: (time: string) => void;
+  durationMinutes?: number;
 }) {
   const [displayMonth, setDisplayMonth] = useState(0);
+
+  const timeToMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const canFitDuration = (startTime: string, duration: number, allSlots: Array<{ time: string; available: boolean; reason: string | null }>): boolean => {
+    if (duration === 0) return true; // If no duration set, show all slots
+    
+    const slotDurationMinutes = 30; // Each slot is 30 minutes
+    const slotsNeeded = Math.ceil(duration / slotDurationMinutes);
+    
+    // Find the index of the starting slot
+    const startIndex = allSlots.findIndex(slot => slot.time === startTime);
+    if (startIndex === -1) return false;
+    
+    // Check if we have enough consecutive available slots starting from this slot
+    let consecutiveAvailable = 0;
+    for (let i = startIndex; i < allSlots.length; i++) {
+      if (allSlots[i].available) {
+        consecutiveAvailable++;
+        if (consecutiveAvailable >= slotsNeeded) {
+          return true;
+        }
+      } else {
+        // Stop counting if we hit an unavailable slot
+        break;
+      }
+    }
+    return false;
+  };
 
   const now = new Date();
   const startDate = new Date(now);
@@ -409,24 +441,29 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
         <div className="bg-gray-900 p-4 rounded-lg border-2 border-gray-700">
           <label className="block text-xs font-semibold text-gray-400 uppercase mb-3">Available Times</label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {timeSlotsForSelectedDate.map((slot) => (
-              <button
-                key={slot.time}
-                type="button"
-                onClick={() => slot.available && onTimeSelect(slot.time)}
-                disabled={!slot.available}
-                title={slot.reason ? `${slot.reason}` : ''}
-                className={`py-2 px-2 rounded-lg text-xs font-semibold transition ${
-                  !slot.available
-                    ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
-                    : selectedTime === slot.time
-                    ? 'bg-gray-700 text-white border-2 border-gray-600'
-                    : 'bg-gray-800 border-2 border-gray-700 text-white hover:border-gray-600 hover:bg-gray-700 cursor-pointer'
-                }`}
-              >
-                {slot.time}
-              </button>
-            ))}
+            {timeSlotsForSelectedDate.map((slot) => {
+              const canFit = canFitDuration(slot.time, durationMinutes, timeSlotsForSelectedDate);
+              const slotDisabled = !slot.available || (durationMinutes > 0 && !canFit);
+              
+              return (
+                <button
+                  key={slot.time}
+                  type="button"
+                  onClick={() => !slotDisabled && onTimeSelect(slot.time)}
+                  disabled={slotDisabled}
+                  title={!slot.available ? `${slot.reason}` : slotDisabled ? 'Not enough consecutive time for this duration' : ''}
+                  className={`py-2 px-2 rounded-lg text-xs font-semibold transition ${
+                    slotDisabled
+                      ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                      : selectedTime === slot.time
+                      ? 'bg-gray-700 text-white border-2 border-gray-600'
+                      : 'bg-gray-800 border-2 border-gray-700 text-white hover:border-gray-600 hover:bg-gray-700 cursor-pointer'
+                  }`}
+                >
+                  {slot.time}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -582,6 +619,9 @@ export default function AdminPage() {
   const [editNailArtNotes, setEditNailArtNotes] = useState('');
   const [editAdminNotes, setEditAdminNotes] = useState('');
   const [editNailArtImageUrls, setEditNailArtImageUrls] = useState<string[]>([]);
+  const [editHasRemoval, setEditHasRemoval] = useState(false);
+  const [editHasNailArt, setEditHasNailArt] = useState(false);
+  const [editHasDesign, setEditHasDesign] = useState(false);
   const [isEditingAdminNotes, setIsEditingAdminNotes] = useState(false);
   const [tempAdminNotes, setTempAdminNotes] = useState('');
   const [adminNotesHasChanges, setAdminNotesHasChanges] = useState(false);
@@ -609,9 +649,14 @@ export default function AdminPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; booking: Booking | null }>({ show: false, booking: null });
   const [isDeleting, setIsDeleting] = useState(false);
   
+  // Overlap error state
+  const [overlapError, setOverlapError] = useState<{ show: boolean; message: string; maxDuration: number }>({ show: false, message: '', maxDuration: 0 });
+  
   // Custom dropdown state
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const [durationDropdownOpen, setDurationDropdownOpen] = useState(false);
+  const [editServiceDropdownOpen, setEditServiceDropdownOpen] = useState(false);
+  const [editDurationDropdownOpen, setEditDurationDropdownOpen] = useState(false);
 
   // Load bookings and blocked dates on mount
   useEffect(() => {
@@ -805,6 +850,12 @@ export default function AdminPage() {
     setEditNailArtNotes(booking.nail_art_notes || '');
     setEditAdminNotes(booking.admin_notes || '');
     setEditNailArtImageUrls(booking.nail_art_image_urls || []);
+    
+    // Set add-ons based on booking addons
+    const addons = booking.addons || [];
+    setEditHasRemoval(addons.includes('removal'));
+    setEditHasNailArt(addons.includes('nail-art'));
+    setEditHasDesign(addons.some((addon) => ['french', 'ombre'].includes(addon)));
   };
 
   const handleUploadNailArtImages = async (files: FileList) => {
@@ -1035,6 +1086,63 @@ export default function AdminPage() {
     setCreatingAppointment(true);
   };
 
+  // Helper function to check for appointment overlaps
+  const checkAppointmentOverlap = (date: string, startTime: string, durationMinutes: number, excludeBookingId?: string): { hasOverlap: boolean; nextAppointmentTime: string | null; maxAvailableDuration: number } => {
+    const AVAILABLE_TIMES = [
+      '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+      '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+      '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
+    ];
+
+    // Convert time to minutes for easier comparison
+    const timeToMinutes = (time: string): number => {
+      const [timePart, period] = time.split(' ');
+      let [hours, minutes] = timePart.split(':').map(Number);
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    };
+
+    const startMinutes = timeToMinutes(startTime);
+    const endMinutes = startMinutes + durationMinutes;
+
+    // Get all appointments on this date, excluding the current one being edited
+    const appointmentsOnDate = bookings.filter(b => b.booking_date === date && b.id !== excludeBookingId);
+
+    // Check for overlaps and find next appointment
+    let hasOverlap = false;
+    let nextAppointmentTime: string | null = null;
+    let minTimeToNextAppointment = Infinity;
+
+    appointmentsOnDate.forEach(apt => {
+      const aptStartMinutes = timeToMinutes(apt.booking_time);
+      const aptEndMinutes = aptStartMinutes + apt.duration;
+
+      // Check if there's overlap
+      if (startMinutes < aptEndMinutes && endMinutes > aptStartMinutes) {
+        hasOverlap = true;
+      }
+
+      // Find the next appointment after current start time
+      if (aptStartMinutes > startMinutes) {
+        const timeUntilNextApt = aptStartMinutes - startMinutes;
+        if (timeUntilNextApt < minTimeToNextAppointment) {
+          minTimeToNextAppointment = timeUntilNextApt;
+          nextAppointmentTime = apt.booking_time;
+        }
+      }
+    });
+
+    // Calculate max available duration
+    let maxAvailableDuration = 270; // Default to end of day (8:00 PM)
+    if (nextAppointmentTime) {
+      const nextAppointmentMinutes = timeToMinutes(nextAppointmentTime);
+      maxAvailableDuration = Math.max(0, nextAppointmentMinutes - startMinutes - 15); // 15-min buffer
+    }
+
+    return { hasOverlap, nextAppointmentTime, maxAvailableDuration };
+  };
+
   const calculateServiceDurationAndPrice = (serviceId: string, hasRemoval: boolean, hasNailArt: boolean, hasDesign: boolean) => {
     let duration = 0;
     let price = 0;
@@ -1100,6 +1208,73 @@ export default function AdminPage() {
     setNewAptDuration(duration);
     setNewAptPrice(price);
     setNewAptAddons(addons);
+  };
+
+  // Edit handlers - auto-calculate price when service or add-ons change
+  const handleEditServiceChange = (serviceId: string) => {
+    setEditService(serviceId);
+    const { duration, price, addons } = calculateServiceDurationAndPrice(serviceId, editHasRemoval, editHasNailArt, editHasDesign);
+    setEditDuration(duration);
+    setEditPrice(price);
+  };
+
+  const handleEditRemovalChange = (hasRemoval: boolean) => {
+    const { duration, price, addons } = calculateServiceDurationAndPrice(editService, hasRemoval, editHasNailArt, editHasDesign);
+    setEditHasRemoval(hasRemoval);
+    setEditDuration(duration);
+    setEditPrice(price);
+  };
+
+  const handleEditNailArtChange = (hasNailArt: boolean) => {
+    const { duration, price, addons } = calculateServiceDurationAndPrice(editService, editHasRemoval, hasNailArt, editHasDesign);
+    setEditHasNailArt(hasNailArt);
+    setEditDuration(duration);
+    setEditPrice(price);
+  };
+
+  const handleEditDesignChange = (hasDesign: boolean) => {
+    const { duration, price, addons } = calculateServiceDurationAndPrice(editService, editHasRemoval, editHasNailArt, hasDesign);
+    setEditHasDesign(hasDesign);
+    setEditDuration(duration);
+    setEditPrice(price);
+  };
+
+  // Wrapper for duration changes with overlap checking
+  const handleEditDurationChange = (newDuration: number) => {
+    if (!editingBooking || !editDate || !editTime) return;
+
+    const { hasOverlap, nextAppointmentTime, maxAvailableDuration } = checkAppointmentOverlap(editDate, editTime, newDuration, editingBooking.id);
+    
+    if (hasOverlap) {
+      setOverlapError({
+        show: true,
+        message: `Cannot extend to ${newDuration} minutes. This would overlap with the next appointment at ${nextAppointmentTime}.`,
+        maxDuration: maxAvailableDuration
+      });
+      return;
+    }
+
+    setOverlapError({ show: false, message: '', maxDuration: 0 });
+    setEditDuration(newDuration);
+  };
+
+  // Wrapper for time changes with overlap checking
+  const handleEditTimeChange = (newTime: string) => {
+    if (!editingBooking || !editDate) return;
+
+    const { hasOverlap, nextAppointmentTime, maxAvailableDuration } = checkAppointmentOverlap(editDate, newTime, editDuration, editingBooking.id);
+    
+    if (hasOverlap) {
+      setOverlapError({
+        show: true,
+        message: `Cannot schedule at ${newTime}. This would overlap with the next appointment at ${nextAppointmentTime}.`,
+        maxDuration: maxAvailableDuration
+      });
+      return;
+    }
+
+    setOverlapError({ show: false, message: '', maxDuration: 0 });
+    setEditTime(newTime);
   };
 
   const handleCreateAppointment = async (e: React.FormEvent) => {
@@ -1549,7 +1724,14 @@ export default function AdminPage() {
           <div className="bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-white">Appointments</h3>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-1 ml-2">
+                <button
+                  onClick={() => setCreatingAppointment(true)}
+                  className="px-3 py-2 rounded-lg font-semibold bg-gray-800 text-gray-400 border-2 border-gray-700 hover:border-gray-600 transition"
+                  title="Create new appointment"
+                >
+                  +
+                </button>
                 <button
                   onClick={() => setAppointmentFilter('upcoming')}
                   className={`px-4 py-2 rounded-lg font-semibold transition ${
@@ -1844,7 +2026,7 @@ export default function AdminPage() {
                       }}
                       availableTimeSlotsMap={availableTimeSlotsMap}
                       selectedTime={editTime}
-                      onTimeSelect={setEditTime}
+                      onTimeSelect={handleEditTimeChange}
                     />
                   </div>
 
@@ -1876,48 +2058,150 @@ export default function AdminPage() {
                         />
                       </div>
 
-                      {/* Service - Editable Dropdown */}
+                      {/* Service - Editable Custom Dropdown */}
                       <div>
                         <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Service</label>
-                        <select
-                          value={editService}
-                          onChange={(e) => setEditService(e.target.value)}
-                          className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-sm bg-gray-800"
-                        >
-                          {editService && <option value={editService}>{toReadableTitle(editService)} (Current)</option>}
-                          <option value="gel-manicure">Gel Manicure</option>
-                          <option value="acrylic-nails">Acrylic Nails</option>
-                          <option value="rebase">Rebase</option>
-                          <option value="nail-art">Nail Art</option>
-                        </select>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setEditServiceDropdownOpen(!editServiceDropdownOpen)}
+                            className="w-full p-3 border-2 border-gray-700 rounded-lg text-white font-semibold text-sm bg-gray-800 hover:border-gray-600 transition text-left flex justify-between items-center"
+                          >
+                            <span>{editService ? BASE_SERVICES.find(s => s.id === editService)?.name || toReadableTitle(editService) : 'Select a service'}</span>
+                            <span className="text-xs">▼</span>
+                          </button>
+                          {editServiceDropdownOpen && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg z-10">
+                              {BASE_SERVICES.map((service) => (
+                                <button
+                                  key={service.id}
+                                  type="button"
+                                  onClick={() => {
+                                    handleEditServiceChange(service.id);
+                                    setEditServiceDropdownOpen(false);
+                                  }}
+                                  className={`w-full px-3 py-2 text-left transition ${
+                                    editService === service.id
+                                      ? 'bg-gray-700 text-white'
+                                      : 'text-gray-300 hover:bg-gray-700'
+                                  }`}
+                                >
+                                  {service.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Duration - Dropdown */}
+                      {/* Add-ons Section - Right after Service */}
+                      <div className="bg-gray-800 p-3 rounded-lg border-2 border-gray-700 space-y-3">
+                        <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Add-ons</p>
+                        
+                        {/* Removal Checkbox */}
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editHasRemoval}
+                            onChange={(e) => handleEditRemovalChange(e.target.checked)}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm text-gray-300">Removal (+{REMOVAL_SERVICE.duration} min, +${REMOVAL_SERVICE.price})</span>
+                        </label>
+
+                        {/* Nail Art Checkbox */}
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editHasNailArt}
+                            onChange={(e) => handleEditNailArtChange(e.target.checked)}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm text-gray-300">Nail Art (+{NAIL_ART.durationAdd} min)</span>
+                        </label>
+
+                        {/* Design Checkbox (French or Ombre) */}
+                        {editService && !['nail-art'].includes(editService) && (
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editHasDesign}
+                              onChange={(e) => handleEditDesignChange(e.target.checked)}
+                              className="w-4 h-4"
+                            />
+                            <span className="text-sm text-gray-300">French or Ombre (+60 min, +$15)</span>
+                          </label>
+                        )}
+                      </div>
+
+                      {/* Overlap Error Alert */}
+                      {overlapError.show && (
+                        <div className="bg-red-900 border-2 border-red-600 p-4 rounded-lg">
+                          <p className="text-sm font-semibold text-red-200 mb-2">⚠️ Scheduling Conflict</p>
+                          <p className="text-xs text-red-100 mb-2">{overlapError.message}</p>
+                          {overlapError.maxDuration > 0 && (
+                            <p className="text-xs text-red-100">
+                              <span className="font-semibold">Max available duration:</span> {overlapError.maxDuration} minutes
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Duration - Custom Dropdown */}
                       <div>
                         <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Duration (minutes)</label>
-                        <select
-                          value={editDuration}
-                          onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
-                          className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-sm bg-gray-800"
-                        >
-                          {[30, 60, 90, 120, 150, 180, 210].map((duration) => (
-                            <option key={duration} value={duration}>
-                              {duration} min{editDuration === duration ? ' (Current)' : ''}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setEditDurationDropdownOpen(!editDurationDropdownOpen)}
+                            className="w-full p-3 border-2 border-gray-700 rounded-lg text-white font-semibold text-sm bg-gray-800 hover:border-gray-600 transition text-left flex justify-between items-center"
+                          >
+                            <span>{editDuration > 0 ? `${editDuration} min` : 'Select duration'}</span>
+                            <span className="text-xs">▼</span>
+                          </button>
+                          {editDurationDropdownOpen && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
+                              {[30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240, 255, 270].map((duration) => (
+                                <button
+                                  key={duration}
+                                  type="button"
+                                  onClick={() => {
+                                    handleEditDurationChange(duration);
+                                    setEditDurationDropdownOpen(false);
+                                  }}
+                                  className={`w-full px-3 py-2 text-left transition ${
+                                    editDuration === duration
+                                      ? 'bg-gray-700 text-white'
+                                      : 'text-gray-300 hover:bg-gray-700'
+                                  }`}
+                                >
+                                  {duration} min
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Price */}
                       <div>
                         <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Price ($)</label>
                         <input
-                          type="number"
+                          type="text"
                           inputMode="decimal"
                           value={editPrice === 0 ? '' : editPrice}
-                          onChange={(e) => setEditPrice(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-                          step="0.01"
-                          min="0"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '') {
+                              setEditPrice(0);
+                            } else {
+                              const parsed = parseFloat(value);
+                              if (!isNaN(parsed)) {
+                                setEditPrice(parsed);
+                              }
+                            }
+                          }}
+                          placeholder="0.00"
                           className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-lg bg-gray-800"
                         />
                       </div>
@@ -1937,9 +2221,10 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Nail Art Section - Below main grid */}
-                <div className="mt-6 bg-gray-800 p-4 rounded-lg border-2 border-gray-700">
-                  <h4 className="font-bold text-lg text-white mb-4">Nail Art Details (Optional)</h4>
+                {/* Nail Art Section - Below main grid (Only show if Nail Art is selected) */}
+                {editHasNailArt && (
+                  <div className="mt-6 bg-gray-800 p-4 rounded-lg border-2 border-gray-700">
+                    <h4 className="font-bold text-lg text-white mb-4">Nail Art Details (Optional)</h4>
                   
                   <div className="space-y-4">
                     {/* Nail Art Notes */}
@@ -2009,6 +2294,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </div>
+                )}
               </div>
 
               {/* Footer Actions */}
@@ -2057,18 +2343,6 @@ export default function AdminPage() {
                       {createAptError}
                     </div>
                   )}
-
-                  {/* Date and Time (Read-only) */}
-                  <div className="grid grid-cols-2 gap-4 bg-gray-800 p-4 rounded-lg">
-                    <div>
-                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Date</p>
-                      <p className="text-sm font-bold text-white">{new Date(`${newAptDate}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Time</p>
-                      <p className="text-sm font-bold text-white">{newAptTime}</p>
-                    </div>
-                  </div>
 
                   {/* Customer Name */}
                   <div>
@@ -2224,6 +2498,25 @@ export default function AdminPage() {
                     <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Total Price (auto-calculated)</p>
                     <p className="text-sm font-bold text-white">${newAptPrice.toFixed(2)}{newAptHasNailArt && '+'}</p>
                   </div>
+
+                  {/* Date and Time Selection Calendar - After Duration Selection */}
+                  {newAptDuration > 0 && (
+                    <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700">
+                      <h4 className="font-bold text-lg text-white mb-4">Select Date & Time</h4>
+                      <p className="text-xs text-gray-400 mb-4">Available slots for {newAptDuration} minutes</p>
+                      <EditCalendar 
+                        selectedDate={newAptDate}
+                        onDateSelect={(date) => {
+                          setNewAptDate(date);
+                          setNewAptTime(''); // Clear time when date changes
+                        }}
+                        availableTimeSlotsMap={availableTimeSlotsMap}
+                        selectedTime={newAptTime}
+                        onTimeSelect={setNewAptTime}
+                        durationMinutes={newAptDuration}
+                      />
+                    </div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="flex gap-3 pt-4">
