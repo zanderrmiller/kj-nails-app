@@ -472,7 +472,7 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
 }
 
 // Admin Navigation Menu Component
-function AdminNavMenu({ activeTab, setActiveTab }: { activeTab: 'calendar' | 'appointments' | 'gallery'; setActiveTab: (tab: 'calendar' | 'appointments' | 'gallery') => void }) {
+function AdminNavMenu({ activeTab, setActiveTab, pendingCount }: { activeTab: 'calendar' | 'appointments' | 'confirmations' | 'gallery'; setActiveTab: (tab: 'calendar' | 'appointments' | 'confirmations' | 'gallery') => void; pendingCount: number }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -510,6 +510,20 @@ function AdminNavMenu({ activeTab, setActiveTab }: { activeTab: 'calendar' | 'ap
               className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition text-left"
             >
               Appointments
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('confirmations');
+                setIsOpen(false);
+              }}
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition text-left relative flex items-center gap-2"
+            >
+              Confirmations
+              {pendingCount > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-pink-600 rounded-full">
+                  {pendingCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => {
@@ -573,6 +587,20 @@ function AdminNavMenu({ activeTab, setActiveTab }: { activeTab: 'calendar' | 'ap
               </button>
               <button
                 onClick={() => {
+                  setActiveTab('confirmations');
+                  setIsOpen(false);
+                }}
+                className="text-white font-bold text-2xl hover:text-gray-400 transition py-4 text-left flex items-center gap-2"
+              >
+                Confirmations
+                {pendingCount > 0 && (
+                  <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-pink-600 rounded-full">
+                    {pendingCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => {
                   setActiveTab('calendar');
                   setIsOpen(false);
                 }}
@@ -605,7 +633,7 @@ export default function AdminPage() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [loading, setLoading] = useState(true);
   const [saveMessage, setSaveMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'calendar' | 'appointments' | 'gallery'>('appointments');
+  const [activeTab, setActiveTab] = useState<'calendar' | 'appointments' | 'confirmations' | 'gallery'>('appointments');
   const [appointmentFilter, setAppointmentFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [selectedAppointment, setSelectedAppointment] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
@@ -1494,7 +1522,7 @@ export default function AdminPage() {
           </button>
         </div>
         <div style={{margin: 0, height: '100%', marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '16px'}}>
-          <AdminNavMenu activeTab={activeTab} setActiveTab={setActiveTab} />
+          <AdminNavMenu activeTab={activeTab} setActiveTab={setActiveTab} pendingCount={bookings.filter(b => b.status === 'pending').length} />
         </div>
       </nav>
 
@@ -2582,6 +2610,151 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Pending Confirmations Tab */}
+        {activeTab === 'confirmations' && (
+          <div className="bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-700">
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-white">
+                Pending Confirmations ({bookings.filter(b => b.status === 'pending').length})
+              </h3>
+              <p className="text-xs text-gray-400 mt-1">Review and confirm these appointments to send customer confirmation messages</p>
+            </div>
+
+            {bookings.filter(b => b.status === 'pending').length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-lg">✓ All appointments confirmed!</p>
+                <p className="text-gray-500 text-sm mt-2">No pending confirmations at this time</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {bookings
+                  .filter(b => b.status === 'pending')
+                  .sort((a, b) => {
+                    const dateTimeA = new Date(`${a.booking_date}T${a.booking_time}`);
+                    const dateTimeB = new Date(`${b.booking_date}T${b.booking_time}`);
+                    return dateTimeA.getTime() - dateTimeB.getTime();
+                  })
+                  .map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="border-2 border-gray-700 rounded-lg p-4 bg-gray-800 hover:border-gray-600 transition"
+                    >
+                      {/* Header - Name and Status Badge */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="text-sm font-bold text-white">{booking.customer_name}</p>
+                          <p className="text-xs text-gray-500">{booking.customer_phone}</p>
+                        </div>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-900 text-yellow-200">
+                          Pending
+                        </span>
+                      </div>
+
+                      {/* Appointment Details */}
+                      <div className="space-y-2 mb-4 pb-4 border-b border-gray-700">
+                        {/* Date & Time */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 text-xs">📅</span>
+                          <div>
+                            <p className="text-xs text-gray-400">Date & Time</p>
+                            <p className="text-sm font-semibold text-white">
+                              {new Date(`${booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · {format24to12Hour(booking.booking_time)} - {calculateEndTime(booking.booking_time, booking.duration)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Service */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 text-xs">💅</span>
+                          <div>
+                            <p className="text-xs text-gray-400">Service</p>
+                            <p className="text-sm font-semibold text-white">{toReadableTitle(booking.service_id)}</p>
+                          </div>
+                        </div>
+
+                        {/* Duration */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 text-xs">⏱️</span>
+                          <div>
+                            <p className="text-xs text-gray-400">Duration</p>
+                            <p className="text-sm font-semibold text-white">{booking.duration} minutes</p>
+                          </div>
+                        </div>
+
+                        {/* Add-ons */}
+                        {booking.addons && booking.addons.length > 0 && (
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-500 text-xs">✨</span>
+                            <div>
+                              <p className="text-xs text-gray-400">Add-ons</p>
+                              <p className="text-sm text-white">
+                                {Array.isArray(booking.addons) ? booking.addons.map(toReadableTitle).join(', ') : booking.addons}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Price Section */}
+                      <div className="bg-gray-700 rounded-lg p-3 mb-4">
+                        <p className="text-xs text-gray-400 mb-1 font-semibold">Current Price</p>
+                        <p className="text-2xl font-bold text-green-500">
+                          {formatPrice(booking.total_price, booking.service_id)}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">This price will be sent to customer when confirmed</p>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditBooking(booking)}
+                          className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-gray-700 text-white hover:bg-gray-600 transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            // Confirm appointment immediately
+                            const confirmAppointment = async () => {
+                              try {
+                                const response = await fetch('/api/appointments/confirm', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    appointmentId: booking.id,
+                                    finalPrice: booking.total_price,
+                                  }),
+                                });
+
+                                if (response.ok) {
+                                  // Update booking status to confirmed
+                                  const updatedBooking = { ...booking, status: 'confirmed' };
+                                  setBookings(bookings.map(b => b.id === booking.id ? updatedBooking : b));
+                                  setSaveMessage(`Confirmed ${booking.customer_name}'s appointment!`);
+                                  setTimeout(() => setSaveMessage(''), 3000);
+                                } else {
+                                  const errorData = await response.json();
+                                  alert(`Failed to confirm: ${errorData.error || 'Unknown error'}`);
+                                }
+                              } catch (error) {
+                                console.error('Error confirming appointment:', error);
+                                alert('An error occurred while confirming the appointment');
+                              }
+                            };
+                            confirmAppointment();
+                          }}
+                          className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-green-700 text-white hover:bg-green-600 transition"
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
         )}
 
