@@ -2732,7 +2732,7 @@ export default function AdminPage() {
 
                                 if (response.ok) {
                                   // Update booking status to confirmed
-                                  const updatedBooking = { ...booking, status: 'confirmed' };
+                                  const updatedBooking: Booking = { ...booking, status: 'confirmed' };
                                   setBookings(bookings.map(b => b.id === booking.id ? updatedBooking : b));
                                   setSaveMessage(`Confirmed ${booking.customer_name}'s appointment!`);
                                   setTimeout(() => setSaveMessage(''), 3000);
