@@ -1423,6 +1423,7 @@ export default function AdminPage() {
       if (response.ok) {
         setBookings(bookings.filter((b) => b.id !== booking.id));
         setSelectedAppointment(null);
+        setEditingBooking(null);
         setSaveMessage('Appointment deleted successfully');
         setTimeout(() => setSaveMessage(''), 2000);
         
