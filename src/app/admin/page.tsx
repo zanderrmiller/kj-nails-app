@@ -678,6 +678,10 @@ export default function AdminPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; booking: Booking | null }>({ show: false, booking: null });
   const [isDeleting, setIsDeleting] = useState(false);
   
+  // Confirmation preview modal state
+  const [confirmationPreview, setConfirmationPreview] = useState<{ show: boolean; booking: Booking | null; tempPrice: number }>({ show: false, booking: null, tempPrice: 0 });
+  const [isConfirming, setIsConfirming] = useState(false);
+  
   // Overlap error state
   const [overlapError, setOverlapError] = useState<{ show: boolean; message: string; maxDuration: number }>({ show: false, message: '', maxDuration: 0 });
   
@@ -1790,8 +1794,8 @@ export default function AdminPage() {
                 {bookings
                   .filter((booking) => {
                     if (!booking || !booking.booking_date || !booking.booking_time) return false;
-                    // Only show confirmed appointments
-                    if (booking.status !== 'confirmed') return false;
+                    // Show confirmed appointments (or bookings without status for backward compatibility)
+                    if (booking.status && booking.status !== 'confirmed') return false;
                     const bookingDateTime = new Date(`${booking.booking_date}T${booking.booking_time}`);
                     const now = new Date();
                     if (appointmentFilter === 'upcoming') {
@@ -2616,6 +2620,148 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* Confirmation Preview Modal */}
+        {confirmationPreview.show && confirmationPreview.booking && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            onClick={() => !isConfirming && setConfirmationPreview({ show: false, booking: null, tempPrice: 0 })}
+          >
+            <div 
+              className="bg-gray-900 rounded-lg shadow-2xl max-w-2xl w-full border-2 border-gray-700 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-gray-800 border-b-2 border-gray-700 p-6">
+                <h3 className="text-2xl font-bold text-white">Confirm Appointment</h3>
+                <p className="text-sm text-gray-400 mt-1">Review the details below and confirm to send SMS to customer</p>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                {/* Customer Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Customer Name</p>
+                    <p className="text-lg font-bold text-white">{confirmationPreview.booking.customer_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Phone Number</p>
+                    <p className="text-lg font-bold text-white">{confirmationPreview.booking.customer_phone}</p>
+                  </div>
+                </div>
+
+                {/* Appointment Details */}
+                <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700">
+                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Appointment Details</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Date</span>
+                      <span className="text-white font-semibold">
+                        {new Date(`${confirmationPreview.booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Time</span>
+                      <span className="text-white font-semibold">
+                        {format24to12Hour(confirmationPreview.booking.booking_time)} - {calculateEndTime(confirmationPreview.booking.booking_time, confirmationPreview.booking.duration)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Duration</span>
+                      <span className="text-white font-semibold">{confirmationPreview.booking.duration} minutes</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-gray-700">
+                      <span className="text-gray-400">Service</span>
+                      <span className="text-white font-semibold">{toReadableTitle(confirmationPreview.booking.service_id)}</span>
+                    </div>
+                    {confirmationPreview.booking.addons && confirmationPreview.booking.addons.length > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Add-ons</span>
+                        <span className="text-white font-semibold">
+                          {Array.isArray(confirmationPreview.booking.addons) ? confirmationPreview.booking.addons.map(toReadableTitle).join(', ') : confirmationPreview.booking.addons}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Price Section */}
+                <div className="bg-green-900 bg-opacity-20 border-2 border-green-700 p-4 rounded-lg">
+                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Final Price</p>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2">
+                      <span className="text-gray-400 text-sm">Adjust price if needed:</span>
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={confirmationPreview.tempPrice === 0 ? '' : confirmationPreview.tempPrice}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '') {
+                          setConfirmationPreview({ ...confirmationPreview, tempPrice: 0 });
+                        } else {
+                          const parsed = parseFloat(value);
+                          if (!isNaN(parsed)) {
+                            setConfirmationPreview({ ...confirmationPreview, tempPrice: parsed });
+                          }
+                        }
+                      }}
+                      placeholder="0.00"
+                      className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-green-600 text-white font-bold text-2xl bg-gray-800"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gray-800 p-6 border-t-2 border-gray-700 flex gap-3">
+                <button
+                  onClick={() => setConfirmationPreview({ show: false, booking: null, tempPrice: 0 })}
+                  disabled={isConfirming}
+                  className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!confirmationPreview.booking) return;
+                    setIsConfirming(true);
+                    try {
+                      const response = await fetch('/api/appointments/confirm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          appointmentId: confirmationPreview.booking.id,
+                          finalPrice: confirmationPreview.tempPrice,
+                        }),
+                      });
+
+                      if (response.ok) {
+                        // Update booking status to confirmed
+                        const updatedBooking: Booking = { ...confirmationPreview.booking, status: 'confirmed' };
+                        setBookings(bookings.map(b => b.id === confirmationPreview.booking!.id ? updatedBooking : b));
+                        setSaveMessage(`Confirmed ${confirmationPreview.booking.customer_name}'s appointment!`);
+                        setConfirmationPreview({ show: false, booking: null, tempPrice: 0 });
+                        setTimeout(() => setSaveMessage(''), 3000);
+                      } else {
+                        const errorData = await response.json();
+                        alert(`Failed to confirm: ${errorData.error || 'Unknown error'}`);
+                      }
+                    } catch (error) {
+                      console.error('Error confirming appointment:', error);
+                      alert('An error occurred while confirming the appointment');
+                    } finally {
+                      setIsConfirming(false);
+                    }
+                  }}
+                  disabled={isConfirming}
+                  className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-600 transition disabled:opacity-50"
+                >
+                  {isConfirming ? 'Confirming...' : 'Confirm & Send SMS'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Pending Confirmations Tab */}
         {activeTab === 'confirmations' && (
           <div className="bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-700">
@@ -2636,7 +2782,7 @@ export default function AdminPage() {
                   .map((booking) => (
                     <div
                       key={booking.id}
-                      className="border-2 border-yellow-700 rounded-lg p-4 hover:border-yellow-600 hover:shadow-lg hover:bg-gray-800 transition cursor-pointer bg-gray-800"
+                      className="border-2 border-gray-600 rounded-lg p-4 hover:border-gray-500 hover:shadow-lg hover:bg-gray-800 transition cursor-pointer bg-gray-800"
                     >
                       <div className="space-y-2">
                         {/* Name and Phone */}
@@ -2651,7 +2797,7 @@ export default function AdminPage() {
                         {/* Date & Time */}
                         <div>
                           <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Appointment</p>
-                          <p className="text-xs font-semibold text-yellow-500">
+                          <p className="text-xs font-semibold text-pink-600">
                             {new Date(`${booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {format24to12Hour(booking.booking_time)} - {calculateEndTime(booking.booking_time, booking.duration)}
                           </p>
                         </div>
@@ -2681,34 +2827,7 @@ export default function AdminPage() {
                         </button>
                         <button
                           onClick={() => {
-                            // Confirm appointment immediately
-                            const confirmAppointment = async () => {
-                              try {
-                                const response = await fetch('/api/appointments/confirm', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    appointmentId: booking.id,
-                                    finalPrice: booking.total_price,
-                                  }),
-                                });
-
-                                if (response.ok) {
-                                  // Update booking status to confirmed
-                                  const updatedBooking: Booking = { ...booking, status: 'confirmed' };
-                                  setBookings(bookings.map(b => b.id === booking.id ? updatedBooking : b));
-                                  setSaveMessage(`Confirmed ${booking.customer_name}'s appointment!`);
-                                  setTimeout(() => setSaveMessage(''), 3000);
-                                } else {
-                                  const errorData = await response.json();
-                                  alert(`Failed to confirm: ${errorData.error || 'Unknown error'}`);
-                                }
-                              } catch (error) {
-                                console.error('Error confirming appointment:', error);
-                                alert('An error occurred while confirming the appointment');
-                              }
-                            };
-                            confirmAppointment();
+                            setConfirmationPreview({ show: true, booking, tempPrice: booking.total_price });
                           }}
                           className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-green-700 text-white hover:bg-green-600 transition text-center"
                         >
