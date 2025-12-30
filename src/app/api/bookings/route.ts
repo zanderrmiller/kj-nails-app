@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendAppointmentBookedSMS } from '@/lib/sms-service';
+import { sendAppointmentBookedSMS, sendTechnicianConfirmationSMS } from '@/lib/sms-service';
 
 const AVAILABLE_TIMES = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -139,7 +139,8 @@ export async function POST(request: NextRequest) {
           booking.customer_name,
           booking.booking_date,
           booking.booking_time,
-          body.baseService?.name || 'Nail Service'
+          body.baseService?.name || 'Nail Service',
+          booking.id
         );
         console.log('SMS result:', smsResult);
         if (smsResult.success) {
@@ -153,6 +154,36 @@ export async function POST(request: NextRequest) {
       }
     } else {
       console.log('No customer phone number provided, skipping SMS');
+    }
+
+    // Send confirmation SMS to technician (Kinsey)
+    const technicianPhone = process.env.TECHNICIAN_PHONE_NUMBER;
+    const confirmationBaseUrl = process.env.CONFIRMATION_LINK_BASE_URL || 'http://localhost:3000/admin/confirm';
+    
+    if (technicianPhone) {
+      console.log('Attempting to send confirmation SMS to Kinsey:', technicianPhone);
+      try {
+        const confirmationLink = `${confirmationBaseUrl}/${booking.id}`;
+        const technicianSmsResult = await sendTechnicianConfirmationSMS(
+          technicianPhone,
+          booking.customer_name,
+          booking.booking_date,
+          booking.booking_time,
+          body.baseService?.name || 'Nail Service',
+          confirmationLink
+        );
+        console.log('Technician SMS result:', technicianSmsResult);
+        if (technicianSmsResult.success) {
+          console.log('✅ Technician SMS sent successfully');
+        } else {
+          console.error('❌ Technician SMS failed:', technicianSmsResult.error);
+        }
+      } catch (techSmsError) {
+        console.error('Failed to send technician confirmation SMS:', techSmsError);
+        // Don't fail the booking if technician SMS fails
+      }
+    } else {
+      console.log('No technician phone number configured, skipping technician SMS');
     }
 
     return NextResponse.json(

@@ -114,9 +114,24 @@ export const sendAppointmentBookedSMS = async (
   customerName: string,
   appointmentDate: string,
   appointmentTime: string,
-  serviceName: string
+  serviceName: string,
+  appointmentId?: string
 ): Promise<SMSResponse> => {
-  const message = `Hi ${customerName}! Your appointment at KJ Nails is confirmed for ${appointmentDate} at ${appointmentTime} (${serviceName}). We look forward to seeing you!`;
+  // Format date to readable format (e.g., "Dec 30")
+  const date = new Date(`${appointmentDate}T00:00:00`);
+  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  
+  // Convert 24-hour time to 12-hour format (e.g., "15:30:00" -> "3:30 PM")
+  const [hours, minutes] = appointmentTime.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const formattedHour = hour % 12 || 12;
+  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
+  
+  const customerLink = appointmentId ? `https://kj-nails-app.vercel.app/customer/appointment/${appointmentId}` : '';
+  const linkText = customerLink ? `\nManage: ${customerLink}` : '';
+  
+  const message = `Hi ${customerName}! Your appointment with KJ Nails is booked for ${formattedDate} at ${formattedTime} ${serviceName}.\nKinsey will confirm appointment and pricing soon!${linkText}`;
 
   return sendSMS({
     to: phoneNumber,
@@ -148,6 +163,116 @@ export const sendAppointmentCancelledSMS = async (
   customerName: string
 ): Promise<SMSResponse> => {
   const message = `Hi ${customerName}! Your appointment at KJ Nails has been cancelled. Please contact us if you have any questions.`;
+
+  return sendSMS({
+    to: phoneNumber,
+    body: message,
+  });
+};
+
+/**
+ * Send appointment confirmation request to technician
+ */
+export const sendTechnicianConfirmationSMS = async (
+  phoneNumber: string,
+  customerName: string,
+  appointmentDate: string,
+  appointmentTime: string,
+  serviceName: string,
+  confirmationLink: string
+): Promise<SMSResponse> => {
+  const date = new Date(`${appointmentDate}T00:00:00`);
+  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  
+  const [hours, minutes] = appointmentTime.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const formattedHour = hour % 12 || 12;
+  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
+
+  const message = `New appointment: ${customerName} on ${formattedDate} at ${formattedTime} for ${serviceName}. Confirm: ${confirmationLink}`;
+
+  return sendSMS({
+    to: phoneNumber,
+    body: message,
+  });
+};
+
+/**
+ * Send appointment confirmation to customer (after technician approves)
+ */
+export const sendAppointmentConfirmedSMS = async (
+  phoneNumber: string,
+  customerName: string,
+  appointmentDate: string,
+  appointmentTime: string,
+  finalPrice: number
+): Promise<SMSResponse> => {
+  const date = new Date(`${appointmentDate}T00:00:00`);
+  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  
+  const [hours, minutes] = appointmentTime.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const formattedHour = hour % 12 || 12;
+  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
+
+  const message = `Hi ${customerName}! Your appointment with KJ Nails is confirmed for ${formattedDate} at ${formattedTime}. Total: $${finalPrice.toFixed(2)}. See you soon!`;
+
+  return sendSMS({
+    to: phoneNumber,
+    body: message,
+  });
+};
+
+/**
+ * Send appointment edit notification to technician (new confirmation needed)
+ */
+export const sendAppointmentEditedSMS = async (
+  phoneNumber: string,
+  customerName: string,
+  appointmentDate: string,
+  appointmentTime: string,
+  serviceName: string,
+  confirmationLink: string
+): Promise<SMSResponse> => {
+  const date = new Date(`${appointmentDate}T00:00:00`);
+  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  
+  const [hours, minutes] = appointmentTime.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const formattedHour = hour % 12 || 12;
+  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
+
+  const message = `UPDATE: ${customerName}'s appointment rescheduled to ${formattedDate} at ${formattedTime} for ${serviceName}. Review changes: ${confirmationLink}`;
+
+  return sendSMS({
+    to: phoneNumber,
+    body: message,
+  });
+};
+
+/**
+ * Send appointment cancellation notification to technician
+ */
+export const sendAppointmentCancelledToTechnicianSMS = async (
+  phoneNumber: string,
+  customerName: string,
+  appointmentDate: string,
+  appointmentTime: string,
+  serviceName: string
+): Promise<SMSResponse> => {
+  const date = new Date(`${appointmentDate}T00:00:00`);
+  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  
+  const [hours, minutes] = appointmentTime.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const formattedHour = hour % 12 || 12;
+  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
+
+  const message = `CANCELLED: ${customerName}'s appointment on ${formattedDate} at ${formattedTime} for ${serviceName} has been cancelled.`;
 
   return sendSMS({
     to: phoneNumber,
