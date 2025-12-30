@@ -872,6 +872,7 @@ export default function AdminPage() {
   };
 
   const handleEditBooking = (booking: Booking) => {
+    setSelectedAppointment(booking);
     setEditingBooking(booking);
     setEditDate(booking.booking_date);
     setEditTime(booking.booking_time);
@@ -2030,7 +2031,10 @@ export default function AdminPage() {
         {editingBooking && selectedAppointment && (
           <div 
             className="fixed inset-0 flex items-center justify-center z-[70] p-4"
-            onClick={() => setEditingBooking(null)}
+            onClick={() => {
+              setEditingBooking(null);
+              setSelectedAppointment(null);
+            }}
           >
             <div 
               className="bg-gray-900 rounded-lg shadow-2xl max-w-4xl w-full max-h-[80vh] flex flex-col overflow-hidden border border-gray-700"
@@ -2335,7 +2339,10 @@ export default function AdminPage() {
               {/* Footer Actions */}
               <div className="flex gap-3 p-6 border-t-2 border-gray-700 bg-gray-800 flex-shrink-0">
                 <button
-                  onClick={() => setEditingBooking(null)}
+                  onClick={() => {
+                    setEditingBooking(null);
+                    setSelectedAppointment(null);
+                  }}
                   className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
                 >
                   Cancel
