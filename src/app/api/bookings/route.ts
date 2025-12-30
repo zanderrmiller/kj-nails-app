@@ -132,18 +132,27 @@ export async function POST(request: NextRequest) {
 
     // Send SMS notification to customer
     if (booking.customer_phone) {
+      console.log('Attempting to send SMS to:', booking.customer_phone);
       try {
-        await sendAppointmentBookedSMS(
+        const smsResult = await sendAppointmentBookedSMS(
           booking.customer_phone,
           booking.customer_name,
           booking.booking_date,
           booking.booking_time,
           body.baseService?.name || 'Nail Service'
         );
+        console.log('SMS result:', smsResult);
+        if (smsResult.success) {
+          console.log('✅ SMS sent successfully');
+        } else {
+          console.error('❌ SMS failed:', smsResult.error);
+        }
       } catch (smsError) {
         console.error('Failed to send booking confirmation SMS:', smsError);
         // Don't fail the booking if SMS fails
       }
+    } else {
+      console.log('No customer phone number provided, skipping SMS');
     }
 
     return NextResponse.json(

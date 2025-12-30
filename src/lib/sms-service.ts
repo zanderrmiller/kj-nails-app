@@ -21,6 +21,11 @@ export const sendSMS = async (options: SendSMSOptions): Promise<SMSResponse> => 
   const apiKey = process.env.CLICKSEND_API_KEY;
   const senderId = process.env.CLICKSEND_SENDER_ID || 'KJNails';
 
+  console.log('=== ClickSend SMS Debug ===');
+  console.log('Username configured:', !!apiUsername);
+  console.log('API Key configured:', !!apiKey);
+  console.log('Sender ID:', senderId);
+
   if (!apiUsername || !apiKey) {
     console.warn('ClickSend credentials not configured. SMS functionality will be disabled.');
     return {
@@ -43,6 +48,10 @@ export const sendSMS = async (options: SendSMSOptions): Promise<SMSResponse> => 
       }
     }
 
+    console.log('Sending SMS to:', phoneNumber);
+    console.log('Message:', options.body);
+    console.log('API Endpoint:', `${CLICKSEND_API_URL}/sms/send`);
+
     const response = await axios.post(
       `${CLICKSEND_API_URL}/sms/send`,
       {
@@ -62,20 +71,34 @@ export const sendSMS = async (options: SendSMSOptions): Promise<SMSResponse> => 
       }
     );
 
+    console.log('ClickSend Response Status:', response.status);
+    console.log('ClickSend Response Data:', JSON.stringify(response.data, null, 2));
+
     if (response.data.data && response.data.data.messages && response.data.data.messages.length > 0) {
       const message = response.data.data.messages[0];
+      console.log('SMS sent successfully. Message ID:', message.message_id);
       return {
         success: true,
         messageId: message.message_id,
       };
     }
 
+    console.log('No messages in response');
     return {
       success: false,
       error: 'Failed to send SMS',
     };
   } catch (error) {
     console.error('Error sending SMS via ClickSend:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+    }
+    // Log axios error details if available
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as any;
+      console.error('Response status:', axiosError.response?.status);
+      console.error('Response data:', JSON.stringify(axiosError.response?.data, null, 2));
+    }
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
