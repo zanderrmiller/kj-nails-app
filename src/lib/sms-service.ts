@@ -108,6 +108,7 @@ export const sendSMS = async (options: SendSMSOptions): Promise<SMSResponse> => 
 
 /**
  * Send appointment booked SMS to customer
+ * NOTE: ClickSend trial accounts can only send to signup number, no links/numbers allowed
  */
 export const sendAppointmentBookedSMS = async (
   phoneNumber: string,
@@ -117,23 +118,8 @@ export const sendAppointmentBookedSMS = async (
   serviceName: string,
   appointmentId?: string
 ): Promise<SMSResponse> => {
-  // Format date to readable format (e.g., "Dec 30")
-  const date = new Date(`${appointmentDate}T00:00:00`);
-  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  
-  // Convert 24-hour time to 12-hour format (e.g., "15:30:00" -> "3:30 PM")
-  const [hours, minutes] = appointmentTime.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const formattedHour = hour % 12 || 12;
-  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
-  
-  // Build message - start with basic message, add link if available
-  let message = `Hi ${customerName}! Your appointment with KJ Nails is booked for ${formattedDate} at ${formattedTime} ${serviceName}.\nKinsey will confirm appointment and pricing soon!`;
-  
-  if (appointmentId) {
-    message += `\nManage: https://kj-nails-app.vercel.app/customer/appointment/${appointmentId}`;
-  }
+  // For ClickSend trial: keep it very simple, no numbers or links allowed
+  const message = `Hi ${customerName}! Your appointment at KJ Nails for ${serviceName} is confirmed. Kinsey will contact you to finalize details soon!`;
 
   return sendSMS({
     to: phoneNumber,
@@ -174,6 +160,7 @@ export const sendAppointmentCancelledSMS = async (
 
 /**
  * Send appointment confirmation request to technician
+ * NOTE: ClickSend trial accounts can only send to signup number, no links/numbers allowed
  */
 export const sendTechnicianConfirmationSMS = async (
   phoneNumber: string,
@@ -183,16 +170,8 @@ export const sendTechnicianConfirmationSMS = async (
   serviceName: string,
   confirmationLink: string
 ): Promise<SMSResponse> => {
-  const date = new Date(`${appointmentDate}T00:00:00`);
-  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  
-  const [hours, minutes] = appointmentTime.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const formattedHour = hour % 12 || 12;
-  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
-
-  const message = `New appointment: ${customerName} on ${formattedDate} at ${formattedTime} for ${serviceName}. Confirm: ${confirmationLink}`;
+  // For ClickSend trial: keep it very simple, no numbers or links allowed
+  const message = `New appointment: ${customerName} for ${serviceName}. Check admin dashboard to confirm and set pricing.`;
 
   return sendSMS({
     to: phoneNumber,
@@ -202,6 +181,7 @@ export const sendTechnicianConfirmationSMS = async (
 
 /**
  * Send appointment confirmation to customer (after technician approves)
+ * NOTE: ClickSend trial accounts can only send to signup number, no links/numbers allowed
  */
 export const sendAppointmentConfirmedSMS = async (
   phoneNumber: string,
@@ -210,16 +190,8 @@ export const sendAppointmentConfirmedSMS = async (
   appointmentTime: string,
   finalPrice: number
 ): Promise<SMSResponse> => {
-  const date = new Date(`${appointmentDate}T00:00:00`);
-  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  
-  const [hours, minutes] = appointmentTime.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const formattedHour = hour % 12 || 12;
-  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
-
-  const message = `Hi ${customerName}! Your appointment with KJ Nails is confirmed for ${formattedDate} at ${formattedTime}. Total: $${finalPrice.toFixed(2)}. See you soon!`;
+  // For ClickSend trial: keep it very simple, no numbers or links allowed
+  const message = `Hi ${customerName}! Your appointment with KJ Nails is confirmed. See you soon!`;
 
   return sendSMS({
     to: phoneNumber,
@@ -229,6 +201,7 @@ export const sendAppointmentConfirmedSMS = async (
 
 /**
  * Send appointment edit notification to technician (new confirmation needed)
+ * NOTE: ClickSend trial accounts can only send to signup number, no links/numbers allowed
  */
 export const sendAppointmentEditedSMS = async (
   phoneNumber: string,
@@ -238,16 +211,8 @@ export const sendAppointmentEditedSMS = async (
   serviceName: string,
   confirmationLink: string
 ): Promise<SMSResponse> => {
-  const date = new Date(`${appointmentDate}T00:00:00`);
-  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  
-  const [hours, minutes] = appointmentTime.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const formattedHour = hour % 12 || 12;
-  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
-
-  const message = `UPDATE: ${customerName}'s appointment rescheduled to ${formattedDate} at ${formattedTime} for ${serviceName}. Review changes: ${confirmationLink}`;
+  // For ClickSend trial: keep it very simple, no numbers or links allowed
+  const message = `UPDATE: ${customerName}'s ${serviceName} appointment has been rescheduled. Check admin dashboard to review and confirm.`;
 
   return sendSMS({
     to: phoneNumber,
@@ -257,6 +222,7 @@ export const sendAppointmentEditedSMS = async (
 
 /**
  * Send appointment cancellation notification to technician
+ * NOTE: ClickSend trial accounts can only send to signup number, no links/numbers allowed
  */
 export const sendAppointmentCancelledToTechnicianSMS = async (
   phoneNumber: string,
@@ -265,16 +231,8 @@ export const sendAppointmentCancelledToTechnicianSMS = async (
   appointmentTime: string,
   serviceName: string
 ): Promise<SMSResponse> => {
-  const date = new Date(`${appointmentDate}T00:00:00`);
-  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  
-  const [hours, minutes] = appointmentTime.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const formattedHour = hour % 12 || 12;
-  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
-
-  const message = `CANCELLED: ${customerName}'s appointment on ${formattedDate} at ${formattedTime} for ${serviceName} has been cancelled.`;
+  // For ClickSend trial: keep it very simple, no numbers or links allowed
+  const message = `CANCELLED: ${customerName}'s ${serviceName} appointment has been cancelled by customer.`;
 
   return sendSMS({
     to: phoneNumber,
