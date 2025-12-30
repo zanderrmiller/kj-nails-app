@@ -37,6 +37,13 @@ const NAIL_DESIGN = [
 const AVAILABLE_TIMES = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
   '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
+];
+
+// Display times for the booking page (only show up to 6:00 PM)
+const DISPLAY_TIMES = [
+  '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
   '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM',
 ];
 
@@ -129,6 +136,37 @@ function calculateEndTime(startTime: string, durationMinutes: number): string {
   const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
   
   return AVAILABLE_TIMES[endIndex];
+}
+
+// Helper function to check if there are enough consecutive available slots for a duration
+function hasEnoughConsecutiveSlots(
+  startTime: string,
+  durationMinutes: number,
+  timeSlotsForDate: Array<{ time: string; available: boolean; reason: string | null }>
+): boolean {
+  const AVAILABLE_TIMES = [
+    '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+    '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+    '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
+  ];
+  
+  const startIndex = AVAILABLE_TIMES.indexOf(startTime);
+  if (startIndex === -1) return false;
+  
+  // Calculate how many slots are needed for this duration
+  const slotsNeeded = Math.ceil(durationMinutes / 30);
+  
+  // Check if all required slots are available
+  for (let i = 0; i < slotsNeeded; i++) {
+    const slotIndex = startIndex + i;
+    if (slotIndex >= AVAILABLE_TIMES.length) return false; // Past end of day
+    
+    const slotTime = AVAILABLE_TIMES[slotIndex];
+    const slot = timeSlotsForDate.find((s) => s.time === slotTime);
+    if (!slot || !slot.available) return false;
+  }
+  
+  return true;
 }
 
 // Helper function to format date as "Month Day"
@@ -726,35 +764,45 @@ export default function BookPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2">
-                  {(availableTimeSlotsMap[selectedDate] || AVAILABLE_TIMES.map((t) => ({ time: t, available: true, reason: null }))).map((slot) => (
-                    <div key={slot.time} className="relative group">
-                      <label
-                        className={`p-2 md:p-3 border-2 rounded-lg text-center text-sm md:text-base transition block ${
-                          !slot.available
-                            ? 'border-gray-600 bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
-                            : selectedTime === slot.time
-                            ? 'border-gray-400 bg-gray-700 text-white cursor-pointer'
-                            : 'bg-black border-gray-600 text-white hover:border-gray-400 hover:bg-gray-800 cursor-pointer'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="time"
-                          value={slot.time}
-                          checked={selectedTime === slot.time}
-                          onChange={(e) => setSelectedTime(e.target.value)}
-                          disabled={!slot.available}
-                          className="hidden"
-                        />
-                        {slot.time}
-                      </label>
-                      {!slot.available && slot.reason && (
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap mb-2 opacity-0 group-hover:opacity-100 transition pointer-events-none">
-                          {slot.reason}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {(availableTimeSlotsMap[selectedDate] || AVAILABLE_TIMES.map((t) => ({ time: t, available: true, reason: null })))
+                    .filter((slot) => DISPLAY_TIMES.includes(slot.time))
+                    .map((slot) => {
+                    // Use the full unfiltered time slots for checking consecutive availability
+                    const fullTimeSlotsForDate = availableTimeSlotsMap[selectedDate] || AVAILABLE_TIMES.map((t) => ({ time: t, available: true, reason: null }));
+                    const canBook = slot.available && hasEnoughConsecutiveSlots(slot.time, totalDuration, fullTimeSlotsForDate);
+                    const isDisabled = !canBook;
+                    const disabledReason = !slot.available ? slot.reason : !canBook ? `Not enough consecutive time for ${totalDuration} min appointment` : null;
+                    
+                    return (
+                      <div key={slot.time} className="relative group">
+                        <label
+                          className={`p-2 md:p-3 border-2 rounded-lg text-center text-sm md:text-base transition block ${
+                            isDisabled
+                              ? 'border-gray-600 bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
+                              : selectedTime === slot.time
+                              ? 'border-gray-400 bg-gray-700 text-white cursor-pointer'
+                              : 'bg-black border-gray-600 text-white hover:border-gray-400 hover:bg-gray-800 cursor-pointer'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="time"
+                            value={slot.time}
+                            checked={selectedTime === slot.time}
+                            onChange={(e) => setSelectedTime(e.target.value)}
+                            disabled={isDisabled}
+                            className="hidden"
+                          />
+                          {slot.time}
+                        </label>
+                        {isDisabled && disabledReason && (
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap mb-2 opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+                            {disabledReason}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -855,7 +903,7 @@ export default function BookPage() {
                 </div>
                 <div className="flex justify-between pt-4 border-t-2 border-gray-700 text-lg font-bold text-white">
                   <span>Total Price:</span>
-                  <span className="text-gray-300">${totalPrice.toFixed(2)}</span>
+                  <span className="text-gray-300">${totalPrice.toFixed(2)}{hasNailArt && '+'}</span>
                 </div>
               </div>
             </div>

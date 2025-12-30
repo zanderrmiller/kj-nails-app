@@ -8,7 +8,36 @@ import GalleryManagement from './GalleryManagement';
 const AVAILABLE_TIMES = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
   '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
-  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM',
+  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
+];
+
+// Base service options
+const BASE_SERVICES = [
+  { id: 'acrylic-short', name: 'Acrylic Sets - Short', duration: 120, basePrice: 50, type: 'acrylic' },
+  { id: 'acrylic-long', name: 'Acrylic Sets - Long', duration: 150, basePrice: 60, type: 'acrylic' },
+  { id: 'gel', name: 'Gel Manicure', duration: 60, basePrice: 35, type: 'gel' },
+  { id: 'rebase', name: 'Rebase', duration: 60, basePrice: 40, type: 'rebase' },
+];
+
+// Optional removal service
+const REMOVAL_SERVICE = {
+  id: 'removal',
+  name: 'Removal',
+  duration: 45,
+  price: 20,
+};
+
+// Optional add-ons
+const NAIL_ART = {
+  id: 'nail-art',
+  name: 'Nail Art',
+  price: 0, // Variable
+  durationAdd: 60,
+};
+
+const NAIL_DESIGN = [
+  { id: 'ombre', name: 'Ombre', price: 15, durationAdd: 60 },
+  { id: 'french', name: 'French', price: 15, durationAdd: 60 },
 ];
 
 interface Booking {
@@ -88,6 +117,13 @@ function getGridSpan(startTime: string, durationMinutes: number): number {
   return Math.ceil(totalMinutes / 30);
 }
 
+// Helper function to format price with '+' suffix for nail art
+function formatPrice(price: string | number, serviceId?: string): string {
+  const formattedPrice = typeof price === 'string' ? parseFloat(price).toFixed(2) : price.toFixed(2);
+  const suffix = serviceId === 'nail-art' ? '+' : '';
+  return `$${formattedPrice}${suffix}`;
+}
+
 // 90-day calendar component
 function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, onUnblockDay }: { bookings: Booking[]; selectedDate: string; onDateSelect: (date: string) => void; blockedDates: Set<string>; onUnblockDay: (date: string) => void }) {
   const [displayMonth, setDisplayMonth] = useState(0);
@@ -117,7 +153,7 @@ function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, 
   const canGoNext = displayMonth < 3; // 90 days = ~3 months
 
   const getDayAppointments = (dateStr: string) => {
-    return bookings.filter(b => b.booking_date === dateStr);
+    return bookings.filter(b => b && b.booking_date === dateStr);
   };
 
   return (
@@ -553,6 +589,29 @@ export default function AdminPage() {
   const [blockedTimes, setBlockedTimes] = useState<Set<string>>(new Set());
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [availableTimeSlotsMap, setAvailableTimeSlotsMap] = useState<{ [date: string]: Array<{ time: string; available: boolean; reason: string | null }> }>({});
+  
+  // Appointment creation state
+  const [creatingAppointment, setCreatingAppointment] = useState(false);
+  const [newAptDate, setNewAptDate] = useState('');
+  const [newAptTime, setNewAptTime] = useState('');
+  const [newAptName, setNewAptName] = useState('');
+  const [newAptPhone, setNewAptPhone] = useState('');
+  const [newAptService, setNewAptService] = useState('');
+  const [newAptDuration, setNewAptDuration] = useState(60);
+  const [newAptPrice, setNewAptPrice] = useState(0);
+  const [newAptAddons, setNewAptAddons] = useState<string[]>([]);
+  const [newAptHasRemoval, setNewAptHasRemoval] = useState(false);
+  const [newAptHasNailArt, setNewAptHasNailArt] = useState(false);
+  const [newAptHasDesign, setNewAptHasDesign] = useState(false);
+  const [createAptError, setCreateAptError] = useState('');
+  
+  // Delete confirmation modal state
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; booking: Booking | null }>({ show: false, booking: null });
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Custom dropdown state
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [durationDropdownOpen, setDurationDropdownOpen] = useState(false);
 
   // Load bookings and blocked dates on mount
   useEffect(() => {
@@ -590,7 +649,7 @@ export default function AdminPage() {
 
   // Prevent background scroll when modal is open
   useEffect(() => {
-    if (selectedAppointment || selectedImageUrl || editingBooking) {
+    if (selectedAppointment || selectedImageUrl || editingBooking || creatingAppointment) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -599,9 +658,15 @@ export default function AdminPage() {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [selectedAppointment, selectedImageUrl, editingBooking]);
+  }, [selectedAppointment, selectedImageUrl, editingBooking, creatingAppointment]);
 
-  // Load blocked times for selected date
+  // Close dropdowns when modal closes
+  useEffect(() => {
+    if (!creatingAppointment) {
+      setServiceDropdownOpen(false);
+      setDurationDropdownOpen(false);
+    }
+  }, [creatingAppointment]);
   useEffect(() => {
     if (!selectedDate) {
       setBlockedTimes(new Set());
@@ -626,7 +691,7 @@ export default function AdminPage() {
     fetchBlockedTimes();
   }, [selectedDate]);
 
-  const dayAppointments = selectedDate ? bookings.filter(b => b.booking_date === selectedDate) : [];
+  const dayAppointments = selectedDate ? bookings.filter(b => b && b.booking_date === selectedDate) : [];
 
   const blockEntireDay = async () => {
     if (!selectedDate) return;
@@ -954,6 +1019,153 @@ export default function AdminPage() {
     }
   };
 
+  const openCreateAppointmentModal = (date: string, time: string) => {
+    setNewAptDate(date);
+    setNewAptTime(time);
+    setNewAptName('');
+    setNewAptPhone('');
+    setNewAptService('');
+    setNewAptDuration(60);
+    setNewAptPrice(0);
+    setNewAptAddons([]);
+    setNewAptHasRemoval(false);
+    setNewAptHasNailArt(false);
+    setNewAptHasDesign(false);
+    setCreateAptError('');
+    setCreatingAppointment(true);
+  };
+
+  const calculateServiceDurationAndPrice = (serviceId: string, hasRemoval: boolean, hasNailArt: boolean, hasDesign: boolean) => {
+    let duration = 0;
+    let price = 0;
+    const addons: string[] = [];
+
+    // Get base service
+    const baseService = BASE_SERVICES.find(s => s.id === serviceId);
+    if (baseService) {
+      duration = baseService.duration;
+      price = baseService.basePrice;
+    }
+
+    // Add removal
+    if (hasRemoval) {
+      duration += REMOVAL_SERVICE.duration;
+      price += REMOVAL_SERVICE.price;
+      addons.push(REMOVAL_SERVICE.id);
+    }
+
+    // Add nail art
+    if (hasNailArt) {
+      duration += NAIL_ART.durationAdd;
+      addons.push(NAIL_ART.id);
+    }
+
+    // Add design
+    if (hasDesign) {
+      duration += 60;
+      price += 15;
+      addons.push('design');
+    }
+
+    return { duration, price, addons };
+  };
+
+  const handleServiceChange = (serviceId: string) => {
+    setNewAptService(serviceId);
+    const { duration, price, addons } = calculateServiceDurationAndPrice(serviceId, newAptHasRemoval, newAptHasNailArt, newAptHasDesign);
+    setNewAptDuration(duration);
+    setNewAptPrice(price);
+    setNewAptAddons(addons);
+  };
+
+  const handleRemovalChange = (hasRemoval: boolean) => {
+    const { duration, price, addons } = calculateServiceDurationAndPrice(newAptService, hasRemoval, newAptHasNailArt, newAptHasDesign);
+    setNewAptHasRemoval(hasRemoval);
+    setNewAptDuration(duration);
+    setNewAptPrice(price);
+    setNewAptAddons(addons);
+  };
+
+  const handleNailArtChange = (hasNailArt: boolean) => {
+    const { duration, price, addons } = calculateServiceDurationAndPrice(newAptService, newAptHasRemoval, hasNailArt, newAptHasDesign);
+    setNewAptHasNailArt(hasNailArt);
+    setNewAptDuration(duration);
+    setNewAptPrice(price);
+    setNewAptAddons(addons);
+  };
+
+  const handleDesignChange = (hasDesign: boolean) => {
+    const { duration, price, addons } = calculateServiceDurationAndPrice(newAptService, newAptHasRemoval, newAptHasNailArt, hasDesign);
+    setNewAptHasDesign(hasDesign);
+    setNewAptDuration(duration);
+    setNewAptPrice(price);
+    setNewAptAddons(addons);
+  };
+
+  const handleCreateAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newAptName || !newAptService || !newAptDate || !newAptTime) {
+      setCreateAptError('Please fill in all required fields');
+      return;
+    }
+
+    if (newAptPrice < 0) {
+      setCreateAptError('Price must be a positive number');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: newAptName,
+          customerPhone: newAptPhone,
+          baseService: { id: newAptService, name: '', duration: newAptDuration, basePrice: 0, type: '' },
+          date: newAptDate,
+          time: newAptTime,
+          totalDuration: newAptDuration,
+          totalPrice: newAptPrice,
+          addons: newAptAddons.map((id) => ({ id, name: '', price: 0 })),
+          nailArtNotes: '',
+          nailArtImagesCount: 0,
+          nailArtImageUrls: [],
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Add new booking to the list
+          setBookings([...bookings, data.booking]);
+          setCreatingAppointment(false);
+          setSaveMessage('Appointment created successfully');
+          setTimeout(() => setSaveMessage(''), 2000);
+          
+          // Refresh availability
+          try {
+            const availabilityResponse = await fetch(`/api/availability-60-days?t=${Date.now()}`);
+            const availabilityData = await availabilityResponse.json();
+            if (availabilityData.success && availabilityData.dates) {
+              setAvailableTimeSlotsMap(availabilityData.dates);
+            }
+          } catch (error) {
+            console.error('Error refreshing availability:', error);
+          }
+        } else {
+          setCreateAptError(data.error || 'Failed to create appointment');
+        }
+      } else {
+        const errorData = await response.json();
+        setCreateAptError(errorData.error || 'Failed to create appointment');
+      }
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      setCreateAptError('An error occurred while creating the appointment');
+    }
+  };
+
   const handleSaveAdminNotes = async (notes: string) => {
     if (!selectedAppointment) return;
 
@@ -982,9 +1194,14 @@ export default function AdminPage() {
   };
 
   const handleDeleteBooking = async (booking: Booking) => {
-    if (!window.confirm(`Delete appointment for ${booking.customer_name} on ${booking.booking_date} at ${booking.booking_time}?`)) {
-      return;
-    }
+    setDeleteConfirmation({ show: true, booking });
+  };
+
+  const confirmDeleteBooking = async () => {
+    if (!deleteConfirmation.booking) return;
+    
+    const booking = deleteConfirmation.booking;
+    setIsDeleting(true);
 
     try {
       const response = await fetch(`/api/bookings?bookingId=${booking.id}`, {
@@ -999,12 +1216,58 @@ export default function AdminPage() {
         setSelectedAppointment(null);
         setSaveMessage('Appointment deleted successfully');
         setTimeout(() => setSaveMessage(''), 2000);
+        
+        // Immediately unlock the time slots on the calendar
+        const AVAILABLE_TIMES = [
+          '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+          '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+          '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM',
+        ];
+        
+        // Calculate which times should be unlocked
+        const timeIndex = AVAILABLE_TIMES.indexOf(booking.booking_time);
+        if (timeIndex !== -1) {
+          const totalMinutesWithBuffer = booking.duration + 15;
+          const slotsNeeded = Math.ceil(totalMinutesWithBuffer / 30);
+          
+          const unlockedTimes = new Set<string>();
+          for (let i = 0; i < slotsNeeded; i++) {
+            if (timeIndex + i < AVAILABLE_TIMES.length) {
+              unlockedTimes.add(AVAILABLE_TIMES[timeIndex + i]);
+            }
+          }
+          
+          // Update availableTimeSlotsMap to unlock these times
+          setAvailableTimeSlotsMap(prevMap => {
+            const updatedMap = { ...prevMap };
+            if (updatedMap[booking.booking_date]) {
+              updatedMap[booking.booking_date] = updatedMap[booking.booking_date].map(slot => 
+                unlockedTimes.has(slot.time) ? { ...slot, available: true, reason: null } : slot
+              );
+            }
+            return updatedMap;
+          });
+        }
+        
+        // Refresh availability to ensure sync with database
+        try {
+          const availabilityResponse = await fetch(`/api/availability-60-days?t=${Date.now()}`);
+          const availabilityData = await availabilityResponse.json();
+          if (availabilityData.success && availabilityData.dates) {
+            setAvailableTimeSlotsMap(availabilityData.dates);
+          }
+        } catch (error) {
+          console.error('Error refreshing availability:', error);
+        }
       } else {
         alert(`Failed to delete appointment: ${responseData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error deleting booking:', error);
       alert('An error occurred while deleting the appointment');
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmation({ show: false, booking: null });
     }
   };
 
@@ -1184,7 +1447,7 @@ export default function AdminPage() {
                                   <div className="text-sm text-gray-400 leading-tight">{apt.customer_phone}</div>
                                 </div>
                                 <div className="text-sm text-gray-300 leading-tight mt-1">
-                                  ${typeof apt.total_price === 'string' ? parseFloat(apt.total_price).toFixed(2) : apt.total_price?.toFixed(2) || '0.00'}
+                                  {formatPrice(apt.total_price, apt.service_id)}
                                 </div>
                               </div>
 
@@ -1209,22 +1472,36 @@ export default function AdminPage() {
                           const heightPercent = (100 / AVAILABLE_TIMES.length);
 
                           return (
-                            <button
+                            <div
                               key={`block-${time}`}
-                              onClick={() => toggleBlockTime(time)}
-                              className={`absolute left-1 right-1 rounded-lg border-2 transition ${
-                                isBlocked
-                                  ? 'border-gray-600 bg-gray-700 hover:bg-gray-600'
-                                  : 'border-gray-700 bg-gray-800 hover:bg-gray-700'
-                              }`}
+                              className="absolute left-1 right-1 rounded-lg border-2 transition flex items-center justify-between p-1 gap-1"
                               style={{
                                 top: `${topPercent}%`,
                                 height: `${heightPercent}%`,
+                                borderColor: isBlocked ? '#4b5563' : '#374151',
+                                backgroundColor: isBlocked ? '#374151' : '#111827',
                               }}
-                              title={time}
                             >
-                              <span className="text-xs font-semibold text-gray-400">{isBlocked ? '🔒' : ''}</span>
-                            </button>
+                              {/* Left side - Block toggle */}
+                              <button
+                                onClick={() => toggleBlockTime(time)}
+                                className="h-full flex items-center justify-center rounded hover:bg-gray-700 transition"
+                                style={{ flex: '5' }}
+                                title={isBlocked ? 'Unblock time' : 'Block time'}
+                              >
+                                <span className="text-xs font-semibold text-gray-400">{isBlocked ? '🔒' : ''}</span>
+                              </button>
+
+                              {/* Right side - Create appointment button */}
+                              <button
+                                onClick={() => openCreateAppointmentModal(selectedDate, time)}
+                                className="h-full flex items-center justify-center rounded border-2 border-gray-500 hover:border-gray-300 hover:bg-gray-700 transition"
+                                style={{ flex: '1' }}
+                                title="Create appointment"
+                              >
+                                <span className="text-lg font-bold text-gray-500 hover:text-gray-300">+</span>
+                              </button>
+                            </div>
                           );
                         })}
                       </div>
@@ -1301,6 +1578,7 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {bookings
                   .filter((booking) => {
+                    if (!booking || !booking.booking_date || !booking.booking_time) return false;
                     const bookingDateTime = new Date(`${booking.booking_date}T${booking.booking_time}`);
                     const now = new Date();
                     if (appointmentFilter === 'upcoming') {
@@ -1347,7 +1625,7 @@ export default function AdminPage() {
                             <div className="text-right">
                               <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">Price</p>
                               <p className="text-xs font-bold text-green-600">
-                                ${typeof booking.total_price === 'string' ? parseFloat(booking.total_price).toFixed(2) : booking.total_price.toFixed(2)}
+                                {formatPrice(booking.total_price, booking.service_id)}
                               </p>
                             </div>
                           </div>
@@ -1401,7 +1679,7 @@ export default function AdminPage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Price</p>
-                      <p className="text-sm font-bold text-gray-300">${typeof selectedAppointment.total_price === 'string' ? parseFloat(selectedAppointment.total_price).toFixed(2) : selectedAppointment.total_price.toFixed(2)}</p>
+                      <p className="text-sm font-bold text-gray-300">{formatPrice(selectedAppointment.total_price, selectedAppointment.service_id)}</p>
                     </div>
                   </div>
 
@@ -1746,6 +2024,268 @@ export default function AdminPage() {
                   className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
                 >
                   Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create Appointment Modal */}
+        {creatingAppointment && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            onClick={() => setCreatingAppointment(false)}
+          >
+            <div 
+              className="bg-gray-900 rounded-lg shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-gray-700 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-gray-800 border-b-2 border-gray-700 p-6 flex items-center justify-between flex-shrink-0">
+                <h4 className="font-bold text-xl text-white">Create New Appointment</h4>
+                <button
+                  onClick={() => setCreatingAppointment(false)}
+                  className="text-gray-400 hover:text-gray-300 text-2xl font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto flex-1">
+                <form onSubmit={handleCreateAppointment} className="space-y-4" noValidate>
+                  {createAptError && (
+                    <div className="bg-red-900 border-2 border-red-700 p-3 rounded-lg text-red-200 text-sm">
+                      {createAptError}
+                    </div>
+                  )}
+
+                  {/* Date and Time (Read-only) */}
+                  <div className="grid grid-cols-2 gap-4 bg-gray-800 p-4 rounded-lg">
+                    <div>
+                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Date</p>
+                      <p className="text-sm font-bold text-white">{new Date(`${newAptDate}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Time</p>
+                      <p className="text-sm font-bold text-white">{newAptTime}</p>
+                    </div>
+                  </div>
+
+                  {/* Customer Name */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Customer Name *</label>
+                    <input
+                      type="text"
+                      value={newAptName}
+                      onChange={(e) => setNewAptName(e.target.value)}
+                      placeholder="Enter customer name"
+                      className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-sm bg-gray-800"
+                    />
+                  </div>
+
+                  {/* Customer Phone */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Phone Number (optional)</label>
+                    <input
+                      type="tel"
+                      value={newAptPhone}
+                      onChange={(e) => setNewAptPhone(e.target.value)}
+                      placeholder="(555) 123-4567"
+                      className="w-full p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-600 text-white font-semibold text-sm bg-gray-800"
+                    />
+                  </div>
+
+                  {/* Service Selection - Custom Dropdown */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Base Service *</label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setServiceDropdownOpen(!serviceDropdownOpen)}
+                        className="w-full p-3 border-2 border-gray-700 rounded-lg text-white font-semibold text-sm bg-gray-800 hover:border-gray-600 transition text-left flex justify-between items-center"
+                      >
+                        <span>{newAptService ? BASE_SERVICES.find(s => s.id === newAptService)?.name : 'Select a service'}</span>
+                        <span className="text-xs">▼</span>
+                      </button>
+                      {serviceDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg z-10">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewAptService('');
+                              setServiceDropdownOpen(false);
+                              handleServiceChange('');
+                            }}
+                            className="w-full px-3 py-2 text-left text-gray-300 hover:bg-gray-700 transition first:rounded-t-lg"
+                          >
+                            Select a service
+                          </button>
+                          {BASE_SERVICES.map((service) => (
+                            <button
+                              key={service.id}
+                              type="button"
+                              onClick={() => {
+                                handleServiceChange(service.id);
+                                setServiceDropdownOpen(false);
+                              }}
+                              className={`w-full px-3 py-2 text-left transition ${
+                                newAptService === service.id
+                                  ? 'bg-gray-700 text-white'
+                                  : 'text-gray-300 hover:bg-gray-700'
+                              }`}
+                            >
+                              {service.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Optional Add-ons */}
+                  {newAptService && (
+                    <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700 space-y-3">
+                      <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Add-ons (optional)</p>
+
+                      {/* Removal Checkbox */}
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newAptHasRemoval}
+                          onChange={(e) => handleRemovalChange(e.target.checked)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-300">Removal (+{REMOVAL_SERVICE.duration} min, +${REMOVAL_SERVICE.price})</span>
+                      </label>
+
+                      {/* Nail Art Checkbox */}
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newAptHasNailArt}
+                          onChange={(e) => handleNailArtChange(e.target.checked)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-300">Nail Art (+{NAIL_ART.durationAdd} min)</span>
+                      </label>
+
+                      {/* Design Checkbox (French or Ombre) */}
+                      {newAptService && !['nail-art'].includes(newAptService) && (
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={newAptHasDesign}
+                            onChange={(e) => handleDesignChange(e.target.checked)}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm text-gray-300">French or Ombre (+60 min, +$15)</span>
+                        </label>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Duration (Custom Dropdown, editable) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Duration (minutes)</label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setDurationDropdownOpen(!durationDropdownOpen)}
+                        className="w-full p-3 border-2 border-gray-700 rounded-lg text-white font-semibold text-sm bg-gray-800 hover:border-gray-600 transition text-left flex justify-between items-center"
+                      >
+                        <span>{newAptDuration} min</span>
+                        <span className="text-xs">▼</span>
+                      </button>
+                      {durationDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                          {[60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240, 255, 270].map((duration) => (
+                            <button
+                              key={duration}
+                              type="button"
+                              onClick={() => {
+                                setNewAptDuration(duration);
+                                setDurationDropdownOpen(false);
+                              }}
+                              className={`w-full px-3 py-2 text-left transition ${
+                                newAptDuration === duration
+                                  ? 'bg-gray-700 text-white'
+                                  : 'text-gray-300 hover:bg-gray-700'
+                              }`}
+                            >
+                              {duration} min
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Price (Read-only, auto-calculated unless Nail Art) */}
+                  <div className="bg-gray-800 p-3 rounded-lg border-2 border-gray-700">
+                    <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Total Price (auto-calculated)</p>
+                    <p className="text-sm font-bold text-white">${newAptPrice.toFixed(2)}{newAptHasNailArt && '+'}</p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setCreatingAppointment(false)}
+                      className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
+                    >
+                      Create Appointment
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmation.show && deleteConfirmation.booking && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            onClick={() => !isDeleting && setDeleteConfirmation({ show: false, booking: null })}
+          >
+            <div 
+              className="bg-gray-900 rounded-lg shadow-2xl max-w-md w-full border-2 border-red-700 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-red-900 p-6">
+                <h3 className="text-xl font-bold text-white">Delete Appointment</h3>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <p className="text-gray-300">
+                  Are you sure you want to delete the appointment for <span className="font-semibold text-white">{deleteConfirmation.booking.customer_name}</span>?
+                </p>
+                <div className="bg-gray-800 p-3 rounded-lg text-sm">
+                  <p className="text-gray-400">Date: <span className="text-white">{new Date(`${deleteConfirmation.booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
+                  <p className="text-gray-400">Time: <span className="text-white">{deleteConfirmation.booking.booking_time}</span></p>
+                </div>
+                <p className="text-red-400 text-sm font-semibold">This action cannot be undone.</p>
+              </div>
+              
+              <div className="bg-gray-800 p-6 flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirmation({ show: false, booking: null })}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteBooking}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 px-4 bg-red-700 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             </div>
