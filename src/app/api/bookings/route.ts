@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import {
-//   sendCustomerPendingNotification,
-//   sendOwnerNewBookingNotification,
-// } from '../lib/twilio-client';
+import { sendAppointmentBookedSMS } from '@/lib/sms-service';
 
 const AVAILABLE_TIMES = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -133,37 +130,21 @@ export async function POST(request: NextRequest) {
 
     console.log('Booking created:', booking);
 
-    // SMS notifications disabled - Twilio not verified yet
-    // try {
-    //   // Send pending notification to customer
-    //   await sendCustomerPendingNotification(
-    //     body.customerPhone,
-    //     body.customerName,
-    //     body.date,
-    //     body.time,
-    //     booking.id.substring(0, 8).toUpperCase()
-    //   );
-
-    //   // Send new booking notification to owner
-    //   const ownerPhone = process.env.OWNER_PHONE_NUMBER;
-    //   if (ownerPhone) {
-    //     const confirmationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin?booking=${booking.id}`;
-    //     await sendOwnerNewBookingNotification(
-    //       ownerPhone,
-    //       body.customerName,
-    //       body.customerPhone,
-    //       body.date,
-    //       body.time,
-    //       body.baseService.name,
-    //       body.totalDuration,
-    //       body.totalPrice,
-    //       confirmationLink
-    //     );
-    //   }
-    // } catch (smsError) {
-    //   console.error('Error sending SMS notifications:', smsError);
-    //   // Don't fail the booking if SMS fails
-    // }
+    // Send SMS notification to customer
+    if (booking.customer_phone) {
+      try {
+        await sendAppointmentBookedSMS(
+          booking.customer_phone,
+          booking.customer_name,
+          booking.booking_date,
+          booking.booking_time,
+          body.baseService?.name || 'Nail Service'
+        );
+      } catch (smsError) {
+        console.error('Failed to send booking confirmation SMS:', smsError);
+        // Don't fail the booking if SMS fails
+      }
+    }
 
     return NextResponse.json(
       {
