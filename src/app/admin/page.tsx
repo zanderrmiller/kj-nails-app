@@ -2841,6 +2841,13 @@ export default function AdminPage() {
                         >
                           Confirm
                         </button>
+                        <button
+                          onClick={() => handleDeleteBooking(booking)}
+                          className="py-2 px-3 rounded-lg font-semibold text-sm bg-gray-700 text-white hover:bg-red-700 transition text-center"
+                          title="Delete appointment"
+                        >
+                          ✕
+                        </button>
                       </div>
                     </div>
                   ))}
