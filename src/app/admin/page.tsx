@@ -1790,6 +1790,8 @@ export default function AdminPage() {
                 {bookings
                   .filter((booking) => {
                     if (!booking || !booking.booking_date || !booking.booking_time) return false;
+                    // Only show confirmed appointments
+                    if (booking.status !== 'confirmed') return false;
                     const bookingDateTime = new Date(`${booking.booking_date}T${booking.booking_time}`);
                     const now = new Date();
                     if (appointmentFilter === 'upcoming') {
@@ -2617,20 +2619,13 @@ export default function AdminPage() {
         {/* Pending Confirmations Tab */}
         {activeTab === 'confirmations' && (
           <div className="bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-700">
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white">
-                Pending Confirmations ({bookings.filter(b => b.status === 'pending').length})
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">Review and confirm these appointments to send customer confirmation messages</p>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-white">Pending Confirmations</h3>
             </div>
-
             {bookings.filter(b => b.status === 'pending').length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-400 text-lg">✓ All appointments confirmed!</p>
-                <p className="text-gray-500 text-sm mt-2">No pending confirmations at this time</p>
-              </div>
+              <p className="text-center text-gray-400 py-8">✓ All appointments confirmed!</p>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {bookings
                   .filter(b => b.status === 'pending')
                   .sort((a, b) => {
@@ -2641,78 +2636,46 @@ export default function AdminPage() {
                   .map((booking) => (
                     <div
                       key={booking.id}
-                      className="border-2 border-gray-700 rounded-lg p-4 bg-gray-800 hover:border-gray-600 transition"
+                      className="border-2 border-yellow-700 rounded-lg p-4 hover:border-yellow-600 hover:shadow-lg hover:bg-gray-800 transition cursor-pointer bg-gray-800"
                     >
-                      {/* Header - Name and Status Badge */}
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="space-y-2">
+                        {/* Name and Phone */}
                         <div>
-                          <p className="text-sm font-bold text-white">{booking.customer_name}</p>
-                          <p className="text-xs text-gray-500">{booking.customer_phone}</p>
+                          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Name</p>
+                          <div className="flex items-baseline gap-2">
+                            <p className="text-base font-bold text-white">{booking.customer_name}</p>
+                            <p className="text-xs text-gray-500">{booking.customer_phone}</p>
+                          </div>
                         </div>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-900 text-yellow-200">
-                          Pending
-                        </span>
-                      </div>
 
-                      {/* Appointment Details */}
-                      <div className="space-y-2 mb-4 pb-4 border-b border-gray-700">
                         {/* Date & Time */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-500 text-xs">📅</span>
-                          <div>
-                            <p className="text-xs text-gray-400">Date & Time</p>
-                            <p className="text-sm font-semibold text-white">
-                              {new Date(`${booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · {format24to12Hour(booking.booking_time)} - {calculateEndTime(booking.booking_time, booking.duration)}
+                        <div>
+                          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Appointment</p>
+                          <p className="text-xs font-semibold text-yellow-500">
+                            {new Date(`${booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {format24to12Hour(booking.booking_time)} - {calculateEndTime(booking.booking_time, booking.duration)}
+                          </p>
+                        </div>
+
+                        {/* Service and Price */}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex-1">
+                            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Service</p>
+                            <p className="text-xs text-gray-300">{toReadableTitle(booking.service_id)}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">Price</p>
+                            <p className="text-xs font-bold text-green-600">
+                              {formatPrice(booking.total_price, booking.service_id)}
                             </p>
                           </div>
                         </div>
-
-                        {/* Service */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-500 text-xs">💅</span>
-                          <div>
-                            <p className="text-xs text-gray-400">Service</p>
-                            <p className="text-sm font-semibold text-white">{toReadableTitle(booking.service_id)}</p>
-                          </div>
-                        </div>
-
-                        {/* Duration */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-500 text-xs">⏱️</span>
-                          <div>
-                            <p className="text-xs text-gray-400">Duration</p>
-                            <p className="text-sm font-semibold text-white">{booking.duration} minutes</p>
-                          </div>
-                        </div>
-
-                        {/* Add-ons */}
-                        {booking.addons && booking.addons.length > 0 && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-gray-500 text-xs">✨</span>
-                            <div>
-                              <p className="text-xs text-gray-400">Add-ons</p>
-                              <p className="text-sm text-white">
-                                {Array.isArray(booking.addons) ? booking.addons.map(toReadableTitle).join(', ') : booking.addons}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Price Section */}
-                      <div className="bg-gray-700 rounded-lg p-3 mb-4">
-                        <p className="text-xs text-gray-400 mb-1 font-semibold">Current Price</p>
-                        <p className="text-2xl font-bold text-green-500">
-                          {formatPrice(booking.total_price, booking.service_id)}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">This price will be sent to customer when confirmed</p>
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mt-4 pt-3 border-t border-gray-700">
                         <button
                           onClick={() => handleEditBooking(booking)}
-                          className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-gray-700 text-white hover:bg-gray-600 transition"
+                          className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-gray-700 text-white hover:bg-gray-600 transition text-center"
                         >
                           Edit
                         </button>
@@ -2747,7 +2710,7 @@ export default function AdminPage() {
                             };
                             confirmAppointment();
                           }}
-                          className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-green-700 text-white hover:bg-green-600 transition"
+                          className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-green-700 text-white hover:bg-green-600 transition text-center"
                         >
                           Confirm
                         </button>
