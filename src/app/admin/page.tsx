@@ -54,6 +54,7 @@ interface Booking {
   admin_notes?: string;
   nail_art_images_count?: number;
   nail_art_image_urls?: string[];
+  status?: 'pending' | 'confirmed' | 'completed' | 'cancelled';
 }
 
 // Helper function to convert ID to readable title
