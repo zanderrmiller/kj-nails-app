@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
     const technicianPhone = process.env.TECHNICIAN_PHONE_NUMBER;
     const confirmationBaseUrl = process.env.CONFIRMATION_LINK_BASE_URL || 'http://localhost:3000/admin/confirm';
     
-    if (technicianPhone) {
+    if (technicianPhone && technicianPhone.length > 0) {
       console.log('Attempting to send confirmation SMS to Kinsey:', technicianPhone);
       try {
         const confirmationLink = `${confirmationBaseUrl}/${booking.id}`;

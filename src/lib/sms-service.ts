@@ -128,10 +128,12 @@ export const sendAppointmentBookedSMS = async (
   const formattedHour = hour % 12 || 12;
   const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
   
-  const customerLink = appointmentId ? `https://kj-nails-app.vercel.app/customer/appointment/${appointmentId}` : '';
-  const linkText = customerLink ? `\nManage: ${customerLink}` : '';
+  // Build message - start with basic message, add link if available
+  let message = `Hi ${customerName}! Your appointment with KJ Nails is booked for ${formattedDate} at ${formattedTime} ${serviceName}.\nKinsey will confirm appointment and pricing soon!`;
   
-  const message = `Hi ${customerName}! Your appointment with KJ Nails is booked for ${formattedDate} at ${formattedTime} ${serviceName}.\nKinsey will confirm appointment and pricing soon!${linkText}`;
+  if (appointmentId) {
+    message += `\nManage: https://kj-nails-app.vercel.app/customer/appointment/${appointmentId}`;
+  }
 
   return sendSMS({
     to: phoneNumber,
