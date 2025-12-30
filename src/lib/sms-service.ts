@@ -37,6 +37,10 @@ export const sendSMS = async (options: SendSMSOptions): Promise<SMSResponse> => 
   try {
     // Prepare phone number - ensure it's in the right format
     let phoneNumber = options.to;
+    
+    // Remove all spaces and dashes from phone number
+    phoneNumber = phoneNumber.replace(/[\s\-]/g, '');
+    
     if (!phoneNumber.startsWith('+')) {
       // Add +1 for US numbers if no country code provided
       if (phoneNumber.startsWith('1')) {

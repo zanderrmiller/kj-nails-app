@@ -79,6 +79,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
     }
 
+    console.log('=== BOOKING REQUEST DEBUG ===');
+    console.log('Body received:', JSON.stringify(body, null, 2));
+    console.log('Customer phone:', body.customerPhone);
+    console.log('Customer name:', body.customerName);
+
     // Validate required fields (phone can be empty string for admin-created bookings)
     if (!body.date || !body.time || !body.baseService || !body.customerName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -131,6 +136,10 @@ export async function POST(request: NextRequest) {
     console.log('Booking created:', booking);
 
     // Send SMS notification to customer
+    console.log('=== SMS SENDING DEBUG ===');
+    console.log('booking.customer_phone:', booking.customer_phone);
+    console.log('booking.customer_phone truthy?:', !!booking.customer_phone);
+    
     if (booking.customer_phone) {
       console.log('Attempting to send SMS to:', booking.customer_phone);
       try {
@@ -153,7 +162,7 @@ export async function POST(request: NextRequest) {
         // Don't fail the booking if SMS fails
       }
     } else {
-      console.log('No customer phone number provided, skipping SMS');
+      console.log('⚠️ No customer phone number provided, skipping SMS');
     }
 
     // Send confirmation SMS to technician (Kinsey)
