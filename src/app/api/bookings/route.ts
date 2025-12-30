@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendAppointmentBookedSMS, sendTechnicianConfirmationSMS } from '@/lib/sms-service';
+import { performFraudChecks } from '@/lib/fraud-protection';
 
 const AVAILABLE_TIMES = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -86,7 +87,15 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields (phone can be empty string for admin-created bookings)
     if (!body.date || !body.time || !body.baseService || !body.customerName) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+     
+
+    // ✅ FRAUD PROTECTION: Run all backend security checks
+    // These are completely transparent to legitimate users
+    const fraudCheck = performFraudChecks(request, body.customerName, body.customerPhone);
+    if (!fraudCheck.allowed) {
+      console.warn('❌ Booking rejected by fraud protection:', fraudCheck.error);
+      return NextResponse.json({ error: fraudCheck.error }, { status: 429 });
+    } return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const supabase = await getSupabase();
