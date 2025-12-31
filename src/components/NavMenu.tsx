@@ -22,12 +22,6 @@ export default function NavMenu() {
         >
           Gallery
         </Link>
-        <Link
-          href="/privacy"
-          className="text-white font-bold hover:text-gray-400 transition"
-        >
-          Privacy
-        </Link>
       </div>
 
       {/* Mobile Hamburger Button */}
@@ -71,15 +65,8 @@ export default function NavMenu() {
               Gallery
             </Link>
             <Link
-              href="/privacy"
-              className="text-white font-bold text-lg py-4 px-4 hover:text-gray-400 transition"
+              href="/privacy"hover:text-gray-400 transition"
               onClick={() => setIsOpen(false)}
             >
-              Privacy
-            </Link>
-          </div>
-        </>
-      )}
-    </>
-  );
+              Galler
 }
