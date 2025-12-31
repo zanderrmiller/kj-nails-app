@@ -59,14 +59,14 @@ export default function NavMenu() {
             </Link>
             <Link
               href="/art"
-              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-gray-400 transition"
+              className="text-white font-bold text-lg py-4 px-4 hover:text-gray-400 transition"
               onClick={() => setIsOpen(false)}
             >
               Gallery
             </Link>
-            <Link
-              href="/privacy"hover:text-gray-400 transition"
-              onClick={() => setIsOpen(false)}
-            >
-              Galler
+          </div>
+        </>
+      )}
+    </>
+  );
 }
