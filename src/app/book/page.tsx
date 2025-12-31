@@ -844,7 +844,7 @@ export default function BookPage() {
                     className="mt-1 w-5 h-5 accent-gray-400 border-gray-600 rounded focus:ring-gray-400 cursor-pointer"
                   />
                   <label htmlFor="smsConsent" className="text-sm text-gray-300 cursor-pointer">
-                    I consent to receive text message updates about my appointment, including confirmation, reminders, and any changes from KJ Nails. *
+                    I agree to receive text messages from KJNails in regards to appointment scheduling, confirmation, and feedback. *
                   </label>
                 </div>
 
