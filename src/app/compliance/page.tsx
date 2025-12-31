@@ -1,22 +1,14 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 export default function SMSConsentPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-black border-b border-gray-900 flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
-        <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
-          <Image
-            src="/images/clear logo.png"
-            alt="KJ Nails Logo"
-            width={200}
-            height={200}
-            style={{display: 'block', height: '64px', width: 'auto', margin: 0, padding: 0}}
-            priority
-          />
+      <nav className="sticky top-0 z-50 bg-black border-b border-gray-900 flex justify-between items-center px-6" style={{height: '80px'}}>
+        <Link href="/" className="text-white font-bold text-xl hover:text-gray-400 transition">
+          KJ Nails
         </Link>
       </nav>
 
@@ -42,6 +34,18 @@ export default function SMSConsentPage() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-950 border-t border-slate-800 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
+          <p>&copy; 2025 KJ Nails. All rights reserved.</p>
+          <div className="mt-2 space-x-4">
+            <Link href="/privacy" className="text-gray-400 hover:text-gray-200 transition">
+              Privacy Policy
+            </Link>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
