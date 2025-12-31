@@ -8,9 +8,32 @@ export default function NavMenu() {
 
   return (
     <>
+      {/* Desktop Navigation Menu */}
+      <div className="hidden md:flex gap-8 items-center">
+        <Link
+          href="/book"
+          className="text-white font-bold hover:text-gray-400 transition"
+        >
+          Book Appointment
+        </Link>
+        <Link
+          href="/art"
+          className="text-white font-bold hover:text-gray-400 transition"
+        >
+          Gallery
+        </Link>
+        <Link
+          href="/privacy"
+          className="text-white font-bold hover:text-gray-400 transition"
+        >
+          Privacy
+        </Link>
+      </div>
+
+      {/* Mobile Hamburger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex flex-col gap-1.5 justify-center items-center p-2"
+        className="md:hidden flex flex-col gap-1.5 justify-center items-center p-2"
         style={{ width: '50px', height: '50px' }}
       >
         <div style={{ width: '28px', height: '3px', backgroundColor: 'white' }}></div>
@@ -28,75 +51,34 @@ export default function NavMenu() {
           >
             <Link
               href="/"
-              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition"
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-gray-400 transition"
               onClick={() => setIsOpen(false)}
             >
               Home
             </Link>
             <Link
               href="/book"
-              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition"
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-gray-400 transition"
               onClick={() => setIsOpen(false)}
             >
               Book Appointment
             </Link>
             <Link
               href="/art"
-              className="text-white font-bold text-lg py-4 px-4 hover:text-pink-600 transition"
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-gray-400 transition"
               onClick={() => setIsOpen(false)}
             >
               Gallery
             </Link>
+            <Link
+              href="/privacy"
+              className="text-white font-bold text-lg py-4 px-4 hover:text-gray-400 transition"
+              onClick={() => setIsOpen(false)}
+            >
+              Privacy
+            </Link>
           </div>
         </>
-      )}
-
-      {/* Desktop Sidebar Menu */}
-      {isOpen && (
-        <div 
-          className="hidden md:flex fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        >
-          {/* Sidebar */}
-          <div 
-            className="ml-auto w-72 bg-black shadow-lg flex flex-col z-50"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Top section aligned with navbar */}
-            <div className="flex justify-between items-center px-8 border-b border-gray-700" style={{ height: '80px' }}>
-              <Link
-                href="/"
-                className="text-white font-bold text-2xl hover:text-gray-400 transition"
-                onClick={() => setIsOpen(false)}
-              >
-                Home
-              </Link>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-2xl font-bold text-white hover:text-gray-400"
-              >
-                ✕
-              </button>
-            </div>
-            {/* Menu items */}
-            <div className="flex flex-col px-8 gap-6 pt-6">
-              <Link
-                href="/book"
-                className="text-white font-bold text-2xl hover:text-gray-400 transition py-4"
-                onClick={() => setIsOpen(false)}
-              >
-                Book Appointment
-              </Link>
-              <Link
-                href="/art"
-                className="text-white font-bold text-2xl hover:text-gray-400 transition py-4"
-                onClick={() => setIsOpen(false)}
-              >
-                Gallery
-              </Link>
-            </div>
-          </div>
-        </div>
       )}
     </>
   );

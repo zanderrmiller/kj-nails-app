@@ -158,8 +158,10 @@ export default function PrivacyPolicy() {
               <div className="mt-4 p-4 bg-gray-800 rounded-lg">
                 <p className="font-semibold text-gray-100">KJ Nails</p>
                 <p>Evans, CO</p>
-                <p className="text-sm mt-2 text-gray-400">
-                  For privacy inquiries, please use the contact form on our website or contact us through your appointment confirmation.
+                <p className="text-sm mt-2">
+                  <a href="mailto:Millerkam22@gmail.com" className="text-blue-400 hover:text-blue-300 transition">
+                    Millerkam22@gmail.com
+                  </a>
                 </p>
               </div>
             </section>
