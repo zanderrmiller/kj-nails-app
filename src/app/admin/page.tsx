@@ -1712,6 +1712,15 @@ export default function AdminPage() {
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-6 sm:py-12">
 
+        {/* Admin Title with Marble Background */}
+        <div className="mb-8 py-6 px-6 rounded-lg" style={{
+          backgroundImage: `url('/images/white-marble-texture.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}>
+          <h1 className="text-3xl sm:text-4xl font-bold text-black text-center">Admin Dashboard</h1>
+        </div>
+
         {saveMessage && (
           <div className="mb-6 p-4 bg-gray-800 border-2 border-gray-600 text-gray-300 rounded-lg text-center">
             {saveMessage}
@@ -3159,6 +3168,13 @@ export default function AdminPage() {
         )}
 
       </div>
+
+      {/* Footer */}
+      <footer className="bg-black border-t border-gray-900 py-8 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
+          <p>&copy; 2025 KJ Nails Admin Dashboard. All rights reserved.</p>
+        </div>
+      </footer>
     </main>
   );
 }

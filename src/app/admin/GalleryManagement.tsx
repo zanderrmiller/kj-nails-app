@@ -130,11 +130,23 @@ export default function GalleryManagement() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Art Gallery Management</h2>
+      {/* Gallery Title with Marble Background */}
+      <div className="py-6 px-6 rounded-lg" style={{
+        backgroundImage: `url('/images/white-marble-texture.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}>
+        <h2 className="text-2xl font-bold text-black text-center">Art Gallery Management</h2>
+      </div>
 
       {/* Upload Section */}
-      <div className="bg-gray-900 p-4 sm:p-6 rounded-lg border border-gray-700">
-        <h3 className="text-lg font-semibold mb-4 text-white">Upload New Images</h3>
+      <div className="p-4 sm:p-6 rounded-lg" style={{
+        backgroundImage: `url('/images/white-marble-texture.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundColor: '#f5f5f0'
+      }}>
+        <h3 className="text-lg font-semibold mb-4 text-black">Upload New Images</h3>
         <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
           <input
             ref={fileInputRef}
@@ -143,7 +155,7 @@ export default function GalleryManagement() {
             multiple
             onChange={handleUpload}
             disabled={uploading}
-            className="flex-1 p-2 border border-gray-700 rounded text-sm text-white bg-gray-800"
+            className="flex-1 p-2 border border-gray-400 rounded text-sm text-gray-900 bg-white"
           />
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -154,7 +166,7 @@ export default function GalleryManagement() {
           </button>
         </div>
         {message && (
-          <p className={`mt-2 text-sm ${message.includes('success') || message.includes('uploaded') ? 'text-gray-400' : 'text-gray-400'}`}>
+          <p className={`mt-2 text-sm ${message.includes('success') || message.includes('uploaded') ? 'text-gray-600' : 'text-gray-600'}`}>
             {message}
           </p>
         )}
