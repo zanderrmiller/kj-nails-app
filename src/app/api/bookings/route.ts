@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendAppointmentBookedSMS } from '@/lib/sms-service';
+import { sendAppointmentBookedSMS, sendAppointmentBookedToTechnicianSMS, sendAppointmentCancelledToTechnicianSMS } from '@/lib/sms-service';
 import { performFraudChecks } from '@/lib/fraud-protection';
 import { createShortCode } from '@/lib/short-codes';
 
@@ -180,7 +180,25 @@ export async function POST(request: NextRequest) {
       console.log('⚠️ No customer phone number provided, skipping SMS');
     }
 
-    // Note: Technician confirmation now handled via admin panel pending appointments tab
+    // Send SMS notification to Kinsey (technician)
+    const technicianPhone = process.env.TECHNICIAN_PHONE_NUMBER;
+    if (technicianPhone) {
+      console.log('Sending new appointment notification to technician');
+      try {
+        const technicianSmsResult = await sendAppointmentBookedToTechnicianSMS(
+          technicianPhone,
+          booking.customer_name,
+          booking.booking_date,
+          booking.booking_time,
+          body.baseService?.name || 'Nail Service',
+          body.totalDuration
+        );
+        console.log('Technician SMS result:', technicianSmsResult);
+      } catch (smsError) {
+        console.error('Failed to send technician booking SMS:', smsError);
+        // Don't fail the booking if SMS fails
+      }
+    }
 
     return NextResponse.json(
       {
@@ -388,6 +406,39 @@ export async function DELETE(request: NextRequest) {
         .delete()
         .eq('date', booking.booking_date)
         .in('time', blockedTimesToRemove);
+    }
+
+    // Send cancellation SMS to Kinsey (technician)
+    const technicianPhone = process.env.TECHNICIAN_PHONE_NUMBER;
+    if (technicianPhone) {
+      console.log('Sending cancellation notification to technician');
+      try {
+        // Get service name from booking
+        let serviceName = 'Nail Service';
+        if (booking.service_id) {
+          const services = [
+            { id: 'acrylic-short', name: 'Acrylic Sets - Short' },
+            { id: 'acrylic-long', name: 'Acrylic Sets - Long' },
+            { id: 'gel', name: 'Gel Manicure' },
+            { id: 'rebase', name: 'Rebase' },
+          ];
+          const service = services.find(s => s.id === booking.service_id);
+          if (service) serviceName = service.name;
+        }
+
+        const cancelSmsResult = await sendAppointmentCancelledToTechnicianSMS(
+          technicianPhone,
+          booking.customer_name,
+          booking.booking_date,
+          formattedTime,
+          serviceName,
+          booking.duration
+        );
+        console.log('Cancellation SMS result:', cancelSmsResult);
+      } catch (smsError) {
+        console.error('Failed to send cancellation SMS:', smsError);
+        // Don't fail the deletion if SMS fails
+      }
     }
 
     return NextResponse.json({

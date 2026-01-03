@@ -319,6 +319,29 @@ export const sendAppointmentRescheduledCustomerSMS = async (
 };
 
 /**
+ * Send new appointment booking notification to technician
+ */
+export const sendAppointmentBookedToTechnicianSMS = async (
+  phoneNumber: string,
+  customerName: string,
+  appointmentDate: string,
+  appointmentTime: string,
+  serviceName: string,
+  totalDuration: number
+): Promise<SMSResponse> => {
+  // Format date nicely (e.g., "Mon, Jan 6")
+  const dateObj = new Date(appointmentDate);
+  const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  
+  const message = `NEW APPOINTMENT:\n${customerName}\n${formattedDate} at ${appointmentTime}\n${totalDuration} mins - ${serviceName}`;
+
+  return sendSMS({
+    to: phoneNumber,
+    body: message,
+  });
+};
+
+/**
  * Send appointment cancellation notification to technician
  */
 export const sendAppointmentCancelledToTechnicianSMS = async (
@@ -326,9 +349,14 @@ export const sendAppointmentCancelledToTechnicianSMS = async (
   customerName: string,
   appointmentDate: string,
   appointmentTime: string,
-  serviceName: string
+  serviceName: string,
+  totalDuration: number
 ): Promise<SMSResponse> => {
-  const message = `CANCELLED: ${customerName}'s ${serviceName} appointment has been cancelled by customer.`;
+  // Format date nicely (e.g., "Mon, Jan 6")
+  const dateObj = new Date(appointmentDate);
+  const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  
+  const message = `Appointment Cancelation:\n${customerName}\n${formattedDate} at ${appointmentTime}\n${totalDuration} mins`;
 
   return sendSMS({
     to: phoneNumber,
