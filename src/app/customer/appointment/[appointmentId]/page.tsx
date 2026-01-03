@@ -447,7 +447,7 @@ export default function EditAppointmentPage() {
 
           if (!uploadResponse.ok) {
             console.error('Image upload failed:', uploadData.error);
-            throw new Error('Failed to upload images');
+            throw new Error(uploadData.error || 'Failed to upload images');
           } else {
             allImageUrls = [...allImageUrls, ...(uploadData.urls || [])];
           }

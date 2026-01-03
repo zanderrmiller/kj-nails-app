@@ -13,11 +13,11 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
-    const bookingId = formData.get('bookingId') as string;
+    const appointmentId = formData.get('appointmentId') as string || formData.get('bookingId') as string;
 
-    if (!files || files.length === 0 || !bookingId) {
+    if (!files || files.length === 0 || !appointmentId) {
       return NextResponse.json(
-        { error: 'Missing files or bookingId' },
+        { error: 'Missing files or appointmentId' },
         { status: 400 }
       );
     }
@@ -30,11 +30,11 @@ export async function POST(request: NextRequest) {
       const file = files[i];
       const timestamp = Date.now();
       const randomStr = Math.random().toString(36).substring(2, 8);
-      const fileName = `${bookingId}-${timestamp}-${randomStr}-${file.name}`;
+      const fileName = `${appointmentId}-${timestamp}-${randomStr}-${file.name}`;
 
       const { data, error } = await supabase.storage
         .from('nail-art-uploads')
-        .upload(`${bookingId}/${fileName}`, file, {
+        .upload(`${appointmentId}/${fileName}`, file, {
           contentType: file.type,
         });
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       // Get the public URL
       const { data: publicData } = supabase.storage
         .from('nail-art-uploads')
-        .getPublicUrl(`${bookingId}/${fileName}`);
+        .getPublicUrl(`${appointmentId}/${fileName}`);
 
       if (publicData?.publicUrl) {
         uploadedUrls.push(publicData.publicUrl);
