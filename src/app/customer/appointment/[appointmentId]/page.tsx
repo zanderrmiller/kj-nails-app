@@ -551,7 +551,7 @@ export default function EditAppointmentPage() {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-pink-300 border-r-pink-600"></div>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-400 border-r-gray-700"></div>
           <p className="mt-4 text-gray-400">Loading appointment...</p>
         </div>
       </main>
