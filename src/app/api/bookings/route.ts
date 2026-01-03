@@ -295,22 +295,44 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 });
     }
 
-    // Remove old blocked times
-    await supabase
-      .from('blocked_times')
-      .delete()
-      .eq('date', currentBooking.booking_date)
-      .in('time', getBlockedTimesForAppointment(currentBooking.booking_time, currentBooking.duration));
+    // Remove old blocked times (but only if we're moving to a different date/time)
+    // If editing to the same date/time, we need to be careful not to remove the slot we're keeping
+    if (newDate !== currentBooking.booking_date || newTime !== currentBooking.booking_time || newDuration !== currentBooking.duration) {
+      // Get old and new blocked time slots
+      const oldBlockedTimes = getBlockedTimesForAppointment(currentBooking.booking_time, currentBooking.duration);
+      const newBlockedTimes = getBlockedTimesForAppointment(newTime, newDuration);
+      
+      // Only delete old times if they're not needed for the new appointment
+      // This prevents unblocking a time slot that the appointment is moving back into
+      const timesToDelete = oldBlockedTimes.filter(
+        time => !(newDate === currentBooking.booking_date && newBlockedTimes.includes(time))
+      );
+      
+      if (timesToDelete.length > 0) {
+        await supabase
+          .from('blocked_times')
+          .delete()
+          .eq('date', currentBooking.booking_date)
+          .in('time', timesToDelete);
+      }
 
-    // Add new blocked times with updated duration
-    const newBlockedTimes = getBlockedTimesForAppointment(newTime, newDuration);
-    if (newBlockedTimes.length > 0) {
-      const blockedTimeRecords = newBlockedTimes.map((t) => ({
-        date: newDate,
-        time: t,
-      }));
+      // Add new blocked times (insert will skip duplicates on the same date/time)
+      if (newBlockedTimes.length > 0) {
+        const blockedTimeRecords = newBlockedTimes.map((t) => ({
+          date: newDate,
+          time: t,
+        }));
 
-      await supabase.from('blocked_times').insert(blockedTimeRecords as any);
+        // Use upsert to avoid conflicts when booking moves to a time it previously occupied
+        const { error: upsertError } = await supabase
+          .from('blocked_times')
+          .upsert(blockedTimeRecords as any, { onConflict: 'date,time' });
+        
+        if (upsertError) {
+          console.error('Error upserting blocked times:', upsertError);
+          // Don't fail the update if blocked times operation fails
+        }
+      }
     }
 
     return NextResponse.json({

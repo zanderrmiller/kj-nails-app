@@ -882,6 +882,16 @@ export default function AdminPage() {
     setEditHasRemoval(addons.includes('removal'));
     setEditHasNailArt(addons.includes('nail-art'));
     setEditHasDesign(addons.some((addon) => ['french', 'ombre'].includes(addon)));
+
+    // Refresh availability excluding this appointment so times are unblocked for editing
+    fetch(`/api/availability-60-days?t=${Date.now()}&excludeAppointmentId=${booking.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.dates) {
+          setAvailableTimeSlotsMap(data.dates);
+        }
+      })
+      .catch(err => console.error('Error refreshing availability for edit:', err));
   };
 
   const handleUploadNailArtImages = async (files: FileList) => {

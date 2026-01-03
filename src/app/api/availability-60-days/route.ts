@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 
 const AVAILABLE_TIMES = [
@@ -7,9 +7,13 @@ const AVAILABLE_TIMES = [
   '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = getSupabase();
+    
+    // Get excludeAppointmentId from query params (for editing existing appointments)
+    const { searchParams } = new URL(request.url);
+    const excludeAppointmentId = searchParams.get('excludeAppointmentId');
     
     // Helper function to format date as YYYY-MM-DD in Mountain Time
     const formatDateMountainTime = (date: Date): string => {
@@ -81,16 +85,21 @@ export async function GET() {
     // Fetch bookings for all dates
     const { data: bookingsData } = await supabase
       .from('bookings')
-      .select('booking_date, booking_time, duration')
+      .select('id, booking_date, booking_time, duration')
       .in('booking_date', allDates)
       .eq('status', 'pending');
 
-    const bookings = new Map<string, Array<{ time: string; duration: number }>>();
+    const bookings = new Map<string, Array<{ id: string; time: string; duration: number }>>();
     (bookingsData || []).forEach((b: any) => {
+      // Skip the appointment being edited
+      if (excludeAppointmentId && b.id === excludeAppointmentId) {
+        return;
+      }
       if (!bookings.has(b.booking_date)) {
         bookings.set(b.booking_date, []);
       }
       bookings.get(b.booking_date)!.push({
+        id: b.id,
         time: b.booking_time,
         duration: b.duration,
       });
