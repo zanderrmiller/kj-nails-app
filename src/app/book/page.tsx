@@ -632,15 +632,9 @@ export default function BookPage() {
                   key={svc.id}
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedBase === svc.id
-                      ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400 bg-gray-900'
+                      ? 'border-gray-500 bg-gray-950'
+                      : 'border-gray-700 hover:border-gray-500 bg-gray-950'
                   }`}
-                  style={{
-                    backgroundImage: `url('/images/white-marble-texture.png')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundBlendMode: 'overlay'
-                  }}
                 >
                   <input
                     type="radio"
@@ -674,15 +668,9 @@ export default function BookPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasRemoval
-                      ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400 bg-gray-900'
+                      ? 'border-gray-500 bg-gray-950'
+                      : 'border-gray-700 hover:border-gray-500 bg-gray-950'
                   }`}
-                  style={{
-                    backgroundImage: `url('/images/white-marble-texture.png')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundBlendMode: 'overlay'
-                  }}
                 >
                   <input
                     type="checkbox"
@@ -698,15 +686,9 @@ export default function BookPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasNailArt
-                      ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400 bg-gray-900'
+                      ? 'border-gray-500 bg-gray-950'
+                      : 'border-gray-700 hover:border-gray-500 bg-gray-950'
                   }`}
-                  style={{
-                    backgroundImage: `url('/images/white-marble-texture.png')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundBlendMode: 'overlay'
-                  }}
                 >
                   <input
                     type="checkbox"
@@ -727,15 +709,9 @@ export default function BookPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedDesign !== ''
-                      ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400 bg-gray-900'
+                      ? 'border-gray-500 bg-gray-950'
+                      : 'border-gray-700 hover:border-gray-500 bg-gray-950'
                   }`}
-                  style={{
-                    backgroundImage: `url('/images/white-marble-texture.png')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundBlendMode: 'overlay'
-                  }}
                 >
                   <input
                     type="checkbox"
@@ -910,7 +886,7 @@ export default function BookPage() {
                     id="smsConsent"
                     checked={smsConsent}
                     onChange={(e) => setSmsConsent(e.target.checked)}
-                    className="mt-1 w-5 h-5 accent-gray-400 border-gray-600 rounded focus:ring-gray-400 cursor-pointer"
+                    className="mt-1 w-5 h-5 accent-gray-800 border-gray-600 rounded focus:ring-gray-800 cursor-pointer"
                   />
                   <label htmlFor="smsConsent" className="text-sm text-gray-600 cursor-pointer font-medium">
                     I agree to receive text messages from KJNails in regards to appointment scheduling, confirmation, and feedback. *
