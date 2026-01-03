@@ -1476,8 +1476,8 @@ export default function AdminPage() {
         }
       }
 
-      // Delete the appointment
-      const response = await fetch(`/api/bookings?bookingId=${bookingToReject.id}`, {
+      // Delete the appointment (isRejection flag prevents SMS to Kinsey)
+      const response = await fetch(`/api/bookings?bookingId=${bookingToReject.id}&isRejection=true`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });

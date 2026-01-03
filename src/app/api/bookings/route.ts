@@ -327,6 +327,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const bookingId = searchParams.get('bookingId');
+    const isRejection = searchParams.get('isRejection') === 'true'; // Flag to skip Kinsey SMS for rejections
 
     if (!bookingId) {
       return NextResponse.json({ error: 'Missing booking ID' }, { status: 400 });
@@ -408,9 +409,9 @@ export async function DELETE(request: NextRequest) {
         .in('time', blockedTimesToRemove);
     }
 
-    // Send cancellation SMS to Kinsey (technician)
+    // Send cancellation SMS to Kinsey (technician) - but NOT for rejections
     const technicianPhone = process.env.TECHNICIAN_PHONE_NUMBER;
-    if (technicianPhone) {
+    if (technicianPhone && !isRejection) {
       console.log('Sending cancellation notification to technician');
       try {
         // Get service name from booking
