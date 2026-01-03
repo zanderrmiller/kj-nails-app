@@ -12,45 +12,67 @@ async function getSupabaseAdmin() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify the request has the correct authorization header (optional security)
+    // Verify the request is from Vercel's cron (Vercel uses a specific header)
+    // or from an authorized source with the CRON_SECRET
     const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const veracelCronHeader = request.headers.get('x-vercel-cron');
+    
+    // Allow if it's from Vercel's cron system OR has the correct secret
+    const isVercelCron = veracelCronHeader === 'true';
+    const hasValidSecret = authHeader === `Bearer ${process.env.CRON_SECRET}`;
+    
+    if (!isVercelCron && !hasValidSecret) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const supabaseAdmin = await getSupabaseAdmin();
 
-    // Calculate times for 24 hours from now
+    // Get current time
     const now = new Date();
-    const tomorrowStart = new Date(now.getTime() + 23 * 60 * 60 * 1000); // 23 hours from now
-    const tomorrowEnd = new Date(now.getTime() + 25 * 60 * 60 * 1000); // 25 hours from now
+    
+    // Find appointments scheduled for approximately 24 hours from now
+    // We check a 2-hour window (23-25 hours) to catch appointments even if cron timing varies
+    const reminderWindowStart = new Date(now.getTime() + 23 * 60 * 60 * 1000); // 23 hours
+    const reminderWindowEnd = new Date(now.getTime() + 25 * 60 * 60 * 1000); // 25 hours
+    
+    // Format dates for database comparison (YYYY-MM-DD)
+    const startDateStr = reminderWindowStart.toISOString().split('T')[0];
+    const endDateStr = reminderWindowEnd.toISOString().split('T')[0];
 
-    // Format dates for comparison (YYYY-MM-DD)
-    const tomorrowStartStr = tomorrowStart.toISOString().split('T')[0];
-    const tomorrowEndStr = tomorrowEnd.toISOString().split('T')[0];
+    console.log(`[${new Date().toISOString()}] Checking for appointments between 23-25 hours away`);
+    console.log(`  Start window: ${reminderWindowStart.toISOString()}`);
+    console.log(`  End window: ${reminderWindowEnd.toISOString()}`);
 
-    console.log(`Checking for appointments between ${tomorrowStart} and ${tomorrowEnd}`);
-
-    // Fetch confirmed appointments for tomorrow that haven't had reminders sent
+    // Fetch confirmed appointments that need reminders (not yet sent)
+    // Note: We check appointments across a 2-hour window because the exact time
+    // depends on when the appointment was scheduled, so checking a wider window
+    // ensures we catch all appointments ~24 hours away
     const { data: appointments, error: fetchError } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('status', 'confirmed')
       .eq('reminder_sent', false)
-      .gte('booking_date', tomorrowStartStr)
-      .lte('booking_date', tomorrowEndStr);
+      .gte('booking_date', startDateStr)
+      .lte('booking_date', endDateStr);
 
     if (fetchError) {
       console.error('Error fetching appointments:', fetchError);
       return NextResponse.json({ error: 'Failed to fetch appointments' }, { status: 500 });
     }
 
-    console.log(`Found ${appointments?.length || 0} appointments for reminders`);
+    // Filter to only appointments at allowed start times (9 AM, 12 PM, 3 PM, 6 PM)
+    const allowedStartTimes = ['09:00', '12:00', '15:00', '18:00'];
+    const filteredAppointments = (appointments || []).filter((apt) => {
+      const startHour = apt.booking_time?.substring(0, 5); // Extract HH:MM
+      return allowedStartTimes.includes(startHour);
+    });
 
-    if (!appointments || appointments.length === 0) {
+    console.log(`Found ${filteredAppointments.length} appointments for reminders (filtered for 9 AM, 12 PM, 3 PM, 6 PM start times)`);
+
+    if (filteredAppointments.length === 0) {
       return NextResponse.json({
         success: true,
-        message: 'No appointments found for reminders',
+        message: 'No appointments found for reminders at allowed start times',
         remindersSent: 0,
       });
     }
@@ -59,7 +81,7 @@ export async function POST(request: NextRequest) {
     const remindersToUpdate = [];
 
     // Send reminders for each appointment
-    for (const appointment of appointments) {
+    for (const appointment of filteredAppointments) {
       try {
         // Get short code for reschedule/cancel link
         let shortCode = '';
