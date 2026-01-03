@@ -652,11 +652,9 @@ export default function BookPage() {
           {/* Add-Ons Section (shown when base service selected) */}
           {selectedBase && (
             <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg border-2 border-gray-700" style={{
-              backgroundColor: 'rgba(30,30,30,0.9)',
               backgroundImage: `url('/images/white-marble-texture.png')`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundBlendMode: 'overlay'
+              backgroundPosition: 'center'
             }}>
               <h2 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">Add-Ons</h2>
 
