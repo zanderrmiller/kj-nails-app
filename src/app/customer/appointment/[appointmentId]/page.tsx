@@ -422,6 +422,39 @@ export default function EditAppointmentPage() {
     previousDurationRef.current = totalDuration;
   }, [totalDuration]);
 
+  const handleUpdateNotesOnly = async () => {
+    try {
+      setSubmitting(true);
+      setError(null);
+
+      const response = await fetch('/api/appointments/update-notes', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          appointmentId,
+          nailArtNotes: nailArtNotes,
+          nailArtImageUrls: nailArtImageUrls,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update notes');
+      }
+
+      // Show success modal and redirect after delay
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        router.push('/');
+      }, 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update notes');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -660,13 +693,13 @@ export default function EditAppointmentPage() {
                                 alt={`Previous ${idx + 1}`}
                                 className="w-full h-20 object-cover rounded border-2 border-gray-600"
                               />
-                              <span className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                              <span className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center cursor-pointer hover:bg-gray-500 transition"
                                 onClick={() => setNailArtImageUrls(nailArtImageUrls.filter((_, i) => i !== idx))}
                               >
                                 ✕
                               </span>
                             </div>
-                          ))}
+                          ))}}
                           {/* New images to upload */}
                           {nailArtImages.map((file, idx) => (
                             <div key={`file-${idx}`} className="relative group">
@@ -675,13 +708,13 @@ export default function EditAppointmentPage() {
                                 alt={`New ${idx + 1}`}
                                 className="w-full h-20 object-cover rounded border-2 border-pink-500"
                               />
-                              <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                              <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center cursor-pointer hover:bg-pink-500 transition"
                                 onClick={() => setNailArtImages(nailArtImages.filter((_, i) => i !== idx))}
                               >
                                 ✕
                               </span>
                             </div>
-                          ))}
+                          ))}}
                         </div>
                       )}
                     </label>
@@ -699,6 +732,16 @@ export default function EditAppointmentPage() {
                       />
                     </label>
                   </div>
+
+                  {/* Update Notes Button */}
+                  <button
+                    type="button"
+                    onClick={handleUpdateNotesOnly}
+                    disabled={submitting}
+                    className="w-full px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? 'Updating...' : 'Update Notes'}
+                  </button>
                 </div>
               )}
             </div>
