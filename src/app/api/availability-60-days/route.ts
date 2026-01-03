@@ -208,8 +208,11 @@ export async function GET(request: NextRequest) {
 
           const slotStart = new Date(dateObj);
           slotStart.setHours(slotHour, slotMinutes, 0);
+          const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000); // Each slot is 30 minutes
 
-          return slotStart >= bookingStart && slotStart < bookingEnd;
+          // Check if slot overlaps with booking (including buffer)
+          // Slots overlap if: slot starts before booking ends AND slot ends after booking starts
+          return slotStart < bookingEnd && slotEnd > bookingStart;
         });
 
         if (hasConflict) {
