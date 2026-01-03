@@ -618,13 +618,10 @@ export default function BookPage() {
         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6 sm:mb-8 text-center">Book Your Appointment</h1>
 
         <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden shadow-xl p-4 sm:p-8" style={{
-          backgroundColor: '#f5f5f0',
-          backgroundImage: `
-            linear-gradient(135deg, transparent 0%, rgba(100,100,100,0.05) 20%, transparent 30%, transparent 70%, rgba(80,80,80,0.05) 80%, transparent 90%),
-            linear-gradient(45deg, transparent 0%, rgba(120,120,100,0.03) 50%, transparent 100%),
-            radial-gradient(circle at 20% 80%, rgba(150,150,140,0.05) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(100,100,90,0.05) 0%, transparent 50%)
-          `
+          backgroundImage: `url('/images/white-marble-texture.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundColor: '#f5f5f0'
         }}>
           {/* Service Selection */}
           <div className="mb-4 sm:mb-6">

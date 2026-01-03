@@ -57,13 +57,10 @@ export default function Home() {
 
           {/* Services Table */}
           <div className="mb-8 rounded-xl overflow-hidden shadow-xl" style={{
-            backgroundColor: '#f5f5f0',
-            backgroundImage: `
-              linear-gradient(135deg, transparent 0%, rgba(100,100,100,0.05) 20%, transparent 30%, transparent 70%, rgba(80,80,80,0.05) 80%, transparent 90%),
-              linear-gradient(45deg, transparent 0%, rgba(120,120,100,0.03) 50%, transparent 100%),
-              radial-gradient(circle at 20% 80%, rgba(150,150,140,0.05) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(100,100,90,0.05) 0%, transparent 50%)
-            `
+            backgroundImage: `url('/images/white-marble-texture.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: '#f5f5f0'
           }}>
             <div className="p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Services</h2>
@@ -89,13 +86,10 @@ export default function Home() {
 
           {/* Add-ons Table */}
           <div className="mb-12 rounded-xl overflow-hidden shadow-xl" style={{
-            backgroundColor: '#f5f5f0',
-            backgroundImage: `
-              linear-gradient(135deg, transparent 0%, rgba(100,100,100,0.05) 20%, transparent 30%, transparent 70%, rgba(80,80,80,0.05) 80%, transparent 90%),
-              linear-gradient(45deg, transparent 0%, rgba(120,120,100,0.03) 50%, transparent 100%),
-              radial-gradient(circle at 20% 80%, rgba(150,150,140,0.05) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(100,100,90,0.05) 0%, transparent 50%)
-            `
+            backgroundImage: `url('/images/white-marble-texture.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: '#f5f5f0'
           }}>
             <div className="p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Add Ons</h2>
@@ -120,13 +114,10 @@ export default function Home() {
 
           {/* About Me Section */}
           <div className="rounded-xl overflow-hidden shadow-xl" style={{
-            backgroundColor: '#f5f5f0',
-            backgroundImage: `
-              linear-gradient(135deg, transparent 0%, rgba(100,100,100,0.05) 20%, transparent 30%, transparent 70%, rgba(80,80,80,0.05) 80%, transparent 90%),
-              linear-gradient(45deg, transparent 0%, rgba(120,120,100,0.03) 50%, transparent 100%),
-              radial-gradient(circle at 20% 80%, rgba(150,150,140,0.05) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(100,100,90,0.05) 0%, transparent 50%)
-            `
+            backgroundImage: `url('/images/white-marble-texture.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: '#f5f5f0'
           }}>
             <div className="p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">About Me</h2>
