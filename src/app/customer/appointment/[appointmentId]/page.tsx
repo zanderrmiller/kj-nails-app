@@ -111,9 +111,10 @@ function hasEnoughConsecutiveSlots(
   const workingSlots = timeSlotsForDate.map(slot => {
     const slotTimeInMinutes = timeToMinutes(slot.time);
     // If this slot is within the current appointment's time window (including buffer), mark it as available (it will be freed)
+    // Use <= for the end time to ensure boundary slots are included
     if (currentAppointmentStartMinutes !== -1 && currentAppointmentEndMinutes !== -1) {
       if (slotTimeInMinutes >= currentAppointmentStartMinutes && 
-          slotTimeInMinutes < currentAppointmentEndMinutes) {
+          slotTimeInMinutes <= currentAppointmentEndMinutes) {
         return { ...slot, available: true };
       }
     }
