@@ -25,10 +25,17 @@ export default function Home() {
       </nav>
 
       {/* Hero Section - Services Overview */}
-      <section className="bg-black py-8">
+      <section className="py-8 relative" style={{
+        backgroundImage: `linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 50%, #1e1e1e 100%), 
+                          url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><defs><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/></filter></defs><rect width="100" height="100" fill="%23f5f5f0" filter="url(%23noise)" opacity="0.03"/></svg>')`,
+        backgroundBlendMode: 'overlay'
+      }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Welcome Section */}
-          <div className="mb-6">
+          <div className="mb-6 p-6 rounded-lg" style={{
+            backgroundImage: `linear-gradient(135deg, rgba(245,245,240,0.05) 0%, rgba(200,200,190,0.03) 100%)`,
+            border: '1px solid rgba(200,200,190,0.15)'
+          }}>
             <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 text-center">Welcome to KJ Nails!</h1>
           </div>
 
@@ -49,7 +56,10 @@ export default function Home() {
           </div>
 
           {/* Services Table */}
-          <div className="mb-8">
+          <div className="mb-8 p-6 rounded-lg" style={{
+            backgroundImage: `linear-gradient(135deg, rgba(245,245,240,0.08) 0%, rgba(200,200,190,0.04) 100%)`,
+            border: '1px solid rgba(200,200,190,0.2)'
+          }}>
             <h2 className="text-2xl font-bold text-white mb-8 text-center">Services</h2>
             <div className="space-y-3">
               {[
@@ -60,7 +70,8 @@ export default function Home() {
               ].map((service) => (
                 <div
                   key={service.name}
-                  className="flex justify-between items-center border-b border-gray-700 pb-3"
+                  className="flex justify-between items-center border-b pb-3"
+                  style={{ borderColor: 'rgba(200,200,190,0.2)' }}
                 >
                   <span className="text-white text-lg">{service.name}</span>
                   <span className="text-white font-bold text-lg">{service.price}</span>
@@ -70,7 +81,10 @@ export default function Home() {
           </div>
 
           {/* Add-ons Table */}
-          <div className="mb-12">
+          <div className="mb-12 p-6 rounded-lg" style={{
+            backgroundImage: `linear-gradient(135deg, rgba(245,245,240,0.08) 0%, rgba(200,200,190,0.04) 100%)`,
+            border: '1px solid rgba(200,200,190,0.2)'
+          }}>
             <h2 className="text-2xl font-bold text-white mb-8 text-center">Add Ons</h2>
             <div className="space-y-3">
               {[
@@ -80,7 +94,8 @@ export default function Home() {
               ].map((addon) => (
                 <div
                   key={addon.name}
-                  className="flex justify-between items-center border-b border-gray-700 pb-3"
+                  className="flex justify-between items-center border-b pb-3"
+                  style={{ borderColor: 'rgba(200,200,190,0.2)' }}
                 >
                   <span className="text-white text-lg">{addon.name}</span>
                   <span className="text-white font-bold text-lg">{addon.price}</span>
@@ -90,7 +105,10 @@ export default function Home() {
           </div>
 
           {/* About Me Section */}
-          <div>
+          <div className="p-6 rounded-lg" style={{
+            backgroundImage: `linear-gradient(135deg, rgba(245,245,240,0.08) 0%, rgba(200,200,190,0.04) 100%)`,
+            border: '1px solid rgba(200,200,190,0.2)'
+          }}>
             <h2 className="text-2xl font-bold text-white mb-4 text-center">About Me</h2>
             <p className="text-white text-lg leading-relaxed text-center">
               I'm Kinsey, a passionate nail artist offering professional nail services from the comfort of my home studio in Evans, CO.<br /><br />

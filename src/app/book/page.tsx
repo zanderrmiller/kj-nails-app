@@ -617,7 +617,11 @@ export default function BookPage() {
       <div className="max-w-4xl mx-auto px-2 sm:px-4 lg:px-8 py-6 sm:py-12">
         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6 sm:mb-8 text-center">Book Your Appointment</h1>
 
-        <form onSubmit={handleSubmit} className="bg-black rounded-lg shadow-lg p-4 sm:p-8 border border-gray-700">
+        <form onSubmit={handleSubmit} className="rounded-lg shadow-lg p-4 sm:p-8 border" style={{
+          backgroundImage: `linear-gradient(135deg, rgba(245,245,240,0.08) 0%, rgba(200,200,190,0.04) 100%)`,
+          borderColor: 'rgba(200,200,190,0.2)',
+          backgroundColor: '#1a1a1a'
+        }}>
           {/* Service Selection */}
           <div className="mb-4 sm:mb-6">
             <h2 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">Select Your Nail Service</h2>
