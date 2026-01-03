@@ -1458,8 +1458,21 @@ export default function AdminPage() {
     try {
       // Send rejection SMS to customer if checkbox is checked
       if (rejectionModal.sendMessage) {
-        const { sendAppointmentRejectedSMS } = await import('@/lib/sms-service');
-        await sendAppointmentRejectedSMS(bookingToReject.customer_phone, bookingToReject.customer_name);
+        try {
+          await fetch('/api/appointments/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              bookingId: bookingToReject.id,
+              customerPhone: bookingToReject.customer_phone,
+              customerName: bookingToReject.customer_name,
+              sendMessage: true,
+            }),
+          });
+        } catch (smsError) {
+          console.error('Failed to send rejection SMS:', smsError);
+          // Don't fail the rejection if SMS fails
+        }
       }
 
       // Delete the appointment
