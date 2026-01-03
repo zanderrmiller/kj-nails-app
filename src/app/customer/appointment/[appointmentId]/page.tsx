@@ -2,27 +2,36 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
+import NavMenu from '@/components/NavMenu';
 
-interface Appointment {
-  id: string;
-  customer_name: string;
-  customer_phone: string;
-  booking_date: string;
-  booking_time: string;
-  service_id: string;
-  duration: number;
-  total_price: number;
-  status: string;
-  addons: string[];
-  nail_art_notes: string | null;
-}
+// Service options matching booking page
+const BASE_SERVICES = [
+  { id: 'acrylic-short', name: 'Acrylic Sets - Short', duration: 120, basePrice: 50, type: 'acrylic' },
+  { id: 'acrylic-long', name: 'Acrylic Sets - Long', duration: 150, basePrice: 60, type: 'acrylic' },
+  { id: 'gel', name: 'Gel Manicure', duration: 60, basePrice: 35, type: 'gel' },
+  { id: 'rebase', name: 'Rebase', duration: 60, basePrice: 40, type: 'rebase' },
+];
 
-const BASE_SERVICES: Record<string, { name: string; duration: number; basePrice: number }> = {
-  acrylicfill: { name: 'Acrylic Fill', duration: 45, basePrice: 35 },
-  acrylicset: { name: 'Acrylic Set', duration: 60, basePrice: 45 },
-  polygel: { name: 'PolyGel', duration: 45, basePrice: 40 },
-  manicure: { name: 'Manicure', duration: 30, basePrice: 25 },
+const REMOVAL_SERVICE = {
+  id: 'removal',
+  name: 'Removal',
+  duration: 45,
+  price: 20,
 };
+
+const NAIL_ART = {
+  id: 'nail-art',
+  name: 'Nail Art',
+  price: 'Variable',
+  durationAdd: 60,
+};
+
+const NAIL_DESIGN = [
+  { id: 'ombre', name: 'Ombre', price: 15, durationAdd: 60 },
+  { id: 'french', name: 'French', price: 15, durationAdd: 60 },
+];
 
 const AVAILABLE_TIMES = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -36,7 +45,6 @@ const DISPLAY_TIMES = [
   '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM',
 ];
 
-// Helper function to check if there are enough consecutive available slots
 function hasEnoughConsecutiveSlots(
   startTime: string,
   durationMinutes: number,
@@ -59,18 +67,15 @@ function hasEnoughConsecutiveSlots(
   return true;
 }
 
-// Calendar component
-function CalendarComponent({ 
+function Calendar({ 
   selectedDate, 
   onDateSelect, 
   availableTimeSlotsMap,
-  serviceType,
   duration
 }: { 
   selectedDate: string; 
   onDateSelect: (date: string) => void;
   availableTimeSlotsMap: { [date: string]: Array<{ time: string; available: boolean; reason: string | null }> };
-  serviceType: string;
   duration: number;
 }) {
   const [displayMonth, setDisplayMonth] = useState(0);
@@ -184,75 +189,118 @@ function CalendarComponent({
   );
 }
 
-export default function CustomerAppointmentPage() {
+export default function EditAppointmentPage() {
   const params = useParams();
   const router = useRouter();
   const appointmentId = params.appointmentId as string;
 
-  const [appointment, setAppointment] = useState<Appointment | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [appointment, setAppointment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [availableTimeSlotsMap, setAvailableTimeSlotsMap] = useState<{ [date: string]: Array<{ time: string; available: boolean; reason: string | null }> }>({});
-  const [timeSlotsLoading, setTimeSlotsLoading] = useState(false);
 
-  // Edit form state
-  const [editDate, setEditDate] = useState<string>('');
-  const [editTime, setEditTime] = useState<string>('');
-  const [editNailArtNotes, setEditNailArtNotes] = useState<string>('');
-
+  // Form state
+  const [selectedBase, setSelectedBase] = useState('');
+  const [hasRemoval, setHasRemoval] = useState(false);
+  const [hasNailArt, setHasNailArt] = useState(false);
+  const [selectedDesign, setSelectedDesign] = useState('');
+  const [nailArtPrice, setNailArtPrice] = useState(0);
+  const [nailArtNotes, setNailArtNotes] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
 
-  // Fetch availability on mount
+  // Fetch appointment and availability
   useEffect(() => {
-    const fetchAvailability = async () => {
-      try {
-        const response = await fetch(`/api/availability-60-days?t=${Date.now()}`);
-        const data = await response.json();
-        if (data.success && data.dates) {
-          setAvailableTimeSlotsMap(data.dates);
-        }
-      } catch (error) {
-        console.error('Failed to fetch availability:', error);
-      }
-    };
-    fetchAvailability();
-  }, []);
-
-  useEffect(() => {
-    const fetchAppointment = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/appointments/confirm?appointmentId=${appointmentId}`);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch appointment');
+        
+        // Fetch appointment
+        const appointmentResponse = await fetch(`/api/appointments/confirm?appointmentId=${appointmentId}`);
+        if (!appointmentResponse.ok) throw new Error('Failed to fetch appointment');
+        const appointmentData = await appointmentResponse.json();
+        setAppointment(appointmentData.appointment);
+        
+        // Pre-select the current service based on appointment service_id
+        const currentServiceId = appointmentData.appointment.service_id;
+        let selectedServiceId = BASE_SERVICES[0].id;
+        
+        // Try to match the service
+        if (currentServiceId.includes('acrylic')) {
+          selectedServiceId = currentServiceId.includes('long') ? 'acrylic-long' : 'acrylic-short';
+        } else if (currentServiceId.includes('gel')) {
+          selectedServiceId = 'gel';
+        } else if (currentServiceId.includes('rebase')) {
+          selectedServiceId = 'rebase';
+        }
+        
+        setSelectedBase(selectedServiceId);
+        setSelectedDate(appointmentData.appointment.booking_date);
+        setSelectedTime(appointmentData.appointment.booking_time);
+        if (appointmentData.appointment.nail_art_notes) {
+          setNailArtNotes(appointmentData.appointment.nail_art_notes);
         }
 
-        const data = await response.json();
-        setAppointment(data.appointment);
-        setEditDate(data.appointment.booking_date);
-        setEditTime(data.appointment.booking_time);
-        setEditNailArtNotes(data.appointment.nail_art_notes || '');
+        // Fetch availability
+        const availabilityResponse = await fetch(`/api/availability-60-days?t=${Date.now()}`);
+        const availabilityData = await availabilityResponse.json();
+        if (availabilityData.success && availabilityData.dates) {
+          setAvailableTimeSlotsMap(availabilityData.dates);
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load appointment');
+        setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setLoading(false);
       }
     };
 
     if (appointmentId) {
-      fetchAppointment();
+      fetchData();
     }
   }, [appointmentId]);
+
+  const baseService = BASE_SERVICES.find((s) => s.id === selectedBase);
+
+  let totalDuration = baseService?.duration || 0;
+  let totalPrice = baseService?.basePrice || 0;
+
+  if (hasRemoval) {
+    totalDuration += REMOVAL_SERVICE.duration;
+    totalPrice += REMOVAL_SERVICE.price;
+  }
+
+  if (baseService) {
+    if (hasNailArt) {
+      totalPrice += nailArtPrice;
+      if (baseService.type === 'acrylic' || baseService.type === 'rebase') {
+        totalDuration += NAIL_ART.durationAdd;
+      }
+    }
+
+    if (selectedDesign) {
+      const design = NAIL_DESIGN.find((d) => d.id === selectedDesign);
+      if (design) {
+        totalPrice += design.price;
+        if (baseService.type === 'acrylic' || baseService.type === 'rebase') {
+          if (!hasNailArt) {
+            totalDuration += design.durationAdd;
+          }
+        }
+      }
+    }
+  }
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setSubmitting(true);
       setError(null);
+
+      if (!selectedDate || !selectedTime) {
+        throw new Error('Please select a date and time');
+      }
 
       const response = await fetch('/api/appointments/edit', {
         method: 'PUT',
@@ -261,9 +309,9 @@ export default function CustomerAppointmentPage() {
         },
         body: JSON.stringify({
           appointmentId,
-          newDate: editDate,
-          newTime: editTime,
-          nailArtNotes: editNailArtNotes,
+          newDate: selectedDate,
+          newTime: selectedTime,
+          nailArtNotes: nailArtNotes,
         }),
       });
 
@@ -271,13 +319,10 @@ export default function CustomerAppointmentPage() {
         throw new Error('Failed to update appointment');
       }
 
-      setSuccess(true);
-      setIsEditing(false);
-
-      // Refresh appointment data
+      // Show success and redirect
       setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+        router.push('/');
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update appointment');
     } finally {
@@ -298,13 +343,9 @@ export default function CustomerAppointmentPage() {
         throw new Error('Failed to cancel appointment');
       }
 
-      setSuccess(true);
-      setShowCancelModal(false);
-
-      // Redirect after success
       setTimeout(() => {
         router.push('/');
-      }, 2000);
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cancel appointment');
     } finally {
@@ -314,331 +355,302 @@ export default function CustomerAppointmentPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow p-8">
-          <div className="text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-pink-300 border-r-pink-600"></div>
-            <p className="mt-4 text-gray-600">Loading your appointment...</p>
-          </div>
+      <main className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-pink-300 border-r-pink-600"></div>
+          <p className="mt-4 text-gray-400">Loading appointment...</p>
         </div>
-      </div>
-    );
-  }
-
-  if (error && !appointment) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow p-8 max-w-md w-full">
-          <div className="bg-red-50 border border-red-200 rounded p-4 text-red-700">
-            <h2 className="font-bold mb-2">Error Loading Appointment</h2>
-            <p>{error}</p>
-          </div>
-        </div>
-      </div>
+      </main>
     );
   }
 
   if (!appointment) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow p-8 max-w-md w-full">
-          <p className="text-center text-gray-600">Appointment not found</p>
+      <main className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-400">Appointment not found</p>
         </div>
-      </div>
+      </main>
     );
   }
 
-  const serviceName = BASE_SERVICES[appointment.service_id]?.name || appointment.service_id;
-  const formattedDate = new Date(`${appointment.booking_date}T00:00:00`).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
-
-  const [hours, minutes] = appointment.booking_time.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const formattedHour = hour % 12 || 12;
-  const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
-
-  const statusColor = appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Your Appointment</h1>
-          <div className={`inline-block px-4 py-2 rounded-full font-semibold ${statusColor}`}>
-            {appointment.status === 'confirmed' ? '✓ Confirmed' : '⏳ Pending Confirmation'}
+    <main className="min-h-screen bg-black text-white">
+      {/* Header */}
+      <header className="bg-black shadow" style={{padding: 0, margin: 0}}>
+        <div className="flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
+          <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
+            <Image
+              src="/images/clear logo.png"
+              alt="KJ Nails Logo"
+              width={200}
+              height={200}
+              style={{display: 'block', height: '64px', width: 'auto', margin: 0, padding: 0}}
+              priority
+            />
+          </Link>
+          <div style={{margin: 0, height: '100%', marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '16px'}}>
+            <NavMenu />
           </div>
         </div>
+      </header>
 
-        {/* Success Message */}
-        {success && (
-          <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded">
-            <p className="text-green-700 font-bold">✅ Changes saved! Redirecting...</p>
-          </div>
-        )}
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 lg:px-8 py-6 sm:py-12">
+        {/* Cancel Button at Top */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowCancelModal(true)}
+            disabled={submitting}
+            className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancel Appointment
+          </button>
+        </div>
 
-        {/* Error Message */}
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6 sm:mb-8 text-center">Edit Your Appointment</h1>
+
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
-            <p className="text-red-700">{error}</p>
+          <div className="bg-red-900 border-l-4 border-red-600 p-4 mb-6 rounded text-red-100">
+            <p>{error}</p>
           </div>
         )}
 
-        {/* Appointment Details Card */}
-        {!isEditing ? (
-          <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-            <h2 className="text-2xl font-bold text-pink-600 mb-6">Appointment Details</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              {/* Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                <p className="text-lg text-gray-900">{formattedDate}</p>
-              </div>
-
-              {/* Time */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-                <p className="text-lg text-gray-900">{formattedTime}</p>
-              </div>
-
-              {/* Service */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
-                <p className="text-lg text-gray-900">{serviceName}</p>
-              </div>
-
-              {/* Duration */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-                <p className="text-lg text-gray-900">{appointment.duration} minutes</p>
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <p className="text-lg text-gray-900">{appointment.customer_phone}</p>
-              </div>
-
-              {/* Price */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {appointment.status === 'confirmed' ? 'Total Price' : 'Estimated Price'}
+        <form onSubmit={handleEdit} className="bg-black rounded-lg shadow-lg p-4 sm:p-8 border border-gray-700">
+          {/* Service Selection */}
+          <div className="mb-4 sm:mb-6">
+            <h2 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">Select Your Nail Service</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2">
+              {BASE_SERVICES.map((svc) => (
+                <label
+                  key={svc.id}
+                  className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
+                    selectedBase === svc.id
+                      ? 'border-gray-400 bg-gray-800'
+                      : 'border-gray-600 hover:border-gray-400'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="service"
+                    value={svc.id}
+                    checked={selectedBase === svc.id}
+                    onChange={(e) => setSelectedBase(e.target.value)}
+                    className="hidden"
+                  />
+                  <div className="font-semibold text-white text-sm">{svc.name}</div>
+                  <div className="text-xs text-gray-400">${svc.basePrice} • {svc.duration}m</div>
                 </label>
-                <p className="text-lg font-bold text-pink-600">${appointment.total_price.toFixed(2)}</p>
-              </div>
+              ))}
             </div>
-
-            {/* Add-ons */}
-            {appointment.addons && appointment.addons.length > 0 && (
-              <div className="mb-8 pb-8 border-b border-gray-200">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Add-ons</label>
-                <div className="space-y-2">
-                  {appointment.addons.map((addonId) => (
-                    <p key={addonId} className="text-gray-900">
-                      • {addonId.charAt(0).toUpperCase() + addonId.slice(1)}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Nail Art Notes */}
-            {appointment.nail_art_notes && (
-              <div className="mb-8 pb-8 border-b border-gray-200">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nail Art Notes</label>
-                <p className="text-gray-900 whitespace-pre-wrap">{appointment.nail_art_notes}</p>
-              </div>
-            )}
-
-            {/* Info Message */}
-            {appointment.status === 'pending' && (
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8 rounded">
-                <p className="text-blue-700">
-                  <strong>Note:</strong> This appointment is pending confirmation from Kinsey. You can still edit or cancel it.
-                </p>
-              </div>
-            )}
-
-            {appointment.status === 'confirmed' && (
-              <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-8 rounded">
-                <p className="text-green-700">
-                  <strong>Confirmed!</strong> Your appointment has been confirmed. If you need to reschedule, you can still edit it below.
-                </p>
-              </div>
-            )}
           </div>
-        ) : null}
 
-        {/* Edit Form - Simplified Booking */}
-        {isEditing && (
-          <form onSubmit={handleEdit} className="bg-white rounded-lg shadow-lg p-8 mb-6">
-            <h2 className="text-2xl font-bold text-pink-600 mb-6">Reschedule Appointment</h2>
+          {/* Add-Ons Section */}
+          {selectedBase && (
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-950 rounded-lg border-2 border-gray-700">
+              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Add-Ons</h2>
 
-            <div className="space-y-6">
-              {/* Service (Pre-selected, read-only) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Service</label>
-                <div className="p-4 bg-gray-100 rounded-lg border border-gray-300">
-                  <p className="text-lg font-semibold text-gray-900">{serviceName}</p>
-                  <p className="text-sm text-gray-600 mt-1">Duration: {appointment.duration} minutes</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2 mb-4">
+                {/* Removal */}
+                <label
+                  className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
+                    hasRemoval
+                      ? 'border-gray-400 bg-gray-800'
+                      : 'border-gray-600 hover:border-gray-400'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={hasRemoval}
+                    onChange={(e) => setHasRemoval(e.target.checked)}
+                    className="hidden"
+                  />
+                  <div className="font-semibold text-white text-sm">Removal Service</div>
+                  <div className="text-xs text-gray-400">${REMOVAL_SERVICE.price} • {REMOVAL_SERVICE.duration}m</div>
+                </label>
+
+                {/* Nail Art */}
+                <label
+                  className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
+                    hasNailArt
+                      ? 'border-gray-400 bg-gray-800'
+                      : 'border-gray-600 hover:border-gray-400'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={hasNailArt}
+                    onChange={(e) => setHasNailArt(e.target.checked)}
+                    className="hidden"
+                  />
+                  <div className="font-semibold text-white text-sm">Nail Art</div>
+                  <div className="text-xs text-gray-400">$2-5 per Nail{(baseService?.type === 'acrylic' || baseService?.type === 'rebase') && ' • 60m'}</div>
+                </label>
+
+                {/* Design */}
+                <label
+                  className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
+                    selectedDesign !== ''
+                      ? 'border-gray-400 bg-gray-800'
+                      : 'border-gray-600 hover:border-gray-400'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedDesign !== ''}
+                    onChange={(e) => setSelectedDesign(e.target.checked ? NAIL_DESIGN[0].id : '')}
+                    className="hidden"
+                  />
+                  <div className="font-semibold text-white text-sm">Ombre or French</div>
+                  <div className="text-xs text-gray-400">${NAIL_DESIGN[0]?.price || 15}{(baseService?.type === 'acrylic' || baseService?.type === 'rebase') && ' • 60m'}</div>
+                </label>
+              </div>
+
+              {/* Nail Art Details */}
+              {hasNailArt && (
+                <div className="bg-gray-950 p-3 rounded-lg border-2 border-gray-700 space-y-3">
+                  <div>
+                    <label className="block">
+                      <span className="text-white font-semibold mb-2 block text-sm">Price per Nail</span>
+                      <input
+                        type="number"
+                        step="0.50"
+                        value={nailArtPrice}
+                        onChange={(e) => setNailArtPrice(parseFloat(e.target.value) || 0)}
+                        className="w-full p-2 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-white bg-gray-900 text-sm"
+                        placeholder="e.g., 3.50"
+                      />
+                    </label>
+                  </div>
+                  <div>
+                    <label className="block">
+                      <span className="text-white font-semibold mb-2 block text-sm">Design Notes (Optional)</span>
+                      <textarea
+                        value={nailArtNotes}
+                        onChange={(e) => setNailArtNotes(e.target.value)}
+                        rows={3}
+                        placeholder="Describe your nail art ideas..."
+                        className="w-full p-2 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-white bg-gray-900 text-sm"
+                      />
+                    </label>
+                  </div>
                 </div>
-              </div>
-
-              {/* Calendar - Date Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select New Date</label>
-                <CalendarComponent 
-                  selectedDate={editDate} 
-                  onDateSelect={setEditDate}
-                  availableTimeSlotsMap={availableTimeSlotsMap}
-                  serviceType={appointment.service_id}
-                  duration={appointment.duration}
-                />
-              </div>
-
-              {/* Time Slots */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select New Time</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {DISPLAY_TIMES.map((time) => {
-                    const timeSlotsForDate = availableTimeSlotsMap[editDate];
-                    const hasSlots = hasEnoughConsecutiveSlots(time, appointment.duration, timeSlotsForDate || []);
-                    const isSelected = editTime === time;
-
-                    return (
-                      <button
-                        key={time}
-                        type="button"
-                        onClick={() => hasSlots && setEditTime(time)}
-                        disabled={!hasSlots || submitting}
-                        className={`p-3 rounded-lg font-semibold text-sm transition ${
-                          isSelected
-                            ? 'bg-pink-500 text-white border-2 border-pink-600'
-                            : hasSlots
-                            ? 'bg-white text-gray-900 border-2 border-gray-300 hover:border-pink-500 hover:bg-pink-50 cursor-pointer'
-                            : 'bg-gray-100 text-gray-400 border-2 border-gray-200 cursor-not-allowed'
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Nail Art Notes */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nail Art Notes (Optional)</label>
-                <textarea
-                  value={editNailArtNotes}
-                  onChange={(e) => setEditNailArtNotes(e.target.value)}
-                  disabled={submitting}
-                  rows={4}
-                  placeholder="Any special requests or design ideas..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                />
-              </div>
-
-              {/* Info */}
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                <p className="text-blue-700 text-sm">
-                  <strong>Note:</strong> When you save changes, Kinsey will be notified and will need to re-confirm your appointment.
-                </p>
-              </div>
+              )}
             </div>
+          )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-4 justify-end mt-8">
+          {/* Calendar Section */}
+          <div className="mb-4 sm:mb-6">
+            <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Select New Date</h2>
+            <Calendar 
+              selectedDate={selectedDate} 
+              onDateSelect={setSelectedDate}
+              availableTimeSlotsMap={availableTimeSlotsMap}
+              duration={totalDuration}
+            />
+          </div>
+
+          {/* Time Selection */}
+          <div className="mb-4 sm:mb-6">
+            <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Select New Time</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+              {DISPLAY_TIMES.map((time) => {
+                const timeSlotsForDate = availableTimeSlotsMap[selectedDate];
+                const hasSlots = hasEnoughConsecutiveSlots(time, totalDuration, timeSlotsForDate || []);
+                const isSelected = selectedTime === time;
+
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    onClick={() => hasSlots && setSelectedTime(time)}
+                    disabled={!hasSlots}
+                    className={`p-2 rounded-lg font-semibold text-xs sm:text-sm transition ${
+                      isSelected
+                        ? 'bg-pink-600 text-white border-2 border-pink-500'
+                        : hasSlots
+                        ? 'bg-gray-800 text-white border-2 border-gray-700 hover:border-gray-500 hover:bg-gray-700 cursor-pointer'
+                        : 'bg-gray-900 text-gray-600 border-2 border-gray-900 cursor-not-allowed'
+                    }`}
+                  >
+                    {time}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Price Summary */}
+          <div className="mb-6 p-4 bg-gray-950 rounded-lg border-2 border-gray-700">
+            <div className="flex justify-between items-center text-white">
+              <span className="font-semibold">Estimated Total:</span>
+              <span className="text-xl font-bold text-pink-500">${totalPrice.toFixed(2)}</span>
+            </div>
+            <div className="text-xs text-gray-400 mt-2">Duration: {totalDuration} minutes</div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4 flex-col sm:flex-row">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              disabled={submitting}
+              className="flex-1 px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !selectedDate || !selectedTime}
+              className="flex-1 px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {submitting ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
+                  Saving...
+                </>
+              ) : (
+                'Confirm Changes'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 rounded-lg shadow-xl max-w-md w-full p-8 border-2 border-gray-700">
+            <h3 className="text-2xl font-bold text-red-500 mb-4">Cancel Appointment?</h3>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to cancel this appointment? This action cannot be undone, and Kinsey will be notified.
+            </p>
+            <div className="flex gap-4">
               <button
-                type="button"
-                onClick={() => setIsEditing(false)}
+                onClick={() => setShowCancelModal(false)}
                 disabled={submitting}
-                className="px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Cancel
+                Keep Appointment
               </button>
               <button
-                type="submit"
-                disabled={submitting || !editDate || !editTime}
-                className="px-8 py-3 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                onClick={handleCancel}
+                disabled={submitting}
+                className="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
-                    Saving...
+                    Cancelling...
                   </>
                 ) : (
-                  '💾 Save Changes'
+                  'Yes, Cancel'
                 )}
               </button>
             </div>
-          </form>
-        )}
-
-        {/* Action Buttons */}
-        {!isEditing && (
-          <div className="flex flex-col gap-3 mb-6">
-            <button
-              onClick={() => setIsEditing(true)}
-              className="w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition"
-            >
-              ✏️ Edit Appointment
-            </button>
-            <button
-              onClick={() => setShowCancelModal(true)}
-              className="w-full px-6 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition"
-            >
-              ✕ Cancel Appointment
-            </button>
-            <button
-              onClick={() => router.push('/')}
-              className="w-full px-6 py-3 bg-gray-400 text-white font-semibold rounded-lg hover:bg-gray-500 transition"
-            >
-              ← Back Home
-            </button>
           </div>
-        )}
-
-        {/* Cancel Confirmation Modal */}
-        {showCancelModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-8">
-              <h3 className="text-2xl font-bold text-red-600 mb-4">Cancel Appointment?</h3>
-              <p className="text-gray-700 mb-6">
-                Are you sure you want to cancel this appointment? This action cannot be undone, and Kinsey will be notified.
-              </p>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setShowCancelModal(false)}
-                  disabled={submitting}
-                  className="flex-1 px-4 py-3 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Keep Appointment
-                </button>
-                <button
-                  onClick={handleCancel}
-                  disabled={submitting}
-                  className="flex-1 px-4 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {submitting ? (
-                    <>
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
-                      Cancelling...
-                    </>
-                  ) : (
-                    '✓ Yes, Cancel'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </main>
   );
 }
