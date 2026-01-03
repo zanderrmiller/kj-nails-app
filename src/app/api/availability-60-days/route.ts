@@ -118,12 +118,12 @@ export async function GET(request: NextRequest) {
       blockedTimes.get(bt.date)!.add(bt.time);
     });
 
-    // Fetch bookings for all dates
+    // Fetch bookings for all dates (both pending and confirmed block time slots)
     const { data: bookingsData } = await supabase
       .from('bookings')
       .select('id, booking_date, booking_time, duration')
       .in('booking_date', allDates)
-      .eq('status', 'pending');
+      .in('status', ['pending', 'confirmed']);
 
     const bookings = new Map<string, Array<{ id: string; time: string; duration: number }>>();
     (bookingsData || []).forEach((b: any) => {
