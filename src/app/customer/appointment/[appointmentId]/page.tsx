@@ -86,15 +86,31 @@ function hasEnoughConsecutiveSlots(
 
   const slotsNeeded = Math.ceil(durationMinutes / 30);
 
-  // If this is the same date as the current appointment, exclude those slots from being blocked
+  // If this is the same date as the current appointment, we need to allow those slots through
+  // even if the backend marks them as unavailable (since we're freeing them up)
   const currentAppointmentBlockedSlots = new Set<string>();
   if (currentAppointmentTime && currentAppointmentDuration) {
-    const currentStartIndex = AVAILABLE_TIMES.indexOf(currentAppointmentTime);
-    const currentSlotsNeeded = Math.ceil(currentAppointmentDuration / 30);
-    for (let i = 0; i < currentSlotsNeeded; i++) {
-      const slotIndex = currentStartIndex + i;
-      if (slotIndex < AVAILABLE_TIMES.length) {
-        currentAppointmentBlockedSlots.add(AVAILABLE_TIMES[slotIndex]);
+    // Try to find the appointment time in AVAILABLE_TIMES
+    // It might be in 12-hour format like "2:00 PM" or needs conversion from "14:00"
+    let appointmentTimeFormatted = currentAppointmentTime;
+    if (!AVAILABLE_TIMES.includes(currentAppointmentTime)) {
+      // Try to convert from HH:MM format to 12-hour format
+      const timeParts = currentAppointmentTime.split(':');
+      if (timeParts.length >= 2) {
+        const hours = parseInt(timeParts[0]);
+        const minutes = parseInt(timeParts[1]);
+        appointmentTimeFormatted = minutesToTime(hours * 60 + minutes);
+      }
+    }
+    
+    const currentStartIndex = AVAILABLE_TIMES.indexOf(appointmentTimeFormatted);
+    if (currentStartIndex !== -1) {
+      const currentSlotsNeeded = Math.ceil(currentAppointmentDuration / 30);
+      for (let i = 0; i < currentSlotsNeeded; i++) {
+        const slotIndex = currentStartIndex + i;
+        if (slotIndex < AVAILABLE_TIMES.length) {
+          currentAppointmentBlockedSlots.add(AVAILABLE_TIMES[slotIndex]);
+        }
       }
     }
   }
@@ -105,11 +121,12 @@ function hasEnoughConsecutiveSlots(
 
     const slotTime = AVAILABLE_TIMES[slotIndex];
     
-    // Skip check if this slot is part of the current appointment being edited
+    // If this slot is part of the current appointment being edited, treat it as available
     if (currentAppointmentBlockedSlots.has(slotTime)) {
       continue;
     }
 
+    // For other slots, check if they're available from the backend data
     const slot = timeSlotsForDate.find((s) => s.time === slotTime);
     if (!slot || !slot.available) return false;
   }
@@ -290,7 +307,20 @@ export default function EditAppointmentPage() {
         
         setSelectedBase(selectedServiceId);
         setSelectedDate(appointmentData.appointment.booking_date);
-        setSelectedTime(appointmentData.appointment.booking_time);
+        
+        // Convert booking_time from HH:MM format to 12-hour format
+        const bookingTime = appointmentData.appointment.booking_time;
+        let formattedTime = bookingTime;
+        if (bookingTime && !bookingTime.includes('AM') && !bookingTime.includes('PM')) {
+          // Convert from HH:MM to 12-hour format
+          const timeParts = bookingTime.split(':');
+          if (timeParts.length >= 2) {
+            const hours = parseInt(timeParts[0]);
+            const minutes = parseInt(timeParts[1]);
+            formattedTime = minutesToTime(hours * 60 + minutes);
+          }
+        }
+        setSelectedTime(formattedTime);
         
         // Load previous nail art info
         if (appointmentData.appointment.nail_art_notes) {
