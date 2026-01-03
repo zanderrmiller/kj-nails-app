@@ -139,7 +139,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-950 border-t border-slate-800 py-8">
+      <footer className="bg-black border-t border-gray-900 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
           <p>&copy; 2025 KJ Nails. All rights reserved.</p>
           <div className="mt-2 space-x-4">

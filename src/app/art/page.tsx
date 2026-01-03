@@ -231,12 +231,17 @@ export default function ArtPage() {
       )}
 
       {/* Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800 py-8">
+      <footer className="bg-black border-t border-gray-900 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
           <p>Want to book your own nail art appointment?</p>
           <Link
             href="/book"
-            className="inline-block bg-pink-600 hover:bg-pink-700 px-6 py-2 rounded-lg font-semibold transition mt-4"
+            className="inline-block px-6 py-2 rounded-lg font-semibold transition mt-4 text-black hover:opacity-90"
+            style={{
+              backgroundImage: `url('/images/white-marble-texture.png')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
           >
             Book Now
           </Link>
