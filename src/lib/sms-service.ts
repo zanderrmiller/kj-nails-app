@@ -292,6 +292,64 @@ export const sendAppointmentEditedSMS = async (
 };
 
 /**
+ * Send appointment rescheduled confirmation to customer with new details
+ */
+export const sendAppointmentRescheduledCustomerSMS = async (
+  phoneNumber: string,
+  customerName: string,
+  appointmentDate: string,
+  appointmentTime: string,
+  serviceName: string,
+  basePrice: number,
+  appointmentId?: string
+): Promise<SMSResponse> => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kj-nails-app.vercel.app';
+  
+  // Get short code from appointment ID
+  let shortCode = '';
+  if (appointmentId) {
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+      );
+
+      const { data } = await supabase
+        .from('short_codes')
+        .select('code')
+        .eq('appointment_id', appointmentId)
+        .single();
+
+      shortCode = data?.code || '';
+    } catch (error) {
+      console.error('Error getting short code:', error);
+    }
+  }
+  
+  const appointmentUrl = shortCode ? `${baseUrl}/a/${shortCode}` : '';
+  
+  // Format date nicely (e.g., "Mon, Jan 6")
+  const dateObj = new Date(appointmentDate);
+  const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  
+  let message = `Hi ${customerName}! Your appointment has been rescheduled:\n\n`;
+  message += `Date: ${formattedDate} at ${appointmentTime}\n`;
+  message += `Service: ${serviceName}\n`;
+  message += `Price: ~$${basePrice}\n\n`;
+  message += `Awaiting confirmation from KJ Nails.`;
+  
+  if (appointmentUrl) {
+    message += `\n\nChange or cancel: ${appointmentUrl}`;
+  }
+
+  return sendSMS({
+    to: phoneNumber,
+    body: message,
+  });
+};
+
+/**
  * Send appointment cancellation notification to technician
  */
 export const sendAppointmentCancelledToTechnicianSMS = async (

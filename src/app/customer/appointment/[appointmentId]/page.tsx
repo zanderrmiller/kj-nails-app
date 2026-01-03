@@ -285,6 +285,7 @@ export default function EditAppointmentPage() {
   const [selectedTime, setSelectedTime] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [initialDateSet, setInitialDateSet] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const previousDurationRef = useRef<number | null>(null);
 
   // Fetch appointment and availability
@@ -431,10 +432,11 @@ export default function EditAppointmentPage() {
         throw new Error('Failed to update appointment');
       }
 
-      // Show success and redirect
+      // Show success modal and redirect after delay
+      setShowSuccessModal(true);
       setTimeout(() => {
         router.push('/');
-      }, 1500);
+      }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update appointment');
     } finally {
@@ -835,6 +837,20 @@ export default function EditAppointmentPage() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 rounded-lg p-8 max-w-md w-full text-center border-2 border-pink-600">
+            <div className="mb-4 text-5xl">✓</div>
+            <h2 className="text-2xl font-bold text-white mb-2">Appointment Updated!</h2>
+            <p className="text-gray-300 mb-4">
+              Your appointment has been successfully rescheduled. Kinsey will review the changes and send you a confirmation message.
+            </p>
+            <p className="text-gray-400 text-sm">Redirecting you home...</p>
           </div>
         </div>
       )}

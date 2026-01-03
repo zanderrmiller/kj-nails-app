@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendAppointmentEditedSMS } from '@/lib/sms-service';
+import { sendAppointmentEditedSMS, sendAppointmentRescheduledCustomerSMS } from '@/lib/sms-service';
 
 // Lazy load Supabase to avoid build-time errors
 async function getSupabase() {
@@ -147,6 +147,27 @@ export async function PUT(request: NextRequest) {
         console.log('Edit notification SMS result:', editSmsResult);
       } catch (smsError) {
         console.error('Failed to send edit notification SMS:', smsError);
+        // Don't fail the edit if SMS fails
+      }
+    }
+
+    // Send confirmation SMS to customer with new appointment details
+    const customerPhone = appointment.customer_phone;
+    if (customerPhone) {
+      console.log('Sending rescheduled appointment SMS to customer');
+      try {
+        const customerSmsResult = await sendAppointmentRescheduledCustomerSMS(
+          customerPhone,
+          appointment.customer_name,
+          newDate || appointment.booking_date,
+          newTime || appointment.booking_time,
+          appointment.service_id || 'Nail Service',
+          appointment.total_price || 0,
+          appointmentId
+        );
+        console.log('Customer reschedule SMS result:', customerSmsResult);
+      } catch (smsError) {
+        console.error('Failed to send customer reschedule SMS:', smsError);
         // Don't fail the edit if SMS fails
       }
     }
