@@ -322,8 +322,14 @@ export const sendAppointmentEditedSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
+  // Convert appointment time to 12-hour format if needed
+  let formattedTime = appointmentTime;
+  if (appointmentTime.includes(':') && !appointmentTime.includes('AM') && !appointmentTime.includes('PM')) {
+    formattedTime = convert24to12(appointmentTime);
+  }
+  
   // Parse appointment time to calculate end time if duration is provided
-  let timeRange = appointmentTime;
+  let timeRange = formattedTime;
   if (totalDuration) {
     const AVAILABLE_TIMES = [
       '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -331,11 +337,11 @@ export const sendAppointmentEditedSMS = async (
       '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
     ];
     
-    const startIndex = AVAILABLE_TIMES.indexOf(appointmentTime);
+    const startIndex = AVAILABLE_TIMES.indexOf(formattedTime);
     const slotsNeeded = Math.ceil(totalDuration / 30);
     const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
     const endTime = AVAILABLE_TIMES[endIndex];
-    timeRange = `${appointmentTime} - ${endTime}`;
+    timeRange = `${formattedTime} - ${endTime}`;
   }
   
   const message = `UPDATE: ${customerName}'s ${serviceName} appointment rescheduled:\n${formattedDate} ${timeRange}\n\nReview: ${confirmationLink}`;
@@ -442,6 +448,12 @@ export const sendAppointmentBookedToTechnicianSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
+  // Convert appointment time to 12-hour format if needed
+  let formattedTime = appointmentTime;
+  if (appointmentTime.includes(':') && !appointmentTime.includes('AM') && !appointmentTime.includes('PM')) {
+    formattedTime = convert24to12(appointmentTime);
+  }
+  
   // Parse appointment time to calculate end time
   const AVAILABLE_TIMES = [
     '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -449,7 +461,7 @@ export const sendAppointmentBookedToTechnicianSMS = async (
     '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
   ];
   
-  const startIndex = AVAILABLE_TIMES.indexOf(appointmentTime);
+  const startIndex = AVAILABLE_TIMES.indexOf(formattedTime);
   const slotsNeeded = Math.ceil(totalDuration / 30);
   const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
   const endTime = AVAILABLE_TIMES[endIndex];
@@ -457,7 +469,7 @@ export const sendAppointmentBookedToTechnicianSMS = async (
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kj-nails-app.vercel.app';
   const pendingLink = `${baseUrl}/pending`;
   
-  const message = `NEW APPOINTMENT:\n${customerName}\n${formattedDate} ${appointmentTime} - ${endTime}\n${serviceName}\n\nConfirm: ${pendingLink}`;
+  const message = `NEW APPOINTMENT:\n${customerName}\n${formattedDate} ${formattedTime} - ${endTime}\n${serviceName}\n\nConfirm: ${pendingLink}`;
 
   return sendSMS({
     to: phoneNumber,
@@ -480,6 +492,12 @@ export const sendAppointmentCancelledToTechnicianSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
+  // Convert appointment time to 12-hour format if needed
+  let formattedTime = appointmentTime;
+  if (appointmentTime.includes(':') && !appointmentTime.includes('AM') && !appointmentTime.includes('PM')) {
+    formattedTime = convert24to12(appointmentTime);
+  }
+  
   // Parse appointment time to calculate end time
   const AVAILABLE_TIMES = [
     '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -487,12 +505,12 @@ export const sendAppointmentCancelledToTechnicianSMS = async (
     '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
   ];
   
-  const startIndex = AVAILABLE_TIMES.indexOf(appointmentTime);
+  const startIndex = AVAILABLE_TIMES.indexOf(formattedTime);
   const slotsNeeded = Math.ceil(totalDuration / 30);
   const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
   const endTime = AVAILABLE_TIMES[endIndex];
   
-  const message = `Appointment Cancelation:\n${customerName}\n${formattedDate} ${appointmentTime} - ${endTime}`;
+  const message = `Appointment Cancelation:\n${customerName}\n${formattedDate} ${formattedTime} - ${endTime}`;
 
   return sendSMS({
     to: phoneNumber,
