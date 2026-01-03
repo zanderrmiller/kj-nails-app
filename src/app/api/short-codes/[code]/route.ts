@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
+    const { code } = await params;
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -14,7 +15,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('short_codes')
       .select('appointment_id')
-      .eq('code', params.code)
+      .eq('code', code)
       .single();
 
     if (error || !data) {
