@@ -427,6 +427,36 @@ export default function EditAppointmentPage() {
       setSubmitting(true);
       setError(null);
 
+      let allImageUrls = [...nailArtImageUrls]; // Start with existing URLs
+
+      // Step 1: Upload new nail art images if any exist
+      if (nailArtImages.length > 0) {
+        try {
+          const formData = new FormData();
+          nailArtImages.forEach((file) => {
+            formData.append('files', file);
+          });
+          formData.append('appointmentId', appointmentId);
+
+          const uploadResponse = await fetch('/api/upload-nail-art', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const uploadData = await uploadResponse.json();
+
+          if (!uploadResponse.ok) {
+            console.error('Image upload failed:', uploadData.error);
+            throw new Error('Failed to upload images');
+          } else {
+            allImageUrls = [...allImageUrls, ...(uploadData.urls || [])];
+          }
+        } catch (uploadError) {
+          throw new Error(uploadError instanceof Error ? uploadError.message : 'Failed to upload images');
+        }
+      }
+
+      // Step 2: Update appointment notes with all image URLs
       const response = await fetch('/api/appointments/update-notes', {
         method: 'PUT',
         headers: {
@@ -435,7 +465,7 @@ export default function EditAppointmentPage() {
         body: JSON.stringify({
           appointmentId,
           nailArtNotes: nailArtNotes,
-          nailArtImageUrls: nailArtImageUrls,
+          nailArtImageUrls: allImageUrls,
         }),
       });
 
