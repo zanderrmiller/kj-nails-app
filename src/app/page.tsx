@@ -25,19 +25,15 @@ export default function Home() {
       </nav>
 
       {/* Hero Section - Services Overview */}
-      <section className="py-8 relative" style={{
-        backgroundImage: `linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 50%, #1e1e1e 100%), 
-                          url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><defs><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/></filter></defs><rect width="100" height="100" fill="%23f5f5f0" filter="url(%23noise)" opacity="0.03"/></svg>')`,
-        backgroundBlendMode: 'overlay'
-      }}>
+      <section className="py-8 relative bg-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Welcome Section */}
-          <div className="mb-6 p-6 rounded-lg" style={{
+          <div className="mb-6 py-6 px-6 rounded-lg" style={{
             backgroundImage: `url('/images/white-marble-texture.png')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}>
-            <h1 className="text-3xl sm:text-5xl font-bold text-black mb-4 text-center">Welcome to KJ Nails!</h1>
+            <h1 className="text-3xl sm:text-5xl font-bold text-black text-center">Welcome to KJ Nails!</h1>
           </div>
 
           {/* Book Appointment & View Gallery Buttons */}
