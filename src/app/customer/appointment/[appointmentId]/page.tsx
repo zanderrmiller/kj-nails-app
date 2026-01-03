@@ -85,6 +85,7 @@ function hasEnoughConsecutiveSlots(
   if (startIndex === -1) return false;
 
   const slotsNeeded = Math.ceil(durationMinutes / 30);
+  const BUFFER_MINUTES = 15; // 15-minute buffer after appointments (from backend)
 
   // Convert current appointment time if in HH:MM format
   let currentAppointmentTimeFormatted = currentAppointmentTime;
@@ -97,19 +98,19 @@ function hasEnoughConsecutiveSlots(
     }
   }
 
-  // Calculate current appointment's time range
+  // Calculate current appointment's time range INCLUDING the 15-minute buffer
   let currentAppointmentStartMinutes = -1;
   let currentAppointmentEndMinutes = -1;
   
   if (currentAppointmentTimeFormatted && currentAppointmentDuration) {
     currentAppointmentStartMinutes = timeToMinutes(currentAppointmentTimeFormatted);
-    currentAppointmentEndMinutes = currentAppointmentStartMinutes + currentAppointmentDuration;
+    currentAppointmentEndMinutes = currentAppointmentStartMinutes + currentAppointmentDuration + BUFFER_MINUTES;
   }
 
-  // Create a working copy of time slots and mark freed appointment slots as available
+  // Create a working copy of time slots and mark freed appointment slots (including buffer) as available
   const workingSlots = timeSlotsForDate.map(slot => {
     const slotTimeInMinutes = timeToMinutes(slot.time);
-    // If this slot is within the current appointment's time window, mark it as available (it will be freed)
+    // If this slot is within the current appointment's time window (including buffer), mark it as available (it will be freed)
     if (currentAppointmentStartMinutes !== -1 && currentAppointmentEndMinutes !== -1) {
       if (slotTimeInMinutes >= currentAppointmentStartMinutes && 
           slotTimeInMinutes < currentAppointmentEndMinutes) {
@@ -126,7 +127,7 @@ function hasEnoughConsecutiveSlots(
 
     const slotTime = AVAILABLE_TIMES[slotIndex];
     
-    // Check the working slots (which now has freed appointment slots marked as available)
+    // Check the working slots (which now has freed appointment slots and buffer marked as available)
     const slot = workingSlots.find((s) => s.time === slotTime);
     if (slot && !slot.available) {
       return false;
