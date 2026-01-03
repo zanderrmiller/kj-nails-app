@@ -333,7 +333,10 @@ export const sendAppointmentBookedToTechnicianSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
-  const message = `NEW APPOINTMENT:\n${customerName}\n${formattedDate} at ${appointmentTime}\n${totalDuration} mins - ${serviceName}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kj-nails-app.vercel.app';
+  const pendingLink = `${baseUrl}/pending`;
+  
+  const message = `NEW APPOINTMENT:\n${customerName}\n${formattedDate} at ${appointmentTime}\n${totalDuration} mins - ${serviceName}\n\nConfirm: ${pendingLink}`;
 
   return sendSMS({
     to: phoneNumber,
