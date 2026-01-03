@@ -186,37 +186,6 @@ export const sendAppointmentCancelledSMS = async (
 };
 
 /**
- * Send appointment confirmation request to technician
- */
-export const sendTechnicianConfirmationSMS = async (
-  phoneNumber: string,
-  customerName: string,
-  appointmentDate: string,
-  appointmentTime: string,
-  serviceName: string,
-  shortCode: string
-): Promise<SMSResponse> => {
-  const baseUrl = process.env.CONFIRMATION_LINK_BASE_URL || 'https://kj-nails-app.vercel.app/admin/confirm';
-  
-  const confirmationLink = `${baseUrl}/${shortCode}`;
-  
-  // Format date nicely (e.g., "Mon, Jan 6")
-  const dateObj = new Date(appointmentDate);
-  const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  
-  let message = `New appointment request:\n\n`;
-  message += `Customer: ${customerName}\n`;
-  message += `Service: ${serviceName}\n`;
-  message += `Date: ${formattedDate} at ${appointmentTime}\n\n`;
-  message += `Confirm:\n${confirmationLink}`;
-
-  return sendSMS({
-    to: phoneNumber,
-    body: message,
-  });
-};
-
-/**
  * Send appointment confirmation to customer (after technician approves)
  */
 export const sendAppointmentConfirmedSMS = async (

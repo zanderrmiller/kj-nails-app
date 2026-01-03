@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendAppointmentBookedSMS, sendTechnicianConfirmationSMS } from '@/lib/sms-service';
+import { sendAppointmentBookedSMS } from '@/lib/sms-service';
 import { performFraudChecks } from '@/lib/fraud-protection';
 import { createShortCode } from '@/lib/short-codes';
 
@@ -180,34 +180,7 @@ export async function POST(request: NextRequest) {
       console.log('⚠️ No customer phone number provided, skipping SMS');
     }
 
-    // Send confirmation SMS to technician (Kinsey)
-    const technicianPhone = process.env.TECHNICIAN_PHONE_NUMBER;
-    const confirmationBaseUrl = process.env.CONFIRMATION_LINK_BASE_URL || 'http://localhost:3000/admin/confirm';
-    
-    if (technicianPhone && technicianPhone.length > 0 && shortCode) {
-      console.log('Attempting to send confirmation SMS to Kinsey:', technicianPhone);
-      try {
-        const technicianSmsResult = await sendTechnicianConfirmationSMS(
-          technicianPhone,
-          booking.customer_name,
-          booking.booking_date,
-          booking.booking_time,
-          body.baseService?.name || 'Nail Service',
-          shortCode
-        );
-        console.log('Technician SMS result:', technicianSmsResult);
-        if (technicianSmsResult.success) {
-          console.log('✅ Technician SMS sent successfully');
-        } else {
-          console.error('❌ Technician SMS failed:', technicianSmsResult.error);
-        }
-      } catch (techSmsError) {
-        console.error('Failed to send technician confirmation SMS:', techSmsError);
-        // Don't fail the booking if technician SMS fails
-      }
-    } else {
-      console.log('No technician phone number configured, skipping technician SMS');
-    }
+    // Note: Technician confirmation now handled via admin panel pending appointments tab
 
     return NextResponse.json(
       {
