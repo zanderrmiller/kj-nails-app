@@ -699,7 +699,7 @@ export default function EditAppointmentPage() {
                                 ✕
                               </span>
                             </div>
-                          ))}}
+                          ))}
                           {/* New images to upload */}
                           {nailArtImages.map((file, idx) => (
                             <div key={`file-${idx}`} className="relative group">
@@ -714,7 +714,7 @@ export default function EditAppointmentPage() {
                                 ✕
                               </span>
                             </div>
-                          ))}}
+                          ))}
                         </div>
                       )}
                     </label>
