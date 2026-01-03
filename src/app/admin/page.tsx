@@ -1374,6 +1374,54 @@ export default function AdminPage() {
     }
   };
 
+  const handleConfirmAppointment = async (booking: Booking) => {
+    try {
+      const response = await fetch('/api/appointments/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointmentId: booking.id }),
+      });
+
+      if (response.ok) {
+        const updatedBooking: Booking = { ...booking, status: 'confirmed' };
+        setBookings(bookings.map(b => b.id === booking.id ? updatedBooking : b));
+        setSelectedAppointment(null);
+        setSaveMessage('Appointment confirmed successfully');
+        setTimeout(() => setSaveMessage(''), 2000);
+      } else {
+        alert('Failed to confirm appointment');
+      }
+    } catch (error) {
+      console.error('Error confirming appointment:', error);
+      alert('An error occurred while confirming the appointment');
+    }
+  };
+
+  const handleRejectAppointment = async (booking: Booking) => {
+    if (!confirm(`Are you sure you want to reject this appointment for ${booking.customer_name}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/bookings?bookingId=${booking.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        setBookings(bookings.filter(b => b.id !== booking.id));
+        setSelectedAppointment(null);
+        setSaveMessage('Appointment rejected successfully');
+        setTimeout(() => setSaveMessage(''), 2000);
+      } else {
+        alert('Failed to reject appointment');
+      }
+    } catch (error) {
+      console.error('Error rejecting appointment:', error);
+      alert('An error occurred while rejecting the appointment');
+    }
+  };
+
   const handleDeleteBooking = async (booking: Booking) => {
     setDeleteConfirmation({ show: true, booking });
   };
@@ -1837,6 +1885,30 @@ export default function AdminPage() {
                             </div>
                           </div>
                         </div>
+
+                        {/* Action Buttons for Pending Appointments */}
+                        {appointmentFilter === 'pending' && (
+                          <div className="flex gap-2 mt-4 pt-3 border-t border-gray-700">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleConfirmAppointment(booking);
+                              }}
+                              className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-green-700 text-white hover:bg-green-600 transition text-center"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRejectAppointment(booking);
+                              }}
+                              className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-red-700 text-white hover:bg-red-600 transition text-center"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                 </div>
@@ -1999,18 +2071,37 @@ export default function AdminPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-2 p-6 border-t-2 border-gray-700 flex-shrink-0 bg-gray-800">
-                <button
-                  onClick={() => handleEditBooking(selectedAppointment)}
-                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
-                >
-                  Edit Appointment
-                </button>
-                <button
-                  onClick={() => handleDeleteBooking(selectedAppointment)}
-                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
-                >
-                  Delete Appointment
-                </button>
+                {selectedAppointment.status === 'pending' ? (
+                  <>
+                    <button
+                      onClick={() => handleConfirmAppointment(selectedAppointment)}
+                      className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-bold hover:bg-green-600 transition"
+                    >
+                      Confirm Appointment
+                    </button>
+                    <button
+                      onClick={() => handleRejectAppointment(selectedAppointment)}
+                      className="flex-1 py-3 px-4 bg-red-700 text-white rounded-lg font-bold hover:bg-red-600 transition"
+                    >
+                      Reject Appointment
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleEditBooking(selectedAppointment)}
+                      className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
+                    >
+                      Edit Appointment
+                    </button>
+                    <button
+                      onClick={() => handleDeleteBooking(selectedAppointment)}
+                      className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
+                    >
+                      Delete Appointment
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
