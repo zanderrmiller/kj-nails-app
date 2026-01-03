@@ -114,7 +114,8 @@ export async function DELETE(request: NextRequest) {
           appointment.customer_name,
           appointment.booking_date,
           appointment.booking_time,
-          appointment.service_id || 'Nail Service'
+          appointment.service_id || 'Nail Service',
+          appointment.duration
         );
         console.log('Cancellation SMS result:', cancelSmsResult);
       } catch (smsError) {
