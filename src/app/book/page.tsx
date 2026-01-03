@@ -957,7 +957,7 @@ export default function BookPage() {
               disabled={!customerName || !customerPhone || !smsConsent}
               className={`w-full py-4 rounded-lg font-bold text-lg transition ${
                 customerName && customerPhone && smsConsent
-                  ? 'bg-white text-black hover:bg-gray-200 cursor-pointer'
+                  ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer'
                   : 'bg-gray-700 text-gray-500 cursor-not-allowed'
               }`}
             >
