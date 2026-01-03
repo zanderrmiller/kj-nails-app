@@ -374,6 +374,7 @@ export default function BookPage() {
   const [nailArtPrice, setNailArtPrice] = useState(0);
   const [nailArtImages, setNailArtImages] = useState<File[]>([]);
   const [nailArtNotes, setNailArtNotes] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Modal state
   const [modalMessage, setModalMessage] = useState('');
@@ -434,12 +435,14 @@ export default function BookPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!selectedBase || !selectedDate || !selectedTime || !customerName || !customerPhone) {
       setModalTitle('Missing Information');
       setModalMessage('Please fill in all required fields');
       setIsSuccess(false);
       setShowModal(true);
+      setIsLoading(false);
       return;
     }
 
@@ -448,6 +451,7 @@ export default function BookPage() {
       setModalMessage('Please consent to receive text message updates to book your appointment');
       setIsSuccess(false);
       setShowModal(true);
+      setIsLoading(false);
       return;
     }
 
@@ -575,12 +579,14 @@ export default function BookPage() {
         setNailArtPrice(0);
         setNailArtImages([]);
         setNailArtNotes('');
+        setIsLoading(false);
       } else {
         setModalTitle('Booking Failed');
         setModalMessage(data.error || 'Failed to book appointment. Please try again.');
         setIsSuccess(false);
         setBookingDetails(null);
         setShowModal(true);
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Booking error:', error);
@@ -589,6 +595,7 @@ export default function BookPage() {
       setIsSuccess(false);
       setBookingDetails(null);
       setShowModal(true);
+      setIsLoading(false);
     }
   };
 
@@ -954,14 +961,19 @@ export default function BookPage() {
           {selectedBase && selectedDate && selectedTime && (
             <button
               type="submit"
-              disabled={!customerName || !customerPhone || !smsConsent}
-              className={`w-full py-4 rounded-lg font-bold text-lg transition ${
+              disabled={!customerName || !customerPhone || !smsConsent || isLoading}
+              className={`w-full py-4 rounded-lg font-bold text-lg transition flex items-center justify-center gap-2 ${
                 customerName && customerPhone && smsConsent
                   ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer'
                   : 'bg-gray-700 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {customerName && customerPhone && smsConsent 
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-4 border-gray-400 border-r-gray-200 rounded-full animate-spin"></div>
+                  <span>Processing...</span>
+                </>
+              ) : customerName && customerPhone && smsConsent 
                 ? 'Confirm Booking' 
                 : customerName && customerPhone
                   ? 'Check SMS Consent to Continue'
