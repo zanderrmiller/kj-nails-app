@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -285,6 +285,7 @@ export default function EditAppointmentPage() {
   const [selectedTime, setSelectedTime] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [initialDateSet, setInitialDateSet] = useState(false);
+  const previousDurationRef = useRef<number | null>(null);
 
   // Fetch appointment and availability
   useEffect(() => {
@@ -394,6 +395,14 @@ export default function EditAppointmentPage() {
       }
     }
   }
+
+  // Clear selected time when duration changes (service selection changed)
+  useEffect(() => {
+    if (previousDurationRef.current !== null && previousDurationRef.current !== totalDuration) {
+      setSelectedTime('');
+    }
+    previousDurationRef.current = totalDuration;
+  }, [totalDuration]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
