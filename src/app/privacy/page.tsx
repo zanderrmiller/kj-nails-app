@@ -125,7 +125,7 @@ export default function PrivacyPolicy() {
               </p>
               <ul className="list-disc ml-5 mt-3 space-y-2">
                 <li><strong>Supabase</strong> - Database and backend services</li>
-                <li><strong>ClickSend</strong> - SMS delivery service</li>
+                <li><strong>Twilio</strong> - SMS delivery service</li>
                 <li><strong>Vercel</strong> - Application hosting</li>
               </ul>
               <p className="mt-3">

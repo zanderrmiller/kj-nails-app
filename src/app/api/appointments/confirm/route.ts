@@ -27,13 +27,29 @@ interface ConfirmationRequest {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const appointmentId = searchParams.get('appointmentId');
+    let appointmentId = searchParams.get('appointmentId');
 
     if (!appointmentId) {
       return NextResponse.json({ error: 'Missing appointment ID' }, { status: 400 });
     }
 
     const supabase = await getSupabase();
+
+    // Check if appointmentId is a short code (8 chars or less, alphanumeric)
+    if (appointmentId.length <= 8 && /^[a-zA-Z0-9]+$/.test(appointmentId)) {
+      // Look up the full appointment ID from the short code
+      const { data: shortCodeData, error: shortCodeError } = await supabase
+        .from('short_codes')
+        .select('appointment_id')
+        .eq('code', appointmentId)
+        .single();
+
+      if (shortCodeError || !shortCodeData) {
+        return NextResponse.json({ error: 'Appointment not found' }, { status: 404 });
+      }
+
+      appointmentId = shortCodeData.appointment_id;
+    }
 
     // Fetch appointment details
     const { data: appointment, error } = await supabase
@@ -71,16 +87,32 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body: ConfirmationRequest = await request.json();
-    const { appointmentId, finalPrice } = body;
+    let { appointmentId, finalPrice } = body;
 
     if (!appointmentId || finalPrice === undefined) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const supabaseAdmin = await getSupabaseAdmin();
+    const supabase = await getSupabaseAdmin();
+
+    // Check if appointmentId is a short code (8 chars or less, alphanumeric)
+    if (appointmentId.length <= 8 && /^[a-zA-Z0-9]+$/.test(appointmentId)) {
+      // Look up the full appointment ID from the short code
+      const { data: shortCodeData, error: shortCodeError } = await supabase
+        .from('short_codes')
+        .select('appointment_id')
+        .eq('code', appointmentId)
+        .single();
+
+      if (shortCodeError || !shortCodeData) {
+        return NextResponse.json({ error: 'Appointment not found' }, { status: 404 });
+      }
+
+      appointmentId = shortCodeData.appointment_id;
+    }
 
     // Fetch the appointment
-    const { data: appointment, error: fetchError } = await supabaseAdmin
+    const { data: appointment, error: fetchError } = await supabase
       .from('bookings')
       .select('*')
       .eq('id', appointmentId)
@@ -91,7 +123,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update appointment status to confirmed and set final price
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await supabase
       .from('bookings')
       .update({
         status: 'confirmed',
@@ -115,7 +147,8 @@ export async function POST(request: NextRequest) {
           appointment.customer_name,
           appointment.booking_date,
           appointment.booking_time,
-          finalPrice
+          finalPrice,
+          appointmentId
         );
         console.log('Confirmation SMS result:', smsResult);
         if (smsResult.success) {

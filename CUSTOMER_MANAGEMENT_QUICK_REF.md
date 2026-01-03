@@ -168,7 +168,7 @@ CANCELLED: Sarah's appointment on Dec 30 at 3:30 PM for Acrylic Fill has been ca
 
 1. **Update domain** in SMS service for production
 2. **Test the flow** (create → edit → cancel)
-3. **Monitor SMS** logs in ClickSend dashboard
+3. **Monitor SMS** logs in Twilio dashboard
 4. **Get customer feedback** on mobile UX
 
 ---

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendAppointmentBookedSMS, sendTechnicianConfirmationSMS } from '@/lib/sms-service';
 import { performFraudChecks } from '@/lib/fraud-protection';
+import { createShortCode } from '@/lib/short-codes';
 
 const AVAILABLE_TIMES = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -144,6 +145,10 @@ export async function POST(request: NextRequest) {
 
     console.log('Booking created:', booking);
 
+    // Create short code for the appointment
+    const shortCode = await createShortCode(booking.id);
+    console.log('Short code created:', shortCode);
+
     // Send SMS notification to customer
     console.log('=== SMS SENDING DEBUG ===');
     console.log('booking.customer_phone:', booking.customer_phone);
@@ -158,6 +163,7 @@ export async function POST(request: NextRequest) {
           booking.booking_date,
           booking.booking_time,
           body.baseService?.name || 'Nail Service',
+          body.baseService?.basePrice || 0,
           booking.id
         );
         console.log('SMS result:', smsResult);
@@ -178,17 +184,16 @@ export async function POST(request: NextRequest) {
     const technicianPhone = process.env.TECHNICIAN_PHONE_NUMBER;
     const confirmationBaseUrl = process.env.CONFIRMATION_LINK_BASE_URL || 'http://localhost:3000/admin/confirm';
     
-    if (technicianPhone && technicianPhone.length > 0) {
+    if (technicianPhone && technicianPhone.length > 0 && shortCode) {
       console.log('Attempting to send confirmation SMS to Kinsey:', technicianPhone);
       try {
-        const confirmationLink = `${confirmationBaseUrl}/${booking.id}`;
         const technicianSmsResult = await sendTechnicianConfirmationSMS(
           technicianPhone,
           booking.customer_name,
           booking.booking_date,
           booking.booking_time,
           body.baseService?.name || 'Nail Service',
-          confirmationLink
+          shortCode
         );
         console.log('Technician SMS result:', technicianSmsResult);
         if (technicianSmsResult.success) {

@@ -106,7 +106,7 @@ Appointments now have two states:
    CONFIRMATION_LINK_BASE_URL=https://yourdomain.com/admin/confirm
    ```
 
-3. **Verify ClickSend Trial Limits** (SMS credits)
+3. **Verify Twilio Account** (SMS credits/balance)
 
 ### 🔒 Security Note
 Confirmation links are currently simple URLs with appointment ID. For production, consider:

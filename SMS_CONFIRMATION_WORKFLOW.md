@@ -255,7 +255,7 @@ Response:
 
 ## Error Handling
 
-- **SMS failures don't block appointments**: If ClickSend is unavailable, appointments still get created
+- **SMS failures don't block appointments**: If Twilio is unavailable, appointments still get created
 - **Missing technician number**: Skips technician SMS but still creates appointment
 - **Network errors**: Logged to console, graceful fallback
 - **Confirmation link errors**: 404 page shown if appointment not found
@@ -286,7 +286,7 @@ Current implementation:
 ### Technician SMS not receiving
 1. Check `TECHNICIAN_PHONE_NUMBER` in `.env.local`
 2. Verify phone number format: `+1XXXXXXXXXX`
-3. Check ClickSend trial account SMS limit
+3. Verify Twilio account has sufficient balance
 4. Review server logs for SMS API errors
 
 ### Confirmation link not working
@@ -297,7 +297,7 @@ Current implementation:
 
 ### Customer not receiving final SMS
 1. Check customer phone number is stored correctly
-2. Review ClickSend API logs
+2. Review Twilio API logs
 3. Verify final_price is being saved to database
 4. Check for JavaScript errors in confirmation page
 

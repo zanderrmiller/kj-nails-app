@@ -1,7 +1,3 @@
-import axios from 'axios';
-
-const CLICKSEND_API_URL = 'https://api.clicksend.com/v3';
-
 interface SendSMSOptions {
   to: string;
   body: string;
@@ -14,32 +10,32 @@ interface SMSResponse {
 }
 
 /**
- * Send SMS via ClickSend API
+ * Send SMS via Twilio
  */
 export const sendSMS = async (options: SendSMSOptions): Promise<SMSResponse> => {
-  const apiUsername = process.env.CLICKSEND_API_USERNAME;
-  const apiKey = process.env.CLICKSEND_API_KEY;
-  const senderId = process.env.CLICKSEND_SENDER_ID || 'KJNails';
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 
-  console.log('=== ClickSend SMS Debug ===');
-  console.log('Username configured:', !!apiUsername);
-  console.log('API Key configured:', !!apiKey);
-  console.log('Sender ID:', senderId);
+  console.log('=== Twilio SMS Debug ===');
+  console.log('Account SID configured:', !!accountSid);
+  console.log('Auth Token configured:', !!authToken);
+  console.log('Twilio phone number:', twilioPhoneNumber);
 
-  if (!apiUsername || !apiKey) {
-    console.warn('ClickSend credentials not configured. SMS functionality will be disabled.');
+  if (!accountSid || !authToken || !twilioPhoneNumber) {
+    console.warn('Twilio credentials not configured. SMS functionality will be disabled.');
     return {
       success: false,
-      error: 'ClickSend not configured',
+      error: 'Twilio not configured',
     };
   }
 
   try {
-    // Prepare phone number - ensure it's in the right format
+    // Prepare phone number - ensure it's in E.164 format
     let phoneNumber = options.to;
     
     // Remove all spaces and dashes from phone number
-    phoneNumber = phoneNumber.replace(/[\s\-]/g, '');
+    phoneNumber = phoneNumber.replace(/[\s\-()]/g, '');
     
     if (!phoneNumber.startsWith('+')) {
       // Add +1 for US numbers if no country code provided
@@ -53,55 +49,45 @@ export const sendSMS = async (options: SendSMSOptions): Promise<SMSResponse> => 
     }
 
     console.log('Sending SMS to:', phoneNumber);
+    console.log('From:', twilioPhoneNumber);
     console.log('Message:', options.body);
-    console.log('API Endpoint:', `${CLICKSEND_API_URL}/sms/send`);
 
-    const response = await axios.post(
-      `${CLICKSEND_API_URL}/sms/send`,
-      {
-        messages: [
-          {
-            body: options.body,
-            to: phoneNumber,
-            source: senderId,
-          },
-        ],
+    // Use Twilio REST API
+    const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + accountSid + '/Messages.json', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(accountSid + ':' + authToken).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      {
-        auth: {
-          username: apiUsername,
-          password: apiKey,
-        },
-      }
-    );
+      body: new URLSearchParams({
+        From: twilioPhoneNumber,
+        To: phoneNumber,
+        Body: options.body,
+      }).toString(),
+    });
 
-    console.log('ClickSend Response Status:', response.status);
-    console.log('ClickSend Response Data:', JSON.stringify(response.data, null, 2));
+    const data = await response.json() as any;
 
-    if (response.data.data && response.data.data.messages && response.data.data.messages.length > 0) {
-      const message = response.data.data.messages[0];
-      console.log('SMS sent successfully. Message ID:', message.message_id);
+    console.log('Twilio Response Status:', response.status);
+    console.log('Twilio Response Data:', JSON.stringify(data, null, 2));
+
+    if (response.ok && data.sid) {
+      console.log('SMS sent successfully. Message SID:', data.sid);
       return {
         success: true,
-        messageId: message.message_id,
+        messageId: data.sid,
       };
     }
 
-    console.log('No messages in response');
+    console.log('Error response from Twilio');
     return {
       success: false,
-      error: 'Failed to send SMS',
+      error: data.message || 'Failed to send SMS',
     };
   } catch (error) {
-    console.error('Error sending SMS via ClickSend:', error);
+    console.error('Error sending SMS via Twilio:', error);
     if (error instanceof Error) {
       console.error('Error message:', error.message);
-    }
-    // Log axios error details if available
-    if (error && typeof error === 'object' && 'response' in error) {
-      const axiosError = error as any;
-      console.error('Response status:', axiosError.response?.status);
-      console.error('Response data:', JSON.stringify(axiosError.response?.data, null, 2));
     }
     return {
       success: false,
@@ -112,7 +98,6 @@ export const sendSMS = async (options: SendSMSOptions): Promise<SMSResponse> => 
 
 /**
  * Send appointment booked SMS to customer
- * NOTE: ClickSend trial accounts can only send to signup number, no links/numbers allowed
  */
 export const sendAppointmentBookedSMS = async (
   phoneNumber: string,
@@ -120,10 +105,48 @@ export const sendAppointmentBookedSMS = async (
   appointmentDate: string,
   appointmentTime: string,
   serviceName: string,
+  basePrice: number,
   appointmentId?: string
 ): Promise<SMSResponse> => {
-  // For ClickSend trial: keep it very simple, no numbers or links allowed
-  const message = `Hi ${customerName}! Your appointment at KJ Nails for ${serviceName} is confirmed. Kinsey will contact you to finalize details soon!`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kj-nails-app.vercel.app';
+  
+  // Get short code from appointment ID
+  let shortCode = '';
+  if (appointmentId) {
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+      );
+
+      const { data } = await supabase
+        .from('short_codes')
+        .select('code')
+        .eq('appointment_id', appointmentId)
+        .single();
+
+      shortCode = data?.code || '';
+    } catch (error) {
+      console.error('Error getting short code:', error);
+    }
+  }
+  
+  const appointmentUrl = shortCode ? `${baseUrl}/a/${shortCode}` : '';
+  
+  // Format date nicely (e.g., "Mon, Jan 6")
+  const dateObj = new Date(appointmentDate);
+  const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  
+  let message = `Hi ${customerName}! Your appointment at KJ Nails:\n\n`;
+  message += `Date: ${formattedDate} at ${appointmentTime}\n`;
+  message += `Service: ${serviceName}\n`;
+  message += `Price: ~$${basePrice}\n\n`;
+  message += `Appointment will be confirmed soon!`;
+  
+  if (appointmentUrl) {
+    message += `\n\nReschedule/Cancel: ${appointmentUrl}`;
+  }
 
   return sendSMS({
     to: phoneNumber,
@@ -164,7 +187,6 @@ export const sendAppointmentCancelledSMS = async (
 
 /**
  * Send appointment confirmation request to technician
- * NOTE: ClickSend trial accounts can only send to signup number, no links/numbers allowed
  */
 export const sendTechnicianConfirmationSMS = async (
   phoneNumber: string,
@@ -172,10 +194,21 @@ export const sendTechnicianConfirmationSMS = async (
   appointmentDate: string,
   appointmentTime: string,
   serviceName: string,
-  confirmationLink: string
+  shortCode: string
 ): Promise<SMSResponse> => {
-  // For ClickSend trial: keep it very simple, no numbers or links allowed
-  const message = `New appointment: ${customerName} for ${serviceName}. Check admin dashboard to confirm and set pricing.`;
+  const baseUrl = process.env.CONFIRMATION_LINK_BASE_URL || 'https://kj-nails-app.vercel.app/admin/confirm';
+  
+  const confirmationLink = `${baseUrl}/${shortCode}`;
+  
+  // Format date nicely (e.g., "Mon, Jan 6")
+  const dateObj = new Date(appointmentDate);
+  const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  
+  let message = `New appointment request:\n\n`;
+  message += `Customer: ${customerName}\n`;
+  message += `Service: ${serviceName}\n`;
+  message += `Date: ${formattedDate} at ${appointmentTime}\n\n`;
+  message += `Confirm:\n${confirmationLink}`;
 
   return sendSMS({
     to: phoneNumber,
@@ -185,17 +218,53 @@ export const sendTechnicianConfirmationSMS = async (
 
 /**
  * Send appointment confirmation to customer (after technician approves)
- * NOTE: ClickSend trial accounts can only send to signup number, no links/numbers allowed
  */
 export const sendAppointmentConfirmedSMS = async (
   phoneNumber: string,
   customerName: string,
   appointmentDate: string,
   appointmentTime: string,
-  finalPrice: number
+  finalPrice: number,
+  appointmentId?: string
 ): Promise<SMSResponse> => {
-  // For ClickSend trial: keep it very simple, no numbers or links allowed
-  const message = `Hi ${customerName}! Your appointment with KJ Nails is confirmed. See you soon!`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kj-nails-app.vercel.app';
+  
+  // Get short code from appointment ID
+  let shortCode = '';
+  if (appointmentId) {
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+      );
+
+      const { data } = await supabase
+        .from('short_codes')
+        .select('code')
+        .eq('appointment_id', appointmentId)
+        .single();
+
+      shortCode = data?.code || '';
+    } catch (error) {
+      console.error('Error getting short code:', error);
+    }
+  }
+  
+  const appointmentUrl = shortCode ? `${baseUrl}/a/${shortCode}` : '';
+  
+  // Format date nicely (e.g., "Mon, Jan 6")
+  const dateObj = new Date(appointmentDate);
+  const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  
+  let message = `Your appointment is confirmed!\n\n`;
+  message += `Date: ${formattedDate} at ${appointmentTime}\n`;
+  message += `Total: $${finalPrice}\n\n`;
+  message += `See you soon!`;
+  
+  if (appointmentUrl) {
+    message += `\n\nReschedule/Cancel: ${appointmentUrl}`;
+  }
 
   return sendSMS({
     to: phoneNumber,
@@ -205,7 +274,6 @@ export const sendAppointmentConfirmedSMS = async (
 
 /**
  * Send appointment edit notification to technician (new confirmation needed)
- * NOTE: ClickSend trial accounts can only send to signup number, no links/numbers allowed
  */
 export const sendAppointmentEditedSMS = async (
   phoneNumber: string,
@@ -215,7 +283,6 @@ export const sendAppointmentEditedSMS = async (
   serviceName: string,
   confirmationLink: string
 ): Promise<SMSResponse> => {
-  // For ClickSend trial: keep it very simple, no numbers or links allowed
   const message = `UPDATE: ${customerName}'s ${serviceName} appointment has been rescheduled. Check admin dashboard to review and confirm.`;
 
   return sendSMS({
@@ -226,7 +293,6 @@ export const sendAppointmentEditedSMS = async (
 
 /**
  * Send appointment cancellation notification to technician
- * NOTE: ClickSend trial accounts can only send to signup number, no links/numbers allowed
  */
 export const sendAppointmentCancelledToTechnicianSMS = async (
   phoneNumber: string,
@@ -235,7 +301,6 @@ export const sendAppointmentCancelledToTechnicianSMS = async (
   appointmentTime: string,
   serviceName: string
 ): Promise<SMSResponse> => {
-  // For ClickSend trial: keep it very simple, no numbers or links allowed
   const message = `CANCELLED: ${customerName}'s ${serviceName} appointment has been cancelled by customer.`;
 
   return sendSMS({
