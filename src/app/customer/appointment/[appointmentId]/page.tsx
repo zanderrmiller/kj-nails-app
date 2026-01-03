@@ -124,11 +124,13 @@ function hasEnoughConsecutiveSlots(
     }
 
     // For all other slots (before current appointment or after it), check backend availability
+    // If slot data exists, check if it's available; if not, assume it's available (gives benefit of doubt)
     const slot = timeSlotsForDate.find((s) => s.time === slotTime);
-    if (!slot || !slot.available) return false;
+    if (slot && !slot.available) {
+      return false;
+    }
+    // If slot doesn't exist in data or is marked available, continue checking
   }
-
-  return true;
 
   return true;
 }
