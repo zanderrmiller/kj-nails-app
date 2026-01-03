@@ -651,6 +651,9 @@ export default function AdminPage() {
   
   // Confirmation modal state
   const [confirmationModal, setConfirmationModal] = useState<{ show: boolean; booking: Booking | null; finalPrice: number }>({ show: false, booking: null, finalPrice: 0 });
+  
+  // Rejection modal state
+  const [rejectionModal, setRejectionModal] = useState<{ show: boolean; booking: Booking | null; sendMessage: boolean }>({ show: false, booking: null, sendMessage: true });
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Confirmation preview modal state
@@ -1439,27 +1442,37 @@ export default function AdminPage() {
   };
 
   const handleRejectAppointment = async (booking: Booking) => {
-    if (!confirm(`Are you sure you want to reject this appointment for ${booking.customer_name}?`)) {
-      return;
-    }
+    // Show rejection modal
+    setRejectionModal({
+      show: true,
+      booking: booking,
+      sendMessage: true,
+    });
+  };
+
+  const handleFinalRejectAppointment = async () => {
+    if (!rejectionModal.booking) return;
+
+    const bookingToReject = rejectionModal.booking;
 
     try {
-      // Import the rejection SMS function
-      const { sendAppointmentRejectedSMS } = await import('@/lib/sms-service');
-      
-      // Send rejection SMS to customer first
-      await sendAppointmentRejectedSMS(booking.customer_phone, booking.customer_name);
+      // Send rejection SMS to customer if checkbox is checked
+      if (rejectionModal.sendMessage) {
+        const { sendAppointmentRejectedSMS } = await import('@/lib/sms-service');
+        await sendAppointmentRejectedSMS(bookingToReject.customer_phone, bookingToReject.customer_name);
+      }
 
       // Delete the appointment
-      const response = await fetch(`/api/bookings?bookingId=${booking.id}`, {
+      const response = await fetch(`/api/bookings?bookingId=${bookingToReject.id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
 
       if (response.ok) {
-        setBookings(bookings.filter(b => b.id !== booking.id));
+        setBookings(bookings.filter(b => b.id !== bookingToReject.id));
         setSelectedAppointment(null);
         setEditingBooking(null);
+        setRejectionModal({ show: false, booking: null, sendMessage: true });
         setSaveMessage('Appointment rejected successfully');
         setTimeout(() => setSaveMessage(''), 2000);
         
@@ -1471,9 +1484,9 @@ export default function AdminPage() {
         ];
         
         // Calculate which times should be unlocked
-        const timeIndex = AVAILABLE_TIMES.indexOf(booking.booking_time);
+        const timeIndex = AVAILABLE_TIMES.indexOf(bookingToReject.booking_time);
         if (timeIndex !== -1) {
-          const totalMinutesWithBuffer = booking.duration + 15;
+          const totalMinutesWithBuffer = bookingToReject.duration + 15;
           const slotsNeeded = Math.ceil(totalMinutesWithBuffer / 30);
           
           const unlockedTimes = new Set<string>();
@@ -1486,8 +1499,8 @@ export default function AdminPage() {
           // Update availableTimeSlotsMap to unlock these times
           setAvailableTimeSlotsMap(prevMap => {
             const updatedMap = { ...prevMap };
-            if (updatedMap[booking.booking_date]) {
-              updatedMap[booking.booking_date] = updatedMap[booking.booking_date].map(slot => 
+            if (updatedMap[bookingToReject.booking_date]) {
+              updatedMap[bookingToReject.booking_date] = updatedMap[bookingToReject.booking_date].map(slot => 
                 unlockedTimes.has(slot.time) ? { ...slot, available: true, reason: null } : slot
               );
             }
@@ -3046,6 +3059,64 @@ export default function AdminPage() {
                   className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-600 transition"
                 >
                   Confirm & Send SMS
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Appointment Rejection Modal */}
+        {rejectionModal.show && rejectionModal.booking && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            onClick={() => setRejectionModal({ show: false, booking: null, sendMessage: true })}
+          >
+            <div 
+              className="bg-gray-900 rounded-lg shadow-2xl max-w-md w-full border-2 border-red-700 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-red-900 p-6">
+                <h3 className="text-xl font-bold text-white">Reject Appointment</h3>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <p className="text-gray-300">
+                  Are you sure you want to reject the appointment for <span className="font-semibold text-white">{rejectionModal.booking.customer_name}</span>?
+                </p>
+                <div className="bg-gray-800 p-3 rounded-lg text-sm space-y-2">
+                  <p className="text-gray-400">Date: <span className="text-white">{new Date(`${rejectionModal.booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
+                  <p className="text-gray-400">Time: <span className="text-white">{rejectionModal.booking.booking_time}</span></p>
+                </div>
+
+                {/* Send Message Checkbox */}
+                <div className="border-t border-gray-700 pt-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rejectionModal.sendMessage}
+                      onChange={(e) => setRejectionModal({ ...rejectionModal, sendMessage: e.target.checked })}
+                      className="w-5 h-5 rounded border-2 border-gray-600 bg-gray-800 cursor-pointer accent-blue-600"
+                    />
+                    <span className="text-gray-300">Send rejection text to customer</span>
+                  </label>
+                  <p className="text-xs text-gray-500 mt-2 ml-8">The customer will receive a message with a link to rebook</p>
+                </div>
+
+                <p className="text-red-400 text-sm font-semibold">This action cannot be undone. Calendar time slots will be freed.</p>
+              </div>
+              
+              <div className="bg-gray-800 p-6 flex gap-3">
+                <button
+                  onClick={() => setRejectionModal({ show: false, booking: null, sendMessage: true })}
+                  className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleFinalRejectAppointment}
+                  className="flex-1 py-3 px-4 bg-red-700 text-white rounded-lg font-semibold hover:bg-red-600 transition"
+                >
+                  Reject
                 </button>
               </div>
             </div>
