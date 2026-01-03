@@ -682,8 +682,8 @@ export default function EditAppointmentPage() {
                   time, 
                   totalDuration, 
                   timeSlotsForDate || [],
-                  selectedDate === appointment.booking_date ? appointment.booking_time : undefined,
-                  selectedDate === appointment.booking_date ? appointment.duration : undefined
+                  appointment?.booking_time,
+                  appointment?.duration
                 );
                 const isSelected = selectedTime === time;
 
