@@ -665,6 +665,22 @@ export default function AdminPage() {
   const [durationDropdownOpen, setDurationDropdownOpen] = useState(false);
   const [editServiceDropdownOpen, setEditServiceDropdownOpen] = useState(false);
   const [editDurationDropdownOpen, setEditDurationDropdownOpen] = useState(false);
+  // Handle query parameters on mount for navigation (e.g., ?tab=appointments&filter=pending)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    const filterParam = params.get('filter');
+    
+    if (tabParam === 'appointments' || tabParam === 'calendar' || tabParam === 'gallery') {
+      setActiveTab(tabParam);
+    }
+    
+    if (filterParam === 'upcoming' || filterParam === 'past' || filterParam === 'pending') {
+      setAppointmentFilter(filterParam);
+    }
+  }, []);
 
   // Load bookings and blocked dates on mount
   useEffect(() => {

@@ -142,7 +142,7 @@ export async function PUT(request: NextRequest) {
     if (technicianPhone) {
       console.log('Sending edit notification SMS to Kinsey');
       try {
-        const pendingConfirmationsLink = `${adminPageUrl}/admin`;
+        const pendingConfirmationsLink = `${adminPageUrl}/admin?tab=appointments&filter=pending`;
         const editSmsResult = await sendAppointmentEditedSMS(
           technicianPhone,
           appointment.customer_name,
