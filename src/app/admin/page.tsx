@@ -2161,7 +2161,7 @@ export default function AdminPage() {
               {confirmingAppointment.booking?.id === selectedAppointment.id && confirmingAppointment.booking && (
                 <div className="px-6 py-2 border-t-2 border-gray-700 bg-gray-800 space-y-2">
                   {/* Price Section - Inline Compact */}
-                  <div className="flex items-center gap-2 bg-green-900 bg-opacity-20 border-2 border-green-700 p-2 rounded">
+                  <div className="flex items-center gap-2 bg-gray-700 bg-opacity-40 border-2 border-gray-600 p-2 rounded h-11">
                     <p className="text-xs text-gray-400 font-semibold uppercase whitespace-nowrap">Price:</p>
                     <div className="flex items-center gap-1">
                       <span className="text-sm font-bold text-white">$</span>
@@ -2181,19 +2181,19 @@ export default function AdminPage() {
                           }
                         }}
                         placeholder="0.00"
-                        className="w-16 p-1 border-2 border-gray-700 rounded focus:outline-none focus:border-green-600 text-white font-bold text-sm bg-gray-800"
+                        className="w-16 px-1 py-0.5 border-2 border-gray-600 rounded focus:outline-none focus:border-gray-500 text-white font-bold text-sm bg-gray-800"
                       />
                     </div>
                   </div>
 
                   {/* SMS Checkbox - Inline Compact */}
-                  <div className="flex items-center bg-blue-900 bg-opacity-20 border-2 border-blue-700 p-2 rounded">
+                  <div className="flex items-center bg-gray-700 bg-opacity-40 border-2 border-gray-600 p-2 rounded h-11">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={confirmingAppointment.sendSms}
                         onChange={(e) => setConfirmingAppointment({ ...confirmingAppointment, sendSms: e.target.checked })}
-                        className="w-4 h-4 cursor-pointer"
+                        className="w-6 h-6 cursor-pointer"
                       />
                       <span className="text-white text-xs font-semibold whitespace-nowrap">Send SMS</span>
                     </label>
