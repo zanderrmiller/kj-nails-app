@@ -9,6 +9,9 @@ interface Appointment {
   customer_phone: string;
   booking_date: string;
   booking_time: string;
+  previous_booking_date: string | null;
+  previous_booking_time: string | null;
+  was_edited: boolean;
   service_id: string;
   duration: number;
   total_price: number;
@@ -153,6 +156,25 @@ export default function ConfirmAppointmentPage() {
   const formattedHour = hour % 12 || 12;
   const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
 
+  // Format previous appointment info if it was edited
+  let previousFormattedDate = '';
+  let previousFormattedTime = '';
+  if (appointment.was_edited && appointment.previous_booking_date) {
+    previousFormattedDate = new Date(`${appointment.previous_booking_date}T00:00:00`).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    });
+    
+    if (appointment.previous_booking_time) {
+      const [prevHours, prevMinutes] = appointment.previous_booking_time.split(':');
+      const prevHour = parseInt(prevHours);
+      const prevAmpm = prevHour >= 12 ? 'PM' : 'AM';
+      const prevFormattedHour = prevHour % 12 || 12;
+      previousFormattedTime = `${prevFormattedHour}:${prevMinutes} ${prevAmpm}`;
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-2xl mx-auto">
@@ -212,6 +234,23 @@ export default function ConfirmAppointmentPage() {
               />
             </div>
           </div>
+
+          {/* Previous Appointment Details (if edited) */}
+          {appointment.was_edited && previousFormattedDate && (
+            <div className="mb-8 pb-8 border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded">
+              <h3 className="text-lg font-bold text-yellow-800 mb-4">📝 Appointment Was Rescheduled</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-yellow-700 mb-1">Previous Date</label>
+                  <p className="text-gray-900">{previousFormattedDate}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-yellow-700 mb-1">Previous Time</label>
+                  <p className="text-gray-900">{previousFormattedTime}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Add-ons */}
           {appointment.addons && appointment.addons.length > 0 && (

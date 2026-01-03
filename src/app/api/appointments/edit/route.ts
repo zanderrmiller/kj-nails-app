@@ -94,6 +94,13 @@ export async function PUT(request: NextRequest) {
     if (newTime) updateData.booking_time = newTime;
     if (nailArtNotes !== undefined) updateData.nail_art_notes = nailArtNotes;
 
+    // Store previous booking details when editing
+    if (dateChanged || timeChanged) {
+      updateData.previous_booking_date = appointment.booking_date;
+      updateData.previous_booking_time = appointment.booking_time;
+      updateData.was_edited = true;
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('bookings')
       .update(updateData)
