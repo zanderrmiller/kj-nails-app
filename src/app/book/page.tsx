@@ -625,7 +625,7 @@ export default function BookPage() {
         }}>
           {/* Service Selection */}
           <div className="mb-4 sm:mb-6">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Select Your Nail Service</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-black mb-2 sm:mb-3">Select Your Nail Service</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2">
               {BASE_SERVICES.map((svc) => (
                 <label
@@ -666,7 +666,7 @@ export default function BookPage() {
               backgroundPosition: 'center',
               backgroundBlendMode: 'overlay'
             }}>
-              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Add-Ons</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">Add-Ons</h2>
 
               {/* Add-Ons Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2 mb-4">
@@ -808,7 +808,7 @@ export default function BookPage() {
           {/* Date Selection */}
           {selectedBase && (
             <div className="mb-4 sm:mb-8">
-              <h2 className="text-lg sm:text-2xl font-semibold text-white mb-3 sm:mb-4">Select Date</h2>
+              <h2 className="text-lg sm:text-2xl font-semibold text-black mb-3 sm:mb-4">Select Date</h2>
               <Calendar 
                 selectedDate={selectedDate} 
                 onDateSelect={(date) => {
@@ -826,7 +826,7 @@ export default function BookPage() {
           {/* Time Selection */}
           {selectedBase && selectedDate && (
             <div className="mb-4 sm:mb-8">
-              <h2 className="text-lg sm:text-2xl font-semibold text-white mb-3 sm:mb-4">Select Time</h2>
+              <h2 className="text-lg sm:text-2xl font-semibold text-black mb-3 sm:mb-4">Select Time</h2>
               {timeSlotsLoading ? (
                 <div className="text-center py-4">
                   <p className="text-xs sm:text-sm text-gray-400">Loading available times...</p>
@@ -880,7 +880,7 @@ export default function BookPage() {
           {/* Customer Info */}
           {selectedBase && selectedDate && selectedTime && (
             <div className="mb-4 sm:mb-8">
-              <h2 className="text-lg sm:text-2xl font-semibold text-white mb-3 sm:mb-4">Your Information</h2>
+              <h2 className="text-lg sm:text-2xl font-semibold text-black mb-3 sm:mb-4">Your Information</h2>
               <div className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="block text-gray-900 font-semibold mb-2">Name *</label>
@@ -912,7 +912,7 @@ export default function BookPage() {
                     onChange={(e) => setSmsConsent(e.target.checked)}
                     className="mt-1 w-5 h-5 accent-gray-400 border-gray-600 rounded focus:ring-gray-400 cursor-pointer"
                   />
-                  <label htmlFor="smsConsent" className="text-sm text-gray-300 cursor-pointer">
+                  <label htmlFor="smsConsent" className="text-sm text-gray-600 cursor-pointer font-medium">
                     I agree to receive text messages from KJNails in regards to appointment scheduling, confirmation, and feedback. *
                   </label>
                 </div>
