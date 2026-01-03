@@ -45,21 +45,71 @@ const DISPLAY_TIMES = [
   '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM',
 ];
 
+function timeToMinutes(time: string): number {
+  const [timePart, period] = time.split(' ');
+  let [hours, minutes] = timePart.split(':').map(Number);
+  
+  if (period === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  
+  return hours * 60 + minutes;
+}
+
+function minutesToTime(mins: number): string {
+  const hours = Math.floor(mins / 60);
+  const minutes = mins % 60;
+  
+  let displayHours = hours;
+  let period = 'AM';
+  
+  if (hours >= 12) {
+    period = 'PM';
+    if (hours > 12) displayHours = hours - 12;
+  }
+  if (hours === 0) displayHours = 12;
+  
+  return `${displayHours}:${String(minutes).padStart(2, '0')} ${period}`;
+}
+
 function hasEnoughConsecutiveSlots(
   startTime: string,
   durationMinutes: number,
-  timeSlotsForDate: Array<{ time: string; available: boolean; reason: string | null }>
+  timeSlotsForDate: Array<{ time: string; available: boolean; reason: string | null }>,
+  currentAppointmentTime?: string,
+  currentAppointmentDuration?: number
 ): boolean {
   const startIndex = AVAILABLE_TIMES.indexOf(startTime);
   if (startIndex === -1) return false;
 
   const slotsNeeded = Math.ceil(durationMinutes / 30);
 
+  // If this is the same date as the current appointment, exclude those slots from being blocked
+  const currentAppointmentBlockedSlots = new Set<string>();
+  if (currentAppointmentTime && currentAppointmentDuration) {
+    const currentStartIndex = AVAILABLE_TIMES.indexOf(currentAppointmentTime);
+    const currentSlotsNeeded = Math.ceil(currentAppointmentDuration / 30);
+    for (let i = 0; i < currentSlotsNeeded; i++) {
+      const slotIndex = currentStartIndex + i;
+      if (slotIndex < AVAILABLE_TIMES.length) {
+        currentAppointmentBlockedSlots.add(AVAILABLE_TIMES[slotIndex]);
+      }
+    }
+  }
+
   for (let i = 0; i < slotsNeeded; i++) {
     const slotIndex = startIndex + i;
     if (slotIndex >= AVAILABLE_TIMES.length) return false;
 
     const slotTime = AVAILABLE_TIMES[slotIndex];
+    
+    // Skip check if this slot is part of the current appointment being edited
+    if (currentAppointmentBlockedSlots.has(slotTime)) {
+      continue;
+    }
+
     const slot = timeSlotsForDate.find((s) => s.time === slotTime);
     if (!slot || !slot.available) return false;
   }
@@ -206,6 +256,8 @@ export default function EditAppointmentPage() {
   const [hasNailArt, setHasNailArt] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState('');
   const [nailArtPrice, setNailArtPrice] = useState(0);
+  const [nailArtImages, setNailArtImages] = useState<File[]>([]);
+  const [nailArtImageUrls, setNailArtImageUrls] = useState<string[]>([]);
   const [nailArtNotes, setNailArtNotes] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
@@ -239,8 +291,15 @@ export default function EditAppointmentPage() {
         setSelectedBase(selectedServiceId);
         setSelectedDate(appointmentData.appointment.booking_date);
         setSelectedTime(appointmentData.appointment.booking_time);
+        
+        // Load previous nail art info
         if (appointmentData.appointment.nail_art_notes) {
           setNailArtNotes(appointmentData.appointment.nail_art_notes);
+          setHasNailArt(true);
+        }
+        if (appointmentData.appointment.nail_art_image_urls && appointmentData.appointment.nail_art_image_urls.length > 0) {
+          setNailArtImageUrls(appointmentData.appointment.nail_art_image_urls);
+          setHasNailArt(true);
         }
 
         // Fetch availability
@@ -511,25 +570,59 @@ export default function EditAppointmentPage() {
                 <div className="bg-gray-950 p-3 rounded-lg border-2 border-gray-700 space-y-3">
                   <div>
                     <label className="block">
-                      <span className="text-white font-semibold mb-2 block text-sm">Price per Nail</span>
+                      <span className="text-white font-semibold mb-2 block text-sm">Upload Inspiration Pictures</span>
                       <input
-                        type="number"
-                        step="0.50"
-                        value={nailArtPrice}
-                        onChange={(e) => setNailArtPrice(parseFloat(e.target.value) || 0)}
-                        className="w-full p-2 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-white bg-gray-900 text-sm"
-                        placeholder="e.g., 3.50"
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => setNailArtImages(Array.from(e.target.files || []))}
+                        className="w-full p-2 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-sm text-gray-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600"
                       />
+                      {(nailArtImages.length > 0 || nailArtImageUrls.length > 0) && (
+                        <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {/* Previously uploaded images */}
+                          {nailArtImageUrls.map((url, idx) => (
+                            <div key={`url-${idx}`} className="relative group">
+                              <img
+                                src={url}
+                                alt={`Previous ${idx + 1}`}
+                                className="w-full h-20 object-cover rounded border-2 border-gray-600"
+                              />
+                              <span className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                                onClick={() => setNailArtImageUrls(nailArtImageUrls.filter((_, i) => i !== idx))}
+                              >
+                                ✕
+                              </span>
+                            </div>
+                          ))}
+                          {/* New images to upload */}
+                          {nailArtImages.map((file, idx) => (
+                            <div key={`file-${idx}`} className="relative group">
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt={`New ${idx + 1}`}
+                                className="w-full h-20 object-cover rounded border-2 border-pink-500"
+                              />
+                              <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                                onClick={() => setNailArtImages(nailArtImages.filter((_, i) => i !== idx))}
+                              >
+                                ✕
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </label>
                   </div>
+
                   <div>
                     <label className="block">
-                      <span className="text-white font-semibold mb-2 block text-sm">Design Notes (Optional)</span>
+                      <span className="text-white font-semibold mb-2 block text-sm">Nail Art Notes</span>
                       <textarea
                         value={nailArtNotes}
                         onChange={(e) => setNailArtNotes(e.target.value)}
                         rows={3}
-                        placeholder="Describe your nail art ideas..."
+                        placeholder="Describe your nail art design, colors, patterns, or special requests..."
                         className="w-full p-2 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-white bg-gray-900 text-sm"
                       />
                     </label>
@@ -556,7 +649,13 @@ export default function EditAppointmentPage() {
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
               {DISPLAY_TIMES.map((time) => {
                 const timeSlotsForDate = availableTimeSlotsMap[selectedDate];
-                const hasSlots = hasEnoughConsecutiveSlots(time, totalDuration, timeSlotsForDate || []);
+                const hasSlots = hasEnoughConsecutiveSlots(
+                  time, 
+                  totalDuration, 
+                  timeSlotsForDate || [],
+                  selectedDate === appointment.booking_date ? appointment.booking_time : undefined,
+                  selectedDate === appointment.booking_date ? appointment.duration : undefined
+                );
                 const isSelected = selectedTime === time;
 
                 return (
@@ -580,14 +679,49 @@ export default function EditAppointmentPage() {
             </div>
           </div>
 
-          {/* Price Summary */}
-          <div className="mb-6 p-4 bg-gray-950 rounded-lg border-2 border-gray-700">
-            <div className="flex justify-between items-center text-white">
-              <span className="font-semibold">Estimated Total:</span>
-              <span className="text-xl font-bold text-pink-500">${totalPrice.toFixed(2)}</span>
+          {/* Appointment Overview */}
+          {selectedDate && selectedTime && (
+            <div className="mb-6 p-4 bg-gray-950 rounded-lg border-2 border-gray-700">
+              <h3 className="text-base font-semibold text-white mb-3">Appointment Overview</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between text-gray-300">
+                  <span>Date:</span>
+                  <span className="text-white font-semibold">
+                    {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  </span>
+                </div>
+                <div className="flex justify-between text-gray-300">
+                  <span>Start Time:</span>
+                  <span className="text-white font-semibold">{selectedTime}</span>
+                </div>
+                <div className="flex justify-between text-gray-300">
+                  <span>End Time:</span>
+                  <span className="text-white font-semibold">
+                    {minutesToTime(timeToMinutes(selectedTime) + totalDuration)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-gray-300">
+                  <span>Duration:</span>
+                  <span className="text-white font-semibold">{totalDuration} minutes</span>
+                </div>
+                <div className="border-t border-gray-700 pt-2 mt-2 flex justify-between">
+                  <span className="text-white font-semibold">Estimated Total:</span>
+                  <span className="text-pink-500 font-bold text-lg">${totalPrice.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
-            <div className="text-xs text-gray-400 mt-2">Duration: {totalDuration} minutes</div>
-          </div>
+          )}
+
+          {/* Price Summary (backup) */}
+          {(!selectedDate || !selectedTime) && (
+            <div className="mb-6 p-4 bg-gray-950 rounded-lg border-2 border-gray-700">
+              <div className="flex justify-between items-center text-white">
+                <span className="font-semibold">Estimated Total:</span>
+                <span className="text-xl font-bold text-pink-500">${totalPrice.toFixed(2)}</span>
+              </div>
+              <div className="text-xs text-gray-400 mt-2">Duration: {totalDuration} minutes</div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-4 flex-col sm:flex-row">
