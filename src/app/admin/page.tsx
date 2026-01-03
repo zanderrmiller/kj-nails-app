@@ -2159,37 +2159,35 @@ export default function AdminPage() {
 
               {/* Confirmation Mode - Price and SMS Options */}
               {confirmingAppointment.booking?.id === selectedAppointment.id && confirmingAppointment.booking && (
-                <div className="px-6 py-3 border-t-2 border-gray-700 bg-gray-800 space-y-3">
-                  {/* Price Section - Compact */}
-                  <div className="bg-green-900 bg-opacity-20 border-2 border-green-700 p-3 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">Final Price:</p>
-                      <div className="flex items-center gap-1 flex-1">
-                        <span className="text-lg font-bold text-white">$</span>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={confirmingAppointment.finalPrice === 0 ? '' : confirmingAppointment.finalPrice}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '') {
-                              setConfirmingAppointment({ ...confirmingAppointment, finalPrice: 0 });
-                            } else {
-                              const parsed = parseFloat(value);
-                              if (!isNaN(parsed)) {
-                                setConfirmingAppointment({ ...confirmingAppointment, finalPrice: parsed });
-                              }
+                <div className="px-6 py-2 border-t-2 border-gray-700 bg-gray-800 space-y-2">
+                  {/* Price Section - Inline Compact */}
+                  <div className="flex items-center gap-2 bg-green-900 bg-opacity-20 border-2 border-green-700 p-2 rounded">
+                    <p className="text-xs text-gray-400 font-semibold uppercase whitespace-nowrap">Price:</p>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-bold text-white">$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={confirmingAppointment.finalPrice === 0 ? '' : confirmingAppointment.finalPrice}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                            setConfirmingAppointment({ ...confirmingAppointment, finalPrice: 0 });
+                          } else {
+                            const parsed = parseFloat(value);
+                            if (!isNaN(parsed)) {
+                              setConfirmingAppointment({ ...confirmingAppointment, finalPrice: parsed });
                             }
-                          }}
-                          placeholder="0.00"
-                          className="w-20 p-2 border-2 border-gray-700 rounded focus:outline-none focus:border-green-600 text-white font-bold text-lg bg-gray-800"
-                        />
-                      </div>
+                          }
+                        }}
+                        placeholder="0.00"
+                        className="w-16 p-1 border-2 border-gray-700 rounded focus:outline-none focus:border-green-600 text-white font-bold text-sm bg-gray-800"
+                      />
                     </div>
                   </div>
 
-                  {/* SMS Checkbox - Compact */}
-                  <div className="bg-blue-900 bg-opacity-20 border-2 border-blue-700 p-2 rounded-lg">
+                  {/* SMS Checkbox - Inline Compact */}
+                  <div className="flex items-center bg-blue-900 bg-opacity-20 border-2 border-blue-700 p-2 rounded">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -2197,7 +2195,7 @@ export default function AdminPage() {
                         onChange={(e) => setConfirmingAppointment({ ...confirmingAppointment, sendSms: e.target.checked })}
                         className="w-4 h-4 cursor-pointer"
                       />
-                      <span className="text-white text-sm font-semibold">Send SMS to customer</span>
+                      <span className="text-white text-xs font-semibold whitespace-nowrap">Send SMS</span>
                     </label>
                   </div>
                 </div>
@@ -2208,10 +2206,18 @@ export default function AdminPage() {
                 {confirmingAppointment.booking?.id === selectedAppointment.id && confirmingAppointment.booking ? (
                   <>
                     <button
-                      onClick={() => setConfirmingAppointment({ booking: null, finalPrice: 0, sendSms: true })}
-                      className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
+                      onClick={() => handleEditBooking(selectedAppointment)}
+                      className="py-3 px-4 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-600 transition"
+                      title="Edit appointment"
                     >
-                      Cancel
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleRejectAppointment(selectedAppointment)}
+                      className="py-3 px-4 bg-red-700 text-white rounded-lg font-bold hover:bg-red-600 transition"
+                      title="Reject appointment"
+                    >
+                      Reject
                     </button>
                     <button
                       onClick={handleFinalConfirmAppointment}
