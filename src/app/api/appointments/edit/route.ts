@@ -149,7 +149,8 @@ export async function PUT(request: NextRequest) {
           newDate || appointment.booking_date,
           newTime || appointment.booking_time,
           appointment.service_id || 'Nail Service',
-          pendingConfirmationsLink
+          pendingConfirmationsLink,
+          appointment.duration
         );
         console.log('Edit notification SMS result:', editSmsResult);
       } catch (smsError) {
