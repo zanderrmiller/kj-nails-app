@@ -226,7 +226,7 @@ export const sendAppointmentConfirmedSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
-  let message = `Your appointment is confirmed!\n\n`;
+  let message = `Your Appointment with KJNails is Confirmed!\n\n`;
   message += `Date: ${formattedDate} at ${appointmentTime}\n`;
   message += `Final Estimate: $${finalPrice}\n\n`;
   message += `See you soon!`;
