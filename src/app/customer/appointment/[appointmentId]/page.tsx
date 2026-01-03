@@ -86,15 +86,14 @@ function hasEnoughConsecutiveSlots(
 
   const slotsNeeded = Math.ceil(durationMinutes / 30);
 
-  // If this is the same date as the current appointment, we need to allow those slots through
-  // even if the backend marks them as unavailable (since we're freeing them up)
-  const currentAppointmentBlockedSlots = new Set<string>();
+  // Calculate the current appointment's time range to allow all slots within it
+  let currentAppointmentStartMinutes = -1;
+  let currentAppointmentEndMinutes = -1;
+  
   if (currentAppointmentTime && currentAppointmentDuration) {
-    // Try to find the appointment time in AVAILABLE_TIMES
-    // It might be in 12-hour format like "2:00 PM" or needs conversion from "14:00"
+    // Convert appointment time to minutes if in HH:MM format
     let appointmentTimeFormatted = currentAppointmentTime;
     if (!AVAILABLE_TIMES.includes(currentAppointmentTime)) {
-      // Try to convert from HH:MM format to 12-hour format
       const timeParts = currentAppointmentTime.split(':');
       if (timeParts.length >= 2) {
         const hours = parseInt(timeParts[0]);
@@ -103,16 +102,8 @@ function hasEnoughConsecutiveSlots(
       }
     }
     
-    const currentStartIndex = AVAILABLE_TIMES.indexOf(appointmentTimeFormatted);
-    if (currentStartIndex !== -1) {
-      const currentSlotsNeeded = Math.ceil(currentAppointmentDuration / 30);
-      for (let i = 0; i < currentSlotsNeeded; i++) {
-        const slotIndex = currentStartIndex + i;
-        if (slotIndex < AVAILABLE_TIMES.length) {
-          currentAppointmentBlockedSlots.add(AVAILABLE_TIMES[slotIndex]);
-        }
-      }
-    }
+    currentAppointmentStartMinutes = timeToMinutes(appointmentTimeFormatted);
+    currentAppointmentEndMinutes = currentAppointmentStartMinutes + currentAppointmentDuration;
   }
 
   for (let i = 0; i < slotsNeeded; i++) {
@@ -120,13 +111,16 @@ function hasEnoughConsecutiveSlots(
     if (slotIndex >= AVAILABLE_TIMES.length) return false;
 
     const slotTime = AVAILABLE_TIMES[slotIndex];
+    const slotTimeInMinutes = timeToMinutes(slotTime);
     
-    // If this slot is part of the current appointment being edited, treat it as available
-    if (currentAppointmentBlockedSlots.has(slotTime)) {
-      continue;
+    // If this slot falls within the current appointment's time range, it's being freed up, so allow it
+    if (currentAppointmentStartMinutes !== -1 && 
+        slotTimeInMinutes >= currentAppointmentStartMinutes && 
+        slotTimeInMinutes < currentAppointmentEndMinutes) {
+      continue; // This slot is part of the current appointment, it will be freed
     }
 
-    // For other slots, check if they're available from the backend data
+    // For slots outside the current appointment, check backend availability
     const slot = timeSlotsForDate.find((s) => s.time === slotTime);
     if (!slot || !slot.available) return false;
   }
