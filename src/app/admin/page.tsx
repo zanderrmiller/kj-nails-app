@@ -301,7 +301,16 @@ function EditCalendar({
   const [displayMonth, setDisplayMonth] = useState(0);
 
   const timeToMinutes = (time: string): number => {
-    const [hours, minutes] = time.split(':').map(Number);
+    // Handle 12-hour format times like "3:00 PM" or "9:30 AM"
+    const [timePart, period] = time.split(' ');
+    let [hours, minutes] = timePart.split(':').map(Number);
+    
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
     return hours * 60 + minutes;
   };
 
@@ -473,8 +482,8 @@ function EditCalendar({
         <div className="bg-gray-900 p-4 rounded-lg border-2 border-gray-700">
           <label className="block text-xs font-semibold text-gray-400 uppercase mb-3">Available Times</label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {timeSlotsForSelectedDate.map((slot) => {
-              // Create a working copy with freed appointment slots marked as available (same logic as customer page)
+            {(() => {
+              // Create working copy with freed appointment slots marked as available (same logic as customer page)
               const workingSlotsForDisplay = timeSlotsForSelectedDate.map(s => {
                 const slotTimeInMinutes = timeToMinutes(s.time);
                 
@@ -490,30 +499,32 @@ function EditCalendar({
                 return s;
               });
               
-              // Use the working slot for this button's availability
-              const workingSlot = workingSlotsForDisplay.find(s => s.time === slot.time) || slot;
-              const canFit = canFitDuration(slot.time, durationMinutes, workingSlotsForDisplay);
-              const slotDisabled = !workingSlot.available || (durationMinutes > 0 && !canFit);
-              
-              return (
-                <button
-                  key={slot.time}
-                  type="button"
-                  onClick={() => !slotDisabled && onTimeSelect(slot.time)}
-                  disabled={slotDisabled}
-                  title={!workingSlot.available ? `${workingSlot.reason}` : slotDisabled ? 'Not enough consecutive time for this duration' : ''}
-                  className={`py-2 px-2 rounded-lg text-xs font-semibold transition ${
-                    slotDisabled
-                      ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
-                      : selectedTime === slot.time
-                      ? 'bg-gray-700 text-white border-2 border-gray-600'
-                      : 'bg-gray-800 border-2 border-gray-700 text-white hover:border-gray-600 hover:bg-gray-700 cursor-pointer'
-                  }`}
-                >
-                  {slot.time}
-                </button>
-              );
-            })}
+              return timeSlotsForSelectedDate.map((slot) => {
+                // Use the working slot for this button's availability
+                const workingSlot = workingSlotsForDisplay.find(s => s.time === slot.time) || slot;
+                const canFit = canFitDuration(slot.time, durationMinutes, workingSlotsForDisplay);
+                const slotDisabled = !workingSlot.available || (durationMinutes > 0 && !canFit);
+                
+                return (
+                  <button
+                    key={slot.time}
+                    type="button"
+                    onClick={() => !slotDisabled && onTimeSelect(slot.time)}
+                    disabled={slotDisabled}
+                    title={!workingSlot.available ? `${workingSlot.reason}` : slotDisabled ? 'Not enough consecutive time for this duration' : ''}
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold transition ${
+                      slotDisabled
+                        ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                        : selectedTime === slot.time
+                        ? 'bg-gray-700 text-white border-2 border-gray-600'
+                        : 'bg-gray-800 border-2 border-gray-700 text-white hover:border-gray-600 hover:bg-gray-700 cursor-pointer'
+                    }`}
+                  >
+                    {slot.time}
+                  </button>
+                );
+              });
+            })()}
           </div>
         </div>
       )}
