@@ -23,6 +23,7 @@ interface ConfirmationRequest {
   appointmentId: string;
   finalPrice: number;
   duration?: number;
+  sendSms?: boolean;
 }
 
 export async function GET(request: NextRequest) {
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body: ConfirmationRequest = await request.json();
-    let { appointmentId, finalPrice, duration } = body;
+    let { appointmentId, finalPrice, duration, sendSms = true } = body;
 
     if (!appointmentId || finalPrice === undefined) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -149,8 +150,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Appointment confirmed:', appointmentId);
 
-    // Send confirmation SMS to customer
-    if (appointment.customer_phone) {
+    // Send confirmation SMS to customer (if enabled)
+    if (sendSms && appointment.customer_phone) {
       console.log('Attempting to send confirmation SMS to customer:', appointment.customer_phone);
       try {
         const smsResult = await sendAppointmentConfirmedSMS(
@@ -175,7 +176,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Appointment confirmed and customer notified',
+      message: 'Appointment confirmed' + (sendSms ? ' and customer notified' : ''),
       appointmentId: appointmentId,
     });
   } catch (error) {

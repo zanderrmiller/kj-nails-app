@@ -650,7 +650,7 @@ export default function AdminPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; booking: Booking | null }>({ show: false, booking: null });
   
   // Confirmation modal state
-  const [confirmationModal, setConfirmationModal] = useState<{ show: boolean; booking: Booking | null; finalPrice: number }>({ show: false, booking: null, finalPrice: 0 });
+  const [confirmationModal, setConfirmationModal] = useState<{ show: boolean; booking: Booking | null; finalPrice: number; sendSms: boolean }>({ show: false, booking: null, finalPrice: 0, sendSms: true });
   
   // Rejection modal state
   const [rejectionModal, setRejectionModal] = useState<{ show: boolean; booking: Booking | null; sendMessage: boolean }>({ show: false, booking: null, sendMessage: true });
@@ -1397,11 +1397,12 @@ export default function AdminPage() {
   };
 
   const handleConfirmAppointment = async (booking: Booking) => {
-    // Show confirmation modal instead of immediately confirming
+    // Set the confirmation modal with SMS enabled by default
     setConfirmationModal({
       show: true,
       booking: booking,
       finalPrice: booking.total_price,
+      sendSms: true,
     });
   };
 
@@ -1416,6 +1417,7 @@ export default function AdminPage() {
         body: JSON.stringify({
           appointmentId: bookingToConfirm.id,
           finalPrice: confirmationModal.finalPrice,
+          sendSms: confirmationModal.sendSms,
         }),
       });
 
@@ -1429,8 +1431,8 @@ export default function AdminPage() {
         };
         setBookings(bookings.map(b => b.id === bookingToConfirm.id ? updatedBooking : b));
         setSelectedAppointment(null);
-        setConfirmationModal({ show: false, booking: null, finalPrice: 0 });
-        setSaveMessage('Appointment confirmed and customer notified');
+        setConfirmationModal({ show: false, booking: null, finalPrice: 0, sendSms: true });
+        setSaveMessage('Appointment confirmed' + (confirmationModal.sendSms ? ' and customer notified' : ''));
         setTimeout(() => setSaveMessage(''), 2000);
       } else {
         alert(`Failed to confirm appointment: ${responseData.error || 'Unknown error'}`);
@@ -2160,6 +2162,13 @@ export default function AdminPage() {
               <div className="flex gap-2 p-6 border-t-2 border-gray-700 flex-shrink-0 bg-gray-800">
                 {selectedAppointment.status === 'pending' ? (
                   <>
+                    <button
+                      onClick={() => handleEditBooking(selectedAppointment)}
+                      className="py-3 px-4 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-600 transition"
+                      title="Edit appointment"
+                    >
+                      Edit
+                    </button>
                     <button
                       onClick={() => handleConfirmAppointment(selectedAppointment)}
                       className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-bold hover:bg-green-600 transition"
@@ -2941,7 +2950,7 @@ export default function AdminPage() {
         {confirmationModal.show && confirmationModal.booking && (
           <div 
             className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-            onClick={() => setConfirmationModal({ show: false, booking: null, finalPrice: 0 })}
+            onClick={() => setConfirmationModal({ show: false, booking: null, finalPrice: 0, sendSms: true })}
           >
             <div 
               className="bg-gray-900 rounded-lg shadow-2xl max-w-2xl w-full border-2 border-gray-700 overflow-hidden"
@@ -2949,7 +2958,7 @@ export default function AdminPage() {
             >
               <div className="bg-gray-800 border-b-2 border-gray-700 p-6">
                 <h3 className="text-2xl font-bold text-white">Confirm Appointment</h3>
-                <p className="text-sm text-blue-400 mt-2">✓ This will send a confirmation message to the client with appointment details</p>
+                <p className="text-sm text-blue-400 mt-2">✓ Review details and confirm appointment</p>
               </div>
               
               <div className="p-6 space-y-6">
@@ -3003,7 +3012,7 @@ export default function AdminPage() {
                 {/* Price Section */}
                 <div className="bg-green-900 bg-opacity-20 border-2 border-green-700 p-4 rounded-lg">
                   <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Final Price</p>
-                  <p className="text-xs text-gray-500 mb-3">Adjust the final price if needed (will be sent to customer)</p>
+                  <p className="text-xs text-gray-500 mb-3">Adjust the final price if needed (will be sent to customer if SMS is enabled)</p>
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-bold text-white">$</span>
                     <input
@@ -3026,11 +3035,24 @@ export default function AdminPage() {
                     />
                   </div>
                 </div>
+
+                {/* SMS Checkbox */}
+                <div className="bg-blue-900 bg-opacity-20 border-2 border-blue-700 p-4 rounded-lg">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={confirmationModal.sendSms}
+                      onChange={(e) => setConfirmationModal({ ...confirmationModal, sendSms: e.target.checked })}
+                      className="w-5 h-5 cursor-pointer"
+                    />
+                    <span className="text-white font-semibold">Send confirmation SMS to customer</span>
+                  </label>
+                </div>
               </div>
               
               <div className="bg-gray-800 p-6 border-t-2 border-gray-700 flex gap-3">
                 <button
-                  onClick={() => setConfirmationModal({ show: false, booking: null, finalPrice: 0 })}
+                  onClick={() => setConfirmationModal({ show: false, booking: null, finalPrice: 0, sendSms: true })}
                   className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
                 >
                   Cancel
@@ -3039,7 +3061,7 @@ export default function AdminPage() {
                   onClick={handleFinalConfirmAppointment}
                   className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-600 transition"
                 >
-                  Confirm & Send SMS
+                  Confirm
                 </button>
               </div>
             </div>
