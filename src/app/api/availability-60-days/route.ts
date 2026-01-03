@@ -68,6 +68,35 @@ export async function GET(request: NextRequest) {
 
     const blockedDates = new Set((blockedDatesData || []).map((d: any) => d.date));
 
+    // If excluding an appointment, fetch its details to exclude its blocked times
+    let excludedAppointmentBlockedTimes: Set<string> | null = null;
+    let excludedAppointmentDate: string | null = null;
+    
+    if (excludeAppointmentId) {
+      const { data: excludedBooking } = await supabase
+        .from('bookings')
+        .select('booking_date, booking_time, duration')
+        .eq('id', excludeAppointmentId)
+        .single();
+      
+      if (excludedBooking && typeof excludedBooking === 'object') {
+        const booking = excludedBooking as any;
+        excludedAppointmentDate = booking.booking_date;
+        // Calculate which times this appointment blocks
+        const timeIndex = AVAILABLE_TIMES.findIndex(t => t === booking.booking_time);
+        if (timeIndex !== -1) {
+          const totalMinutesWithBuffer = booking.duration + 15; // Add 15-minute buffer
+          const slotsNeeded = Math.ceil(totalMinutesWithBuffer / 30);
+          excludedAppointmentBlockedTimes = new Set();
+          for (let i = 0; i < slotsNeeded; i++) {
+            if (timeIndex + i < AVAILABLE_TIMES.length) {
+              excludedAppointmentBlockedTimes.add(AVAILABLE_TIMES[timeIndex + i]);
+            }
+          }
+        }
+      }
+    }
+
     // Fetch blocked times for all dates
     const { data: blockedTimesData } = await supabase
       .from('blocked_times')
@@ -76,6 +105,13 @@ export async function GET(request: NextRequest) {
 
     const blockedTimes = new Map<string, Set<string>>();
     (blockedTimesData || []).forEach((bt: any) => {
+      // Skip blocked times that belong to the appointment being edited
+      if (excludedAppointmentBlockedTimes && excludedAppointmentDate && 
+          bt.date === excludedAppointmentDate && 
+          excludedAppointmentBlockedTimes.has(bt.time)) {
+        return;
+      }
+      
       if (!blockedTimes.has(bt.date)) {
         blockedTimes.set(bt.date, new Set());
       }
