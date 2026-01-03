@@ -106,26 +106,28 @@ function hasEnoughConsecutiveSlots(
     currentAppointmentEndMinutes = currentAppointmentStartMinutes + currentAppointmentDuration;
   }
 
+  // Create a working copy of time slots and mark freed appointment slots as available
+  const workingSlots = timeSlotsForDate.map(slot => {
+    const slotTimeInMinutes = timeToMinutes(slot.time);
+    // If this slot is within the current appointment's time window, mark it as available (it will be freed)
+    if (currentAppointmentStartMinutes !== -1 && currentAppointmentEndMinutes !== -1) {
+      if (slotTimeInMinutes >= currentAppointmentStartMinutes && 
+          slotTimeInMinutes < currentAppointmentEndMinutes) {
+        return { ...slot, available: true };
+      }
+    }
+    return slot;
+  });
+
   // Check each slot needed for the new appointment
   for (let i = 0; i < slotsNeeded; i++) {
     const slotIndex = startIndex + i;
     if (slotIndex >= AVAILABLE_TIMES.length) return false;
 
     const slotTime = AVAILABLE_TIMES[slotIndex];
-    const slotTimeInMinutes = timeToMinutes(slotTime);
     
-    // If this slot is within the current appointment's time window, it will be freed up, so allow it
-    if (currentAppointmentStartMinutes !== -1 && currentAppointmentEndMinutes !== -1) {
-      if (slotTimeInMinutes >= currentAppointmentStartMinutes && 
-          slotTimeInMinutes < currentAppointmentEndMinutes) {
-        // This slot is being freed, so skip the availability check
-        continue;
-      }
-    }
-
-    // For all other slots (before current appointment or after it), check backend availability
-    // If slot data exists, check if it's available; if not, assume it's available (gives benefit of doubt)
-    const slot = timeSlotsForDate.find((s) => s.time === slotTime);
+    // Check the working slots (which now has freed appointment slots marked as available)
+    const slot = workingSlots.find((s) => s.time === slotTime);
     if (slot && !slot.available) {
       return false;
     }
