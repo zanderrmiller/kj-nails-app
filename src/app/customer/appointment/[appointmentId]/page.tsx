@@ -39,6 +39,7 @@ export default function CustomerAppointmentPage() {
   // Edit form state
   const [editDate, setEditDate] = useState<string>('');
   const [editTime, setEditTime] = useState<string>('');
+  const [editDuration, setEditDuration] = useState<number>(0);
   const [editNailArtNotes, setEditNailArtNotes] = useState<string>('');
 
   // Modal state
@@ -58,6 +59,7 @@ export default function CustomerAppointmentPage() {
         setAppointment(data.appointment);
         setEditDate(data.appointment.booking_date);
         setEditTime(data.appointment.booking_time);
+        setEditDuration(data.appointment.duration);
         setEditNailArtNotes(data.appointment.nail_art_notes || '');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load appointment');
@@ -86,6 +88,7 @@ export default function CustomerAppointmentPage() {
           appointmentId,
           newDate: editDate,
           newTime: editTime,
+          newDuration: editDuration,
           nailArtNotes: editNailArtNotes,
         }),
       });
@@ -322,6 +325,21 @@ export default function CustomerAppointmentPage() {
                   type="time"
                   value={editTime}
                   onChange={(e) => setEditTime(e.target.value)}
+                  disabled={submitting}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+                <input
+                  type="number"
+                  min="15"
+                  max="240"
+                  step="15"
+                  value={editDuration}
+                  onChange={(e) => setEditDuration(parseInt(e.target.value))}
                   disabled={submitting}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />

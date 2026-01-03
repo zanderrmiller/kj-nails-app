@@ -48,13 +48,14 @@ interface EditRequest {
   appointmentId: string;
   newDate?: string;
   newTime?: string;
+  newDuration?: number;
   nailArtNotes?: string;
 }
 
 export async function PUT(request: NextRequest) {
   try {
     const body: EditRequest = await request.json();
-    const { appointmentId, newDate, newTime, nailArtNotes } = body;
+    const { appointmentId, newDate, newTime, newDuration, nailArtNotes } = body;
 
     if (!appointmentId) {
       return NextResponse.json({ error: 'Missing appointment ID' }, { status: 400 });
@@ -84,6 +85,7 @@ export async function PUT(request: NextRequest) {
     // Determine what changed
     const dateChanged = newDate && newDate !== appointment.booking_date;
     const timeChanged = newTime && newTime !== appointment.booking_time;
+    const durationChanged = newDuration && newDuration !== appointment.duration;
 
     // Update the appointment
     const updateData: any = {
@@ -92,6 +94,7 @@ export async function PUT(request: NextRequest) {
 
     if (newDate) updateData.booking_date = newDate;
     if (newTime) updateData.booking_time = newTime;
+    if (newDuration) updateData.duration = newDuration;
     if (nailArtNotes !== undefined) updateData.nail_art_notes = nailArtNotes;
 
     const { error: updateError } = await supabaseAdmin
@@ -104,10 +107,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update appointment' }, { status: 500 });
     }
 
-    // If date/time changed, update blocked times
-    if (dateChanged || timeChanged) {
+    // If date/time/duration changed, update blocked times
+    if (dateChanged || timeChanged || durationChanged) {
       const updatedDate = newDate || appointment.booking_date;
       const updatedTime = newTime || appointment.booking_time;
+      const updatedDuration = newDuration || appointment.duration;
 
       // Remove old blocked times
       await supabaseAdmin
@@ -117,7 +121,7 @@ export async function PUT(request: NextRequest) {
         .in('time', getBlockedTimesForAppointment(appointment.booking_time, appointment.duration));
 
       // Add new blocked times
-      const newBlockedTimes = getBlockedTimesForAppointment(updatedTime, appointment.duration);
+      const newBlockedTimes = getBlockedTimesForAppointment(updatedTime, updatedDuration);
       if (newBlockedTimes.length > 0) {
         const blockedTimeRecords = newBlockedTimes.map((time) => ({
           date: updatedDate,
