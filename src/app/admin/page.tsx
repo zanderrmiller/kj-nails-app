@@ -1736,7 +1736,7 @@ export default function AdminPage() {
                 backgroundPosition: 'center'
               }}>
                 <div className="flex items-center justify-between mb-4 gap-4">
-                  <h3 className="text-lg font-semibold text-white">
+                  <h3 className="text-lg font-semibold text-black">
                     {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                   </h3>
                   
@@ -1947,7 +1947,7 @@ export default function AdminPage() {
             backgroundPosition: 'center'
           }}>
             <div className="mb-4 sm:mb-6">
-              <h3 className="text-lg font-semibold text-white mb-3 sm:mb-4">Appointments</h3>
+              <h3 className="text-lg font-semibold text-black mb-3 sm:mb-4">Appointments</h3>
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setCreatingAppointment(true)}
