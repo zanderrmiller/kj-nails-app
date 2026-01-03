@@ -632,9 +632,15 @@ export default function BookPage() {
                   key={svc.id}
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedBase === svc.id
-                      ? 'border-gray-400 bg-gray-300'
-                      : 'border-gray-400 hover:border-gray-600 bg-white'
+                      ? 'border-gray-400 bg-gray-800'
+                      : 'border-gray-600 hover:border-gray-400 bg-gray-900'
                   }`}
+                  style={{
+                    backgroundImage: `url('/images/white-marble-texture.png')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundBlendMode: 'overlay'
+                  }}
                 >
                   <input
                     type="radio"
@@ -644,8 +650,8 @@ export default function BookPage() {
                     onChange={(e) => setSelectedBase(e.target.value)}
                     className="hidden"
                   />
-                  <div className="font-semibold text-gray-900 text-sm">{svc.name}</div>
-                  <div className="text-xs text-gray-600">${svc.basePrice} • {svc.duration}m</div>
+                  <div className="font-semibold text-white text-sm">{svc.name}</div>
+                  <div className="text-xs text-gray-300">${svc.basePrice} • {svc.duration}m</div>
                 </label>
               ))}
             </div>
@@ -653,11 +659,14 @@ export default function BookPage() {
 
           {/* Add-Ons Section (shown when base service selected) */}
           {selectedBase && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg" style={{
-              backgroundColor: 'rgba(255,255,255,0.7)',
-              border: '2px solid rgba(100,100,90,0.3)'
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg border-2 border-gray-700" style={{
+              backgroundColor: 'rgba(30,30,30,0.9)',
+              backgroundImage: `url('/images/white-marble-texture.png')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundBlendMode: 'overlay'
             }}>
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Add-Ons</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Add-Ons</h2>
 
               {/* Add-Ons Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2 mb-4">
@@ -665,9 +674,15 @@ export default function BookPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasRemoval
-                      ? 'border-gray-600 bg-gray-300'
-                      : 'border-gray-400 hover:border-gray-600 bg-white'
+                      ? 'border-gray-400 bg-gray-800'
+                      : 'border-gray-600 hover:border-gray-400 bg-gray-900'
                   }`}
+                  style={{
+                    backgroundImage: `url('/images/white-marble-texture.png')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundBlendMode: 'overlay'
+                  }}
                 >
                   <input
                     type="checkbox"
@@ -684,8 +699,14 @@ export default function BookPage() {
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasNailArt
                       ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400'
+                      : 'border-gray-600 hover:border-gray-400 bg-gray-900'
                   }`}
+                  style={{
+                    backgroundImage: `url('/images/white-marble-texture.png')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundBlendMode: 'overlay'
+                  }}
                 >
                   <input
                     type="checkbox"
@@ -707,8 +728,14 @@ export default function BookPage() {
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedDesign !== ''
                       ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400'
+                      : 'border-gray-600 hover:border-gray-400 bg-gray-900'
                   }`}
+                  style={{
+                    backgroundImage: `url('/images/white-marble-texture.png')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundBlendMode: 'overlay'
+                  }}
                 >
                   <input
                     type="checkbox"
@@ -726,7 +753,7 @@ export default function BookPage() {
                 <div className="bg-gray-950 p-3 rounded-lg border-2 border-gray-700 space-y-3">
                   <div>
                     <label className="block">
-                      <span className="text-gray-900 font-semibold mb-2 block text-sm">Upload Inspiration Pictures</span>
+                      <span className="text-white font-semibold mb-2 block text-sm">Upload Inspiration Pictures</span>
                       <input
                         type="file"
                         multiple
@@ -757,19 +784,19 @@ export default function BookPage() {
 
                   <div>
                     <label className="block">
-                      <span className="text-gray-900 font-semibold mb-2 block text-sm">Nail Art Notes</span>
+                      <span className="text-white font-semibold mb-2 block text-sm">Nail Art Notes</span>
                       <textarea
                         value={nailArtNotes}
                         onChange={(e) => setNailArtNotes(e.target.value)}
                         placeholder="Describe your nail art design, style preferences, colors, patterns, or any special requests..."
-                        className="w-full p-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:border-gray-600 text-sm resize-none text-gray-900 bg-white"
+                        className="w-full p-2 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-sm resize-none text-white bg-gray-800"
                         rows={4}
                       />
                     </label>
                   </div>
 
-                  <div className="bg-gray-200 border-l-4 border-gray-500 p-2">
-                    <p className="text-xs text-gray-700">
+                  <div className="bg-gray-800 border-l-4 border-gray-600 p-2">
+                    <p className="text-xs text-gray-300">
                       <span className="font-semibold">Note:</span> Kinsey will reach out and discuss final pricing.
                     </p>
                   </div>

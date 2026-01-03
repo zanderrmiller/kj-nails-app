@@ -33,23 +33,34 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Welcome Section */}
           <div className="mb-6 p-6 rounded-lg" style={{
-            backgroundImage: `linear-gradient(135deg, rgba(245,245,240,0.05) 0%, rgba(200,200,190,0.03) 100%)`,
-            border: '1px solid rgba(200,200,190,0.15)'
+            backgroundImage: `url('/images/white-marble-texture.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
           }}>
-            <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 text-center">Welcome to KJ Nails!</h1>
+            <h1 className="text-3xl sm:text-5xl font-bold text-black mb-4 text-center">Welcome to KJ Nails!</h1>
           </div>
 
           {/* Book Appointment & View Gallery Buttons */}
           <div className="flex flex-row gap-3 justify-center mb-8 flex-wrap">
             <Link
               href="/book"
-              className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold text-sm sm:text-base transition text-center flex-1 sm:flex-initial"
+              className="hover:opacity-90 px-4 py-2 rounded-lg font-bold text-sm sm:text-base transition text-center flex-1 sm:flex-initial text-black"
+              style={{
+                backgroundImage: `url('/images/white-marble-texture.png')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
             >
               Book Appointment
             </Link>
             <Link
               href="/art"
-              className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold text-sm sm:text-base transition text-center flex-1 sm:flex-initial"
+              className="hover:opacity-90 px-4 py-2 rounded-lg font-bold text-sm sm:text-base transition text-center flex-1 sm:flex-initial text-black"
+              style={{
+                backgroundImage: `url('/images/white-marble-texture.png')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
             >
               View Gallery
             </Link>
