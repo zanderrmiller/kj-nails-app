@@ -10,6 +10,25 @@ interface SMSResponse {
 }
 
 /**
+ * Convert 24-hour format (HH:MM:SS or HH:MM) to 12-hour format (H:MM AM/PM)
+ */
+function convert24to12(time24: string): string {
+  // Handle both HH:MM:SS and HH:MM formats
+  const timeParts = time24.split(':');
+  let hours = parseInt(timeParts[0], 10);
+  const minutes = timeParts[1];
+  
+  let period = 'AM';
+  if (hours >= 12) {
+    period = 'PM';
+    if (hours > 12) hours -= 12;
+  }
+  if (hours === 0) hours = 12;
+  
+  return `${hours}:${minutes} ${period}`;
+}
+
+/**
  * Send SMS via Twilio
  */
 export const sendSMS = async (options: SendSMSOptions): Promise<SMSResponse> => {
@@ -139,8 +158,14 @@ export const sendAppointmentBookedSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
+  // Convert appointment time to 12-hour format if needed
+  let formattedTime = appointmentTime;
+  if (appointmentTime.includes(':') && !appointmentTime.includes('AM') && !appointmentTime.includes('PM')) {
+    formattedTime = convert24to12(appointmentTime);
+  }
+  
   // Calculate end time if duration is provided
-  let timeRange = appointmentTime;
+  let timeRange = formattedTime;
   if (totalDuration) {
     const AVAILABLE_TIMES = [
       '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -148,11 +173,11 @@ export const sendAppointmentBookedSMS = async (
       '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
     ];
     
-    const startIndex = AVAILABLE_TIMES.indexOf(appointmentTime);
+    const startIndex = AVAILABLE_TIMES.indexOf(formattedTime);
     const slotsNeeded = Math.ceil(totalDuration / 30);
     const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
     const endTime = AVAILABLE_TIMES[endIndex];
-    timeRange = `${appointmentTime} - ${endTime}`;
+    timeRange = `${formattedTime} - ${endTime}`;
   }
   
   let message = `Hi ${customerName}! Your appointment at KJ Nails:\n\n`;
@@ -244,8 +269,14 @@ export const sendAppointmentConfirmedSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
+  // Convert appointment time to 12-hour format if needed
+  let formattedTime = appointmentTime;
+  if (appointmentTime.includes(':') && !appointmentTime.includes('AM') && !appointmentTime.includes('PM')) {
+    formattedTime = convert24to12(appointmentTime);
+  }
+  
   // Calculate end time if duration is provided
-  let timeRange = appointmentTime;
+  let timeRange = formattedTime;
   if (totalDuration) {
     const AVAILABLE_TIMES = [
       '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -253,11 +284,11 @@ export const sendAppointmentConfirmedSMS = async (
       '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
     ];
     
-    const startIndex = AVAILABLE_TIMES.indexOf(appointmentTime);
+    const startIndex = AVAILABLE_TIMES.indexOf(formattedTime);
     const slotsNeeded = Math.ceil(totalDuration / 30);
     const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
     const endTime = AVAILABLE_TIMES[endIndex];
-    timeRange = `${appointmentTime} - ${endTime}`;
+    timeRange = `${formattedTime} - ${endTime}`;
   }
   
   let message = `Your Appointment with KJNails is Confirmed!\n\n`;
@@ -358,8 +389,14 @@ export const sendAppointmentRescheduledCustomerSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
+  // Convert appointment time to 12-hour format if needed
+  let formattedTime = appointmentTime;
+  if (appointmentTime.includes(':') && !appointmentTime.includes('AM') && !appointmentTime.includes('PM')) {
+    formattedTime = convert24to12(appointmentTime);
+  }
+  
   // Calculate end time if duration is provided
-  let timeRange = appointmentTime;
+  let timeRange = formattedTime;
   if (totalDuration) {
     const AVAILABLE_TIMES = [
       '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -367,11 +404,11 @@ export const sendAppointmentRescheduledCustomerSMS = async (
       '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
     ];
     
-    const startIndex = AVAILABLE_TIMES.indexOf(appointmentTime);
+    const startIndex = AVAILABLE_TIMES.indexOf(formattedTime);
     const slotsNeeded = Math.ceil(totalDuration / 30);
     const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
     const endTime = AVAILABLE_TIMES[endIndex];
-    timeRange = `${appointmentTime} - ${endTime}`;
+    timeRange = `${formattedTime} - ${endTime}`;
   }
   
   let message = `Hi ${customerName}! Your appointment has been rescheduled:\n\n`;
