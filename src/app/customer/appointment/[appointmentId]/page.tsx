@@ -263,9 +263,9 @@ function Calendar({
               disabled={!canBook}
               className={`p-2 rounded-lg font-semibold text-sm transition w-full h-full flex items-center justify-center ${
                 isSelected
-                  ? 'bg-pink-500 text-white border-2 border-pink-600'
+                  ? 'bg-gray-700 text-white border-2 border-gray-600'
                   : canBook
-                  ? 'bg-black text-white border-2 border-gray-700 hover:border-pink-500 hover:bg-gray-800 cursor-pointer'
+                  ? 'bg-black text-white border-2 border-gray-700 hover:border-gray-500 hover:bg-gray-800 cursor-pointer'
                   : 'bg-gray-900 text-gray-600 border-2 border-gray-900 cursor-not-allowed'
               }`}
             >
@@ -570,28 +570,33 @@ export default function EditAppointmentPage() {
 
   return (
     <main className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="bg-black shadow" style={{padding: 0, margin: 0}}>
-        <div className="flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
-          <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
-            <Image
-              src="/images/clear logo.png"
-              alt="KJ Nails Logo"
-              width={200}
-              height={200}
-              style={{display: 'block', height: '64px', width: 'auto', margin: 0, padding: 0}}
-              priority
-            />
-          </Link>
-          <div style={{margin: 0, height: '100%', marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '16px'}}>
-            <NavMenu />
-          </div>
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 bg-black border-b border-gray-900 flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
+        <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
+          <Image
+            src="/images/clear logo.png"
+            alt="KJ Nails Logo"
+            width={200}
+            height={200}
+            style={{display: 'block', height: '64px', width: 'auto', margin: 0, padding: 0}}
+            priority
+          />
+        </Link>
+        <div style={{margin: 0, height: '100%', marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '16px'}}>
+          <NavMenu />
         </div>
-      </header>
+      </nav>
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-2 sm:px-4 lg:px-8 py-6 sm:py-12">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 sm:mb-6 text-center">Edit Your Appointment</h1>
+        {/* Title with Marble Background */}
+        <div className="mb-8 py-6 px-6 rounded-lg" style={{
+          backgroundImage: `url('/images/white-marble-texture.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}>
+          <h1 className="text-3xl sm:text-4xl font-bold text-black text-center">Edit Your Appointment</h1>
+        </div>
 
         {/* Cancel Button Below Title */}
         <div className="flex justify-center mb-8">
@@ -610,18 +615,22 @@ export default function EditAppointmentPage() {
           </div>
         )}
 
-        <form onSubmit={handleEdit} className="bg-black rounded-lg shadow-lg p-4 sm:p-8 border border-gray-700">
+        <form onSubmit={handleEdit} className="rounded-lg shadow-lg p-4 sm:p-8 border border-gray-700" style={{
+          backgroundImage: `url('/images/white-marble-texture.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}>
           {/* Service Selection */}
           <div className="mb-4 sm:mb-6">
-            <h2 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">Select Your Nail Service</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-black mb-2 sm:mb-3">Select Your Nail Service</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2">
               {BASE_SERVICES.map((svc) => (
                 <label
                   key={svc.id}
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedBase === svc.id
-                      ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400'
+                      ? 'border-gray-500 bg-gray-700 text-white'
+                      : 'border-gray-700 hover:border-gray-500 bg-gray-950 text-white'
                   }`}
                 >
                   <input
@@ -641,8 +650,12 @@ export default function EditAppointmentPage() {
 
           {/* Add-Ons Section */}
           {selectedBase && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-950 rounded-lg border-2 border-gray-700">
-              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Add-Ons</h2>
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg border-2 border-gray-700" style={{
+              backgroundImage: `url('/images/white-marble-texture.png')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}>
+              <h2 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">Add-Ons</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2 mb-4">
                 {/* Removal */}
@@ -779,7 +792,7 @@ export default function EditAppointmentPage() {
 
           {/* Calendar Section */}
           <div className="mb-4 sm:mb-6">
-            <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Select New Date</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">Select New Date</h2>
             <Calendar 
               selectedDate={selectedDate} 
               onDateSelect={setSelectedDate}
@@ -790,7 +803,7 @@ export default function EditAppointmentPage() {
 
           {/* Time Selection */}
           <div className="mb-4 sm:mb-6">
-            <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Select New Time</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">Select New Time</h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
               {DISPLAY_TIMES.map((time) => {
                 const timeSlotsForDate = availableTimeSlotsMap[selectedDate];
@@ -811,7 +824,7 @@ export default function EditAppointmentPage() {
                     disabled={!hasSlots}
                     className={`p-2 rounded-lg font-semibold text-xs sm:text-sm transition ${
                       isSelected
-                        ? 'bg-pink-600 text-white border-2 border-pink-500'
+                        ? 'bg-gray-700 text-white border-2 border-gray-600'
                         : hasSlots
                         ? 'bg-gray-800 text-white border-2 border-gray-700 hover:border-gray-500 hover:bg-gray-700 cursor-pointer'
                         : 'bg-gray-900 text-gray-600 border-2 border-gray-900 cursor-not-allowed'
@@ -934,7 +947,7 @@ export default function EditAppointmentPage() {
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-900 rounded-lg p-8 max-w-md w-full text-center border-2 border-pink-600">
+          <div className="bg-gray-900 rounded-lg p-8 max-w-md w-full text-center border-2 border-gray-700">
             <div className="mb-4 text-5xl">✓</div>
             <h2 className="text-2xl font-bold text-white mb-2">Appointment Updated!</h2>
             <p className="text-gray-300 mb-4">
@@ -944,6 +957,13 @@ export default function EditAppointmentPage() {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="bg-black border-t border-gray-900 py-8 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
+          <p>&copy; 2025 KJ Nails. All rights reserved.</p>
+        </div>
+      </footer>
     </main>
   );
 }
