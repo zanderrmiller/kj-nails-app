@@ -133,9 +133,16 @@ export default function ArtPage() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main 
+      className="min-h-screen text-white"
+      style={{
+        backgroundImage: `url('/images/white-marble-texture.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+    >
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-black border-b border-gray-900 flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
+      <nav className="sticky top-0 z-50 bg-black/70 border-b border-gray-900 flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
         <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
           <Image
             src="/images/clear logo.png"
@@ -153,8 +160,8 @@ export default function ArtPage() {
 
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-1">Gallery</h1>
-        <p className="text-gray-400 text-sm sm:text-base">Below are examples of my work</p>
+        <h1 className="text-4xl sm:text-5xl font-bold mb-1 text-black">Gallery</h1>
+        <p className="text-gray-700 text-sm sm:text-base font-medium">Below are examples of my work</p>
       </section>
 
       {/* Gallery Grid */}

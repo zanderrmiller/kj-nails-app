@@ -632,7 +632,7 @@ export default function BookPage() {
                   key={svc.id}
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedBase === svc.id
-                      ? 'border-gray-500 bg-gray-950'
+                      ? 'border-gray-500 bg-gray-700'
                       : 'border-gray-700 hover:border-gray-500 bg-gray-950'
                   }`}
                 >
@@ -668,7 +668,7 @@ export default function BookPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasRemoval
-                      ? 'border-gray-500 bg-gray-950'
+                      ? 'border-gray-500 bg-gray-700'
                       : 'border-gray-700 hover:border-gray-500 bg-gray-950'
                   }`}
                 >
@@ -686,7 +686,7 @@ export default function BookPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasNailArt
-                      ? 'border-gray-500 bg-gray-950'
+                      ? 'border-gray-500 bg-gray-700'
                       : 'border-gray-700 hover:border-gray-500 bg-gray-950'
                   }`}
                 >
@@ -709,7 +709,7 @@ export default function BookPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedDesign !== ''
-                      ? 'border-gray-500 bg-gray-950'
+                      ? 'border-gray-500 bg-gray-700'
                       : 'border-gray-700 hover:border-gray-500 bg-gray-950'
                   }`}
                 >
