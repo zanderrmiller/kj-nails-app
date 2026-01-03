@@ -662,8 +662,8 @@ export default function EditAppointmentPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasRemoval
-                      ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400'
+                      ? 'border-gray-500 bg-gray-700 text-white'
+                      : 'border-gray-700 hover:border-gray-500 bg-gray-950 text-white'
                   }`}
                 >
                   <input
@@ -680,8 +680,8 @@ export default function EditAppointmentPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasNailArt
-                      ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400'
+                      ? 'border-gray-500 bg-gray-700 text-white'
+                      : 'border-gray-700 hover:border-gray-500 bg-gray-950 text-white'
                   }`}
                 >
                   <input
@@ -698,8 +698,8 @@ export default function EditAppointmentPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedDesign !== ''
-                      ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400'
+                      ? 'border-gray-500 bg-gray-700 text-white'
+                      : 'border-gray-700 hover:border-gray-500 bg-gray-950 text-white'
                   }`}
                 >
                   <input
@@ -864,7 +864,7 @@ export default function EditAppointmentPage() {
                 </div>
                 <div className="border-t border-gray-700 pt-2 mt-2 flex justify-between">
                   <span className="text-white font-semibold">Estimated Total:</span>
-                  <span className="text-pink-500 font-bold text-lg">${totalPrice.toFixed(2)}</span>
+                  <span className="text-white font-bold text-lg">${totalPrice.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -875,7 +875,7 @@ export default function EditAppointmentPage() {
             <div className="mb-6 p-4 bg-gray-950 rounded-lg border-2 border-gray-700">
               <div className="flex justify-between items-center text-white">
                 <span className="font-semibold">Estimated Total:</span>
-                <span className="text-xl font-bold text-pink-500">${totalPrice.toFixed(2)}</span>
+                <span className="text-xl font-bold text-white">${totalPrice.toFixed(2)}</span>
               </div>
               <div className="text-xs text-gray-400 mt-2">Duration: {totalDuration} minutes</div>
             </div>
@@ -894,7 +894,7 @@ export default function EditAppointmentPage() {
             <button
               type="submit"
               disabled={submitting || !selectedDate || !selectedTime}
-              className="flex-1 px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>
