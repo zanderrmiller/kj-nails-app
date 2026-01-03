@@ -228,7 +228,7 @@ export const sendAppointmentConfirmedSMS = async (
   
   let message = `Your appointment is confirmed!\n\n`;
   message += `Date: ${formattedDate} at ${appointmentTime}\n`;
-  message += `Total: $${finalPrice}\n\n`;
+  message += `Final Estimate: $${finalPrice}\n\n`;
   message += `See you soon!`;
   
   if (appointmentUrl) {
