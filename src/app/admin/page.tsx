@@ -2378,7 +2378,7 @@ export default function AdminPage() {
                       availableTimeSlotsMap={availableTimeSlotsMap}
                       selectedTime={editTime}
                       onTimeSelect={handleEditTimeChange}
-                      currentAppointmentTime={editingBooking?.booking_time}
+                      currentAppointmentTime={editingBooking ? format24to12Hour(editingBooking.booking_time) : undefined}
                       currentAppointmentDuration={editingBooking?.duration}
                       currentAppointmentDate={editingBooking?.booking_date}
                     />
