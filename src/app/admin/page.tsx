@@ -1853,9 +1853,9 @@ export default function AdminPage() {
         {/* Appointments Tab */}
         {activeTab === 'appointments' && (
           <div className="bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-white">Appointments</h3>
-              <div className="flex items-center gap-1 ml-2">
+            <div className="mb-4 sm:mb-6">
+              <h3 className="text-lg font-semibold text-white mb-3 sm:mb-4">Appointments</h3>
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setCreatingAppointment(true)}
                   className="px-3 py-2 rounded-lg font-semibold bg-gray-800 text-gray-400 border-2 border-gray-700 hover:border-gray-600 transition"
@@ -1865,7 +1865,7 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={() => setAppointmentFilter('upcoming')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                  className={`px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm sm:text-base transition ${
                     appointmentFilter === 'upcoming'
                       ? 'bg-gray-700 text-white border-2 border-gray-600'
                       : 'bg-gray-800 text-gray-400 border-2 border-gray-700 hover:border-gray-600'
@@ -1875,7 +1875,7 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={() => setAppointmentFilter('past')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                  className={`px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm sm:text-base transition ${
                     appointmentFilter === 'past'
                       ? 'bg-gray-700 text-white border-2 border-gray-600'
                       : 'bg-gray-800 text-gray-400 border-2 border-gray-700 hover:border-gray-600'
@@ -1885,7 +1885,7 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={() => setAppointmentFilter('pending')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                  className={`px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm sm:text-base transition ${
                     appointmentFilter === 'pending'
                       ? 'bg-yellow-600 text-white border-2 border-yellow-500'
                       : 'bg-gray-800 text-gray-400 border-2 border-gray-700 hover:border-gray-600'
