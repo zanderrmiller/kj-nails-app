@@ -594,24 +594,22 @@ export default function BookPage() {
 
   return (
     <main className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="bg-black shadow" style={{padding: 0, margin: 0}}>
-        <div className="flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
-          <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
-            <Image
-              src="/images/clear logo.png"
-              alt="KJ Nails Logo"
-              width={200}
-              height={200}
-              style={{display: 'block', height: '64px', width: 'auto', margin: 0, padding: 0}}
-              priority
-            />
-          </Link>
-          <div style={{margin: 0, height: '100%', marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '16px'}}>
-            <NavMenu />
-          </div>
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 bg-black border-b border-gray-900 flex justify-between items-center" style={{height: '80px', padding: '4px 0 4px 10px', margin: 0, overflow: 'hidden'}}>
+        <Link href="/" className="flex-shrink-0" style={{padding: 0, margin: 0, display: 'flex', alignItems: 'center', height: '72px'}}>
+          <Image
+            src="/images/clear logo.png"
+            alt="KJ Nails Logo"
+            width={200}
+            height={200}
+            style={{display: 'block', height: '64px', width: 'auto', margin: 0, padding: 0}}
+            priority
+          />
+        </Link>
+        <div style={{margin: 0, height: '100%', marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '16px'}}>
+          <NavMenu />
         </div>
-      </header>
+      </nav>
 
       {/* Booking Form */}
       <div className="max-w-4xl mx-auto px-2 sm:px-4 lg:px-8 py-6 sm:py-12">
