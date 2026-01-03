@@ -1898,7 +1898,7 @@ export default function AdminPage() {
                   onClick={() => setAppointmentFilter('pending')}
                   className={`px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm sm:text-base transition ${
                     appointmentFilter === 'pending'
-                      ? 'bg-yellow-600 text-white border-2 border-yellow-500'
+                      ? 'bg-gray-700 text-white border-2 border-gray-600'
                       : 'bg-gray-800 text-gray-400 border-2 border-gray-700 hover:border-gray-600'
                   }`}
                 >
@@ -1991,7 +1991,7 @@ export default function AdminPage() {
                                 e.stopPropagation();
                                 handleConfirmAppointment(booking);
                               }}
-                              className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-gray-700 text-white hover:bg-gray-600 transition text-center"
+                              className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-gray-600 text-white hover:bg-gray-500 transition text-center"
                             >
                               Confirm
                             </button>
@@ -2000,7 +2000,7 @@ export default function AdminPage() {
                                 e.stopPropagation();
                                 handleRejectAppointment(booking);
                               }}
-                              className="py-2 px-3 rounded-lg font-semibold text-sm bg-gray-700 text-white hover:bg-gray-600 transition text-center"
+                              className="py-2 px-3 rounded-lg font-semibold text-sm bg-gray-600 text-white hover:bg-gray-500 transition text-center"
                               title="Reject appointment"
                             >
                               ✕
@@ -2124,9 +2124,9 @@ export default function AdminPage() {
 
                   {/* Nail Art Notes */}
                   {selectedAppointment.nail_art_notes && (
-                    <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 mt-4">
-                        <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mb-2">Nail Art Notes</p>
-                        <p className="text-sm text-blue-900 whitespace-pre-wrap">{selectedAppointment.nail_art_notes}</p>
+                    <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700 mt-4">
+                        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Nail Art Notes</p>
+                        <p className="text-sm text-gray-400 whitespace-pre-wrap">{selectedAppointment.nail_art_notes}</p>
                       </div>
                     )}
 
@@ -2217,21 +2217,21 @@ export default function AdminPage() {
                   <>
                     <button
                       onClick={() => handleEditBooking(selectedAppointment)}
-                      className="py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
+                      className="py-3 px-4 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-500 transition"
                       title="Edit appointment"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleRejectAppointment(selectedAppointment)}
-                      className="py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
+                      className="py-3 px-4 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-500 transition"
                       title="Reject appointment"
                     >
                       Reject
                     </button>
                     <button
                       onClick={handleFinalConfirmAppointment}
-                      className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
+                      className="flex-1 py-3 px-4 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-500 transition"
                     >
                       Confirm
                     </button>
@@ -2240,20 +2240,20 @@ export default function AdminPage() {
                   <>
                     <button
                       onClick={() => handleEditBooking(selectedAppointment)}
-                      className="py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
+                      className="py-3 px-4 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-500 transition"
                       title="Edit appointment"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleConfirmAppointment(selectedAppointment)}
-                      className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
+                      className="flex-1 py-3 px-4 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-500 transition"
                     >
                       Confirm Appointment
                     </button>
                     <button
                       onClick={() => handleRejectAppointment(selectedAppointment)}
-                      className="py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
+                      className="py-3 px-4 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-500 transition"
                       title="Reject appointment"
                     >
                       ✕
@@ -2263,13 +2263,13 @@ export default function AdminPage() {
                   <>
                     <button
                       onClick={() => handleEditBooking(selectedAppointment)}
-                      className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
+                      className="flex-1 py-3 px-4 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-500 transition"
                     >
                       Edit Appointment
                     </button>
                     <button
                       onClick={() => handleDeleteBooking(selectedAppointment)}
-                      className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
+                      className="flex-1 py-3 px-4 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-500 transition"
                     >
                       Delete Appointment
                     </button>
@@ -2596,13 +2596,13 @@ export default function AdminPage() {
                     setEditingBooking(null);
                     setSelectedAppointment(null);
                   }}
-                  className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
+                  className="flex-1 py-3 px-4 border-2 border-gray-600 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveBooking}
-                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
+                  className="flex-1 py-3 px-4 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-500 transition"
                 >
                   Save Changes
                 </button>
@@ -2864,14 +2864,14 @@ export default function AdminPage() {
                 <button
                   onClick={() => setDeleteConfirmation({ show: false, booking: null })}
                   disabled={isDeleting}
-                  className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition disabled:opacity-50"
+                  className="flex-1 py-3 px-4 border-2 border-gray-600 rounded-lg font-semibold text-white hover:bg-gray-700 transition disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDeleteBooking}
                   disabled={isDeleting}
-                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition disabled:opacity-50"
+                  className="flex-1 py-3 px-4 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-500 transition disabled:opacity-50"
                 >
                   {isDeleting ? 'Deleting...' : 'Delete'}
                 </button>
@@ -3065,13 +3065,13 @@ export default function AdminPage() {
               <div className="bg-gray-800 p-6 flex gap-3">
                 <button
                   onClick={() => setRejectionModal({ show: false, booking: null, sendMessage: true })}
-                  className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
+                  className="flex-1 py-3 px-4 border-2 border-gray-600 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleFinalRejectAppointment}
-                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
+                  className="flex-1 py-3 px-4 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-500 transition"
                 >
                   Reject
                 </button>
