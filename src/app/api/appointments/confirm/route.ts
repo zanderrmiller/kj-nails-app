@@ -160,7 +160,8 @@ export async function POST(request: NextRequest) {
           appointment.booking_date,
           appointment.booking_time,
           finalPrice,
-          appointmentId
+          appointmentId,
+          appointment.duration
         );
         console.log('Confirmation SMS result:', smsResult);
         if (smsResult.success) {

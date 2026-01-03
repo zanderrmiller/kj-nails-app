@@ -164,7 +164,8 @@ export async function POST(request: NextRequest) {
           booking.booking_time,
           body.baseService?.name || 'Nail Service',
           body.baseService?.basePrice || 0,
-          booking.id
+          booking.id,
+          body.totalDuration
         );
         console.log('SMS result:', smsResult);
         if (smsResult.success) {

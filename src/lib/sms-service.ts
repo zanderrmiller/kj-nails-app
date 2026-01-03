@@ -106,7 +106,8 @@ export const sendAppointmentBookedSMS = async (
   appointmentTime: string,
   serviceName: string,
   basePrice: number,
-  appointmentId?: string
+  appointmentId?: string,
+  totalDuration?: number
 ): Promise<SMSResponse> => {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kj-nails-app.vercel.app';
   
@@ -138,8 +139,24 @@ export const sendAppointmentBookedSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
+  // Calculate end time if duration is provided
+  let timeRange = appointmentTime;
+  if (totalDuration) {
+    const AVAILABLE_TIMES = [
+      '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+      '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+      '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
+    ];
+    
+    const startIndex = AVAILABLE_TIMES.indexOf(appointmentTime);
+    const slotsNeeded = Math.ceil(totalDuration / 30);
+    const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
+    const endTime = AVAILABLE_TIMES[endIndex];
+    timeRange = `${appointmentTime} - ${endTime}`;
+  }
+  
   let message = `Hi ${customerName}! Your appointment at KJ Nails:\n\n`;
-  message += `Date: ${formattedDate} at ${appointmentTime}\n`;
+  message += `${formattedDate} ${timeRange}\n`;
   message += `Service: ${serviceName}\n`;
   message += `Price: ~$${basePrice}\n\n`;
   message += `Appointment will be confirmed soon!`;
@@ -194,7 +211,8 @@ export const sendAppointmentConfirmedSMS = async (
   appointmentDate: string,
   appointmentTime: string,
   finalPrice: number,
-  appointmentId?: string
+  appointmentId?: string,
+  totalDuration?: number
 ): Promise<SMSResponse> => {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kj-nails-app.vercel.app';
   
@@ -226,8 +244,24 @@ export const sendAppointmentConfirmedSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
+  // Calculate end time if duration is provided
+  let timeRange = appointmentTime;
+  if (totalDuration) {
+    const AVAILABLE_TIMES = [
+      '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+      '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+      '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
+    ];
+    
+    const startIndex = AVAILABLE_TIMES.indexOf(appointmentTime);
+    const slotsNeeded = Math.ceil(totalDuration / 30);
+    const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
+    const endTime = AVAILABLE_TIMES[endIndex];
+    timeRange = `${appointmentTime} - ${endTime}`;
+  }
+  
   let message = `Your Appointment with KJNails is Confirmed!\n\n`;
-  message += `Date: ${formattedDate} at ${appointmentTime}\n`;
+  message += `${formattedDate} ${timeRange}\n`;
   message += `Final Estimate: $${finalPrice}\n\n`;
   message += `See you soon!`;
   
@@ -291,7 +325,8 @@ export const sendAppointmentRescheduledCustomerSMS = async (
   appointmentTime: string,
   serviceName: string,
   basePrice: number,
-  appointmentId?: string
+  appointmentId?: string,
+  totalDuration?: number
 ): Promise<SMSResponse> => {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kj-nails-app.vercel.app';
   
@@ -323,8 +358,24 @@ export const sendAppointmentRescheduledCustomerSMS = async (
   const dateObj = new Date(appointmentDate);
   const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   
+  // Calculate end time if duration is provided
+  let timeRange = appointmentTime;
+  if (totalDuration) {
+    const AVAILABLE_TIMES = [
+      '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+      '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+      '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
+    ];
+    
+    const startIndex = AVAILABLE_TIMES.indexOf(appointmentTime);
+    const slotsNeeded = Math.ceil(totalDuration / 30);
+    const endIndex = Math.min(startIndex + slotsNeeded, AVAILABLE_TIMES.length - 1);
+    const endTime = AVAILABLE_TIMES[endIndex];
+    timeRange = `${appointmentTime} - ${endTime}`;
+  }
+  
   let message = `Hi ${customerName}! Your appointment has been rescheduled:\n\n`;
-  message += `Date: ${formattedDate} at ${appointmentTime}\n`;
+  message += `${formattedDate} ${timeRange}\n`;
   message += `Service: ${serviceName}\n`;
   message += `Price: ~$${basePrice}\n\n`;
   message += `Awaiting confirmation from KJ Nails.`;

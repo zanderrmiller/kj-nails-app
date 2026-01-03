@@ -171,7 +171,8 @@ export async function PUT(request: NextRequest) {
           newTime || appointment.booking_time,
           appointment.service_id || 'Nail Service',
           appointment.total_price || 0,
-          appointmentId
+          appointmentId,
+          appointment.duration
         );
         console.log('Customer reschedule SMS result:', customerSmsResult);
       } catch (smsError) {
