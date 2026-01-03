@@ -1712,15 +1712,6 @@ export default function AdminPage() {
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-6 sm:py-12">
 
-        {/* Admin Title with Marble Background */}
-        <div className="mb-8 py-6 px-6 rounded-lg" style={{
-          backgroundImage: `url('/images/white-marble-texture.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}>
-          <h1 className="text-3xl sm:text-4xl font-bold text-black text-center">Admin Dashboard</h1>
-        </div>
-
         {saveMessage && (
           <div className="mb-6 p-4 bg-gray-800 border-2 border-gray-600 text-gray-300 rounded-lg text-center">
             {saveMessage}
@@ -1739,7 +1730,11 @@ export default function AdminPage() {
 
             {/* Hour Grid with Appointments */}
             {selectedDate && (
-              <div className="bg-gray-900 rounded-lg shadow-lg p-6 border border-gray-700">
+              <div className="rounded-lg shadow-lg p-6 border border-gray-700" style={{
+                backgroundImage: `url('/images/white-marble-texture.png')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}>
                 <div className="flex items-center justify-between mb-4 gap-4">
                   <h3 className="text-lg font-semibold text-white">
                     {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
@@ -1766,7 +1761,11 @@ export default function AdminPage() {
                 </div>
 
                 {/* Hour Grid */}
-                <div className="mb-6 border-2 border-gray-700 rounded-lg overflow-hidden">
+                <div className="mb-6 border-2 border-gray-700 rounded-lg overflow-hidden" style={{
+                  backgroundImage: `url('/images/white-marble-texture.png')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}>
                   {/* Grid Header and Content */}
                   <div className="grid grid-cols-[120px_1fr] divide-x-2 divide-gray-700 min-h-96">
                     {/* Time Labels Column */}
@@ -1942,7 +1941,11 @@ export default function AdminPage() {
 
         {/* Appointments Tab */}
         {activeTab === 'appointments' && (
-          <div className="bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-700">
+          <div className="rounded-lg shadow-lg p-4 sm:p-6 border border-gray-700" style={{
+            backgroundImage: `url('/images/white-marble-texture.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}>
             <div className="mb-4 sm:mb-6">
               <h3 className="text-lg font-semibold text-white mb-3 sm:mb-4">Appointments</h3>
               <div className="flex items-center gap-2 flex-wrap">
