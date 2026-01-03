@@ -473,7 +473,7 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
 }
 
 // Admin Navigation Menu Component
-function AdminNavMenu({ activeTab, setActiveTab, pendingCount }: { activeTab: 'calendar' | 'appointments' | 'confirmations' | 'gallery'; setActiveTab: (tab: 'calendar' | 'appointments' | 'confirmations' | 'gallery') => void; pendingCount: number }) {
+function AdminNavMenu({ activeTab, setActiveTab, pendingCount }: { activeTab: 'calendar' | 'appointments' | 'gallery'; setActiveTab: (tab: 'calendar' | 'appointments' | 'gallery') => void; pendingCount: number }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -511,20 +511,6 @@ function AdminNavMenu({ activeTab, setActiveTab, pendingCount }: { activeTab: 'c
               className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition text-left"
             >
               Appointments
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('confirmations');
-                setIsOpen(false);
-              }}
-              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition text-left relative flex items-center gap-2"
-            >
-              Confirmations
-              {pendingCount > 0 && (
-                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-pink-600 rounded-full">
-                  {pendingCount}
-                </span>
-              )}
             </button>
             <button
               onClick={() => {
@@ -588,20 +574,6 @@ function AdminNavMenu({ activeTab, setActiveTab, pendingCount }: { activeTab: 'c
               </button>
               <button
                 onClick={() => {
-                  setActiveTab('confirmations');
-                  setIsOpen(false);
-                }}
-                className="text-white font-bold text-2xl hover:text-gray-400 transition py-4 text-left flex items-center gap-2"
-              >
-                Confirmations
-                {pendingCount > 0 && (
-                  <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-pink-600 rounded-full">
-                    {pendingCount}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => {
                   setActiveTab('calendar');
                   setIsOpen(false);
                 }}
@@ -634,8 +606,8 @@ export default function AdminPage() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [loading, setLoading] = useState(true);
   const [saveMessage, setSaveMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'calendar' | 'appointments' | 'confirmations' | 'gallery'>('appointments');
-  const [appointmentFilter, setAppointmentFilter] = useState<'upcoming' | 'past'>('upcoming');
+  const [activeTab, setActiveTab] = useState<'calendar' | 'appointments' | 'gallery'>('appointments');
+  const [appointmentFilter, setAppointmentFilter] = useState<'upcoming' | 'past' | 'pending'>('upcoming');
   const [selectedAppointment, setSelectedAppointment] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [editTime, setEditTime] = useState('');
@@ -1787,6 +1759,16 @@ export default function AdminPage() {
                 >
                   Past
                 </button>
+                <button
+                  onClick={() => setAppointmentFilter('pending')}
+                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    appointmentFilter === 'pending'
+                      ? 'bg-yellow-600 text-white border-2 border-yellow-500'
+                      : 'bg-gray-800 text-gray-400 border-2 border-gray-700 hover:border-gray-600'
+                  }`}
+                >
+                  Pending {bookings.filter(b => b.status === 'pending').length > 0 && `(${bookings.filter(b => b.status === 'pending').length})`}
+                </button>
               </div>
             </div>
             {bookings.length === 0 ? (
@@ -1796,7 +1778,13 @@ export default function AdminPage() {
                 {bookings
                   .filter((booking) => {
                     if (!booking || !booking.booking_date || !booking.booking_time) return false;
-                    // Show confirmed appointments (or bookings without status for backward compatibility)
+                    
+                    // For pending filter, show appointments with pending status
+                    if (appointmentFilter === 'pending') {
+                      return booking.status === 'pending';
+                    }
+                    
+                    // For upcoming/past filters, show confirmed appointments (or bookings without status for backward compatibility)
                     if (booking.status && booking.status !== 'confirmed') return false;
                     const bookingDateTime = new Date(`${booking.booking_date}T${booking.booking_time}`);
                     const now = new Date();
@@ -2767,92 +2755,6 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Pending Confirmations Tab */}
-        {activeTab === 'confirmations' && (
-          <div className="bg-gray-900 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-white">Pending Confirmations</h3>
-            </div>
-            {bookings.filter(b => b.status === 'pending').length === 0 ? (
-              <p className="text-center text-gray-400 py-8">✓ All appointments confirmed!</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {bookings
-                  .filter(b => b.status === 'pending')
-                  .sort((a, b) => {
-                    const dateTimeA = new Date(`${a.booking_date}T${a.booking_time}`);
-                    const dateTimeB = new Date(`${b.booking_date}T${b.booking_time}`);
-                    return dateTimeA.getTime() - dateTimeB.getTime();
-                  })
-                  .map((booking) => (
-                    <div
-                      key={booking.id}
-                      className="border-2 border-gray-600 rounded-lg p-4 hover:border-gray-500 hover:shadow-lg hover:bg-gray-800 transition cursor-pointer bg-gray-800"
-                    >
-                      <div className="space-y-2">
-                        {/* Name and Phone */}
-                        <div>
-                          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Name</p>
-                          <div className="flex items-baseline gap-2">
-                            <p className="text-base font-bold text-white">{booking.customer_name}</p>
-                            <p className="text-xs text-gray-500">{booking.customer_phone}</p>
-                          </div>
-                        </div>
-
-                        {/* Date & Time */}
-                        <div>
-                          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Appointment</p>
-                          <p className="text-xs font-semibold text-pink-600">
-                            {new Date(`${booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {format24to12Hour(booking.booking_time)} - {calculateEndTime(booking.booking_time, booking.duration)}
-                          </p>
-                        </div>
-
-                        {/* Service and Price */}
-                        <div className="flex items-center justify-between pt-1">
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Service</p>
-                            <p className="text-xs text-gray-300">{toReadableTitle(booking.service_id)}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">Price</p>
-                            <p className="text-xs font-bold text-green-600">
-                              {formatPrice(booking.total_price, booking.service_id)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 mt-4 pt-3 border-t border-gray-700">
-                        <button
-                          onClick={() => handleEditBooking(booking)}
-                          className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-gray-700 text-white hover:bg-gray-600 transition text-center"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => {
-                            setConfirmationPreview({ show: true, booking, tempPrice: booking.total_price });
-                          }}
-                          className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-green-700 text-white hover:bg-green-600 transition text-center"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => handleDeleteBooking(booking)}
-                          className="py-2 px-3 rounded-lg font-semibold text-sm bg-gray-700 text-white hover:bg-red-700 transition text-center"
-                          title="Delete appointment"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
           </div>
         )}
 

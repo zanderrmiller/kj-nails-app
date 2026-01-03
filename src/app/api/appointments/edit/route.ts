@@ -137,19 +137,19 @@ export async function PUT(request: NextRequest) {
 
     // Send notification to Kinsey
     const technicianPhone = process.env.TECHNICIAN_PHONE_NUMBER;
-    const confirmationBaseUrl = process.env.CONFIRMATION_LINK_BASE_URL || 'http://localhost:3000/admin/confirm';
+    const adminPageUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     if (technicianPhone) {
       console.log('Sending edit notification SMS to Kinsey');
       try {
-        const confirmationLink = `${confirmationBaseUrl}/${appointmentId}`;
+        const pendingConfirmationsLink = `${adminPageUrl}/admin`;
         const editSmsResult = await sendAppointmentEditedSMS(
           technicianPhone,
           appointment.customer_name,
           newDate || appointment.booking_date,
           newTime || appointment.booking_time,
           appointment.service_id || 'Nail Service',
-          confirmationLink
+          pendingConfirmationsLink
         );
         console.log('Edit notification SMS result:', editSmsResult);
       } catch (smsError) {

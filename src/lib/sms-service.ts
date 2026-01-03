@@ -283,7 +283,7 @@ export const sendAppointmentEditedSMS = async (
   serviceName: string,
   confirmationLink: string
 ): Promise<SMSResponse> => {
-  const message = `UPDATE: ${customerName}'s ${serviceName} appointment has been rescheduled. Check admin dashboard to review and confirm.`;
+  const message = `UPDATE: ${customerName}'s ${serviceName} appointment has been rescheduled. Review pending confirmations: ${confirmationLink}`;
 
   return sendSMS({
     to: phoneNumber,
