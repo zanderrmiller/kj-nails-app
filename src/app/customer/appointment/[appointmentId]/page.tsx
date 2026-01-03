@@ -511,18 +511,18 @@ export default function EditAppointmentPage() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-2 sm:px-4 lg:px-8 py-6 sm:py-12">
-        {/* Cancel Button at Top */}
-        <div className="mb-6">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 sm:mb-6 text-center">Edit Your Appointment</h1>
+
+        {/* Cancel Button Below Title */}
+        <div className="flex justify-center mb-8">
           <button
             onClick={() => setShowCancelModal(true)}
             disabled={submitting}
-            className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel Appointment
           </button>
         </div>
-
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6 sm:mb-8 text-center">Edit Your Appointment</h1>
 
         {error && (
           <div className="bg-red-900 border-l-4 border-red-600 p-4 mb-6 rounded text-red-100">
