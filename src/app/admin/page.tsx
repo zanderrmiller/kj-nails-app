@@ -277,13 +277,26 @@ function OperatorCalendar({ bookings, selectedDate, onDateSelect, blockedDates, 
 }
 
 // Calendar component for edit modal - shows available times per date
-function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selectedTime, onTimeSelect, durationMinutes = 0 }: { 
+function EditCalendar({ 
+  selectedDate, 
+  onDateSelect, 
+  availableTimeSlotsMap, 
+  selectedTime, 
+  onTimeSelect, 
+  durationMinutes = 0,
+  currentAppointmentTime,
+  currentAppointmentDuration,
+  currentAppointmentDate
+}: { 
   selectedDate: string; 
   onDateSelect: (date: string) => void; 
   availableTimeSlotsMap: { [date: string]: Array<{ time: string; available: boolean; reason: string | null }> };
   selectedTime: string;
   onTimeSelect: (time: string) => void;
   durationMinutes?: number;
+  currentAppointmentTime?: string;
+  currentAppointmentDuration?: number;
+  currentAppointmentDate?: string;
 }) {
   const [displayMonth, setDisplayMonth] = useState(0);
 
@@ -291,6 +304,8 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
   };
+
+  const BUFFER_MINUTES = 15; // 15-minute buffer after appointments
 
   const canFitDuration = (startTime: string, duration: number, allSlots: Array<{ time: string; available: boolean; reason: string | null }>): boolean => {
     if (duration === 0) return true; // If no duration set, show all slots
@@ -302,10 +317,26 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
     const startIndex = allSlots.findIndex(slot => slot.time === startTime);
     if (startIndex === -1) return false;
     
+    // Create a working copy with freed appointment slots marked as available (same as customer page)
+    const workingSlots = allSlots.map(slot => {
+      const slotTimeInMinutes = timeToMinutes(slot.time);
+      
+      // If on the same date as current appointment and within time range (including buffer), mark as available
+      if (selectedDate === currentAppointmentDate && currentAppointmentTime && currentAppointmentDuration) {
+        const currentAppointmentStartMinutes = timeToMinutes(currentAppointmentTime);
+        const currentAppointmentEndMinutes = currentAppointmentStartMinutes + currentAppointmentDuration + BUFFER_MINUTES;
+        
+        if (slotTimeInMinutes >= currentAppointmentStartMinutes && slotTimeInMinutes <= currentAppointmentEndMinutes) {
+          return { ...slot, available: true };
+        }
+      }
+      return slot;
+    });
+    
     // Check if we have enough consecutive available slots starting from this slot
     let consecutiveAvailable = 0;
-    for (let i = startIndex; i < allSlots.length; i++) {
-      if (allSlots[i].available) {
+    for (let i = startIndex; i < workingSlots.length; i++) {
+      if (workingSlots[i].available) {
         consecutiveAvailable++;
         if (consecutiveAvailable >= slotsNeeded) {
           return true;
@@ -443,8 +474,26 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
           <label className="block text-xs font-semibold text-gray-400 uppercase mb-3">Available Times</label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {timeSlotsForSelectedDate.map((slot) => {
-              const canFit = canFitDuration(slot.time, durationMinutes, timeSlotsForSelectedDate);
-              const slotDisabled = !slot.available || (durationMinutes > 0 && !canFit);
+              // Create a working copy with freed appointment slots marked as available (same logic as customer page)
+              const workingSlotsForDisplay = timeSlotsForSelectedDate.map(s => {
+                const slotTimeInMinutes = timeToMinutes(s.time);
+                
+                // If on the same date as current appointment and within time range (including buffer), mark as available
+                if (selectedDate === currentAppointmentDate && currentAppointmentTime && currentAppointmentDuration) {
+                  const currentAppointmentStartMinutes = timeToMinutes(currentAppointmentTime);
+                  const currentAppointmentEndMinutes = currentAppointmentStartMinutes + currentAppointmentDuration + BUFFER_MINUTES;
+                  
+                  if (slotTimeInMinutes >= currentAppointmentStartMinutes && slotTimeInMinutes <= currentAppointmentEndMinutes) {
+                    return { ...s, available: true };
+                  }
+                }
+                return s;
+              });
+              
+              // Use the working slot for this button's availability
+              const workingSlot = workingSlotsForDisplay.find(s => s.time === slot.time) || slot;
+              const canFit = canFitDuration(slot.time, durationMinutes, workingSlotsForDisplay);
+              const slotDisabled = !workingSlot.available || (durationMinutes > 0 && !canFit);
               
               return (
                 <button
@@ -452,7 +501,7 @@ function EditCalendar({ selectedDate, onDateSelect, availableTimeSlotsMap, selec
                   type="button"
                   onClick={() => !slotDisabled && onTimeSelect(slot.time)}
                   disabled={slotDisabled}
-                  title={!slot.available ? `${slot.reason}` : slotDisabled ? 'Not enough consecutive time for this duration' : ''}
+                  title={!workingSlot.available ? `${workingSlot.reason}` : slotDisabled ? 'Not enough consecutive time for this duration' : ''}
                   className={`py-2 px-2 rounded-lg text-xs font-semibold transition ${
                     slotDisabled
                       ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
@@ -2329,6 +2378,9 @@ export default function AdminPage() {
                       availableTimeSlotsMap={availableTimeSlotsMap}
                       selectedTime={editTime}
                       onTimeSelect={handleEditTimeChange}
+                      currentAppointmentTime={editingBooking?.booking_time}
+                      currentAppointmentDuration={editingBooking?.duration}
+                      currentAppointmentDate={editingBooking?.booking_date}
                     />
                   </div>
 
