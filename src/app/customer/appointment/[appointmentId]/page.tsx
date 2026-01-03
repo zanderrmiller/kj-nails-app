@@ -155,6 +155,13 @@ function Calendar({
   const now = new Date();
   const startDate = new Date(now);
   
+  // Use DISPLAY_TIMES for validation since that's what users see
+  const TIMES_TO_CHECK = [
+    '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+    '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+    '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM',
+  ];
+  
   const availableDates = new Set<string>();
   for (let i = 0; i < 60; i++) {
     const date = new Date(startDate);
@@ -235,8 +242,18 @@ function Calendar({
           const isSelected = selectedDate === dateString;
           
           const timeSlotsForDate = availableTimeSlotsMap[dateString];
-          const hasAvailableTimes = timeSlotsForDate ? timeSlotsForDate.some((slot) => slot.available) : isWithin60Days;
-          const canBook = isWithin60Days && hasAvailableTimes;
+          // Check only DISPLAY_TIMES for availability
+          const hasAvailableTimes = timeSlotsForDate ? timeSlotsForDate.some((slot) => slot.available && DISPLAY_TIMES.includes(slot.time)) : isWithin60Days;
+          
+          // Check if there's at least one time slot that can fit the duration (checking only DISPLAY_TIMES)
+          let hasValidSlotForDuration = true;
+          if (duration > 0 && timeSlotsForDate) {
+            hasValidSlotForDuration = TIMES_TO_CHECK.some(time => 
+              hasEnoughConsecutiveSlots(time, duration, timeSlotsForDate)
+            );
+          }
+          
+          const canBook = isWithin60Days && hasAvailableTimes && hasValidSlotForDuration;
           
           return (
             <button
