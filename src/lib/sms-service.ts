@@ -534,3 +534,35 @@ export const sendAppointmentRejectedSMS = async (
     body: message,
   });
 };
+
+/**
+ * Send appointment reminder SMS to customer with reschedule/cancel link
+ */
+export const sendAppointmentReminderWithLinkSMS = async (
+  phoneNumber: string,
+  customerName: string,
+  appointmentDate: string,
+  appointmentTime: string,
+  appointmentUrl?: string
+): Promise<SMSResponse> => {
+  // Format date nicely (e.g., "Mon, Jan 6")
+  const dateObj = new Date(appointmentDate);
+  const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  // Convert appointment time to 12-hour format if needed
+  let formattedTime = appointmentTime;
+  if (appointmentTime.includes(':') && !appointmentTime.includes('AM') && !appointmentTime.includes('PM')) {
+    formattedTime = convert24to12(appointmentTime);
+  }
+
+  let message = `Hi ${customerName}! Reminder: Your KJ Nails appointment is tomorrow at ${formattedTime} (${formattedDate}). See you then!`;
+
+  if (appointmentUrl) {
+    message += `\n\nReschedule/Cancel: ${appointmentUrl}`;
+  }
+
+  return sendSMS({
+    to: phoneNumber,
+    body: message,
+  });
+};
