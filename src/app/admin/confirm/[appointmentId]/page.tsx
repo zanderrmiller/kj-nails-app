@@ -15,6 +15,7 @@ interface Appointment {
   status: string;
   addons: string[];
   nail_art_notes: string | null;
+  nail_art_image_urls?: string[];
 }
 
 const BASE_SERVICES: Record<string, { name: string; duration: number; basePrice: number }> = {
@@ -37,6 +38,7 @@ export default function ConfirmAppointmentPage() {
 
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [finalPrice, setFinalPrice] = useState<number>(0);
+  const [editDuration, setEditDuration] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +57,7 @@ export default function ConfirmAppointmentPage() {
         const data = await response.json();
         setAppointment(data.appointment);
         setFinalPrice(data.appointment.total_price);
+        setEditDuration(data.appointment.duration);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load appointment');
       } finally {
@@ -80,6 +83,7 @@ export default function ConfirmAppointmentPage() {
         body: JSON.stringify({
           appointmentId,
           finalPrice,
+          duration: editDuration,
         }),
       });
 
@@ -193,10 +197,19 @@ export default function ConfirmAppointmentPage() {
               <p className="text-lg text-gray-900">{serviceName}</p>
             </div>
 
-            {/* Duration */}
+            {/* Duration - EDITABLE */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-              <p className="text-lg text-gray-900">{appointment.duration} minutes</p>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+              <input
+                type="number"
+                min="15"
+                max="240"
+                step="15"
+                value={editDuration}
+                onChange={(e) => setEditDuration(parseInt(e.target.value))}
+                disabled={confirming}
+                className="text-lg text-gray-900 border-2 border-pink-200 rounded px-3 py-2 w-full focus:outline-none focus:border-pink-500"
+              />
             </div>
           </div>
 
@@ -219,6 +232,25 @@ export default function ConfirmAppointmentPage() {
             <div className="mb-8 pb-8 border-b border-gray-200">
               <label className="block text-sm font-medium text-gray-700 mb-2">Nail Art Notes</label>
               <p className="text-gray-900 whitespace-pre-wrap">{appointment.nail_art_notes}</p>
+            </div>
+          )}
+
+          {/* Nail Art Images */}
+          {appointment.nail_art_image_urls && appointment.nail_art_image_urls.length > 0 && (
+            <div className="mb-8 pb-8 border-b border-gray-200">
+              <label className="block text-sm font-medium text-gray-700 mb-4">Uploaded Nail Art Images</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {appointment.nail_art_image_urls.map((imageUrl, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={imageUrl}
+                      alt={`Nail art reference ${index + 1}`}
+                      className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-pink-500 transition"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">Reference {index + 1}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

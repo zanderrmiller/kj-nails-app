@@ -22,6 +22,7 @@ async function getSupabaseAdmin() {
 interface ConfirmationRequest {
   appointmentId: string;
   finalPrice: number;
+  duration?: number;
 }
 
 export async function GET(request: NextRequest) {
@@ -76,6 +77,7 @@ export async function GET(request: NextRequest) {
         status: appointment.status,
         addons: appointment.addons || [],
         nail_art_notes: appointment.nail_art_notes,
+        nail_art_image_urls: appointment.nail_art_image_urls || [],
       },
     });
   } catch (error) {
@@ -87,7 +89,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body: ConfirmationRequest = await request.json();
-    let { appointmentId, finalPrice } = body;
+    let { appointmentId, finalPrice, duration } = body;
 
     if (!appointmentId || finalPrice === undefined) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -122,13 +124,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Appointment not found' }, { status: 404 });
     }
 
-    // Update appointment status to confirmed and set final price
+    // Update appointment status to confirmed and set final price (and duration if changed)
+    const updateData: any = {
+      status: 'confirmed',
+      total_price: finalPrice,
+    };
+    
+    if (duration !== undefined) {
+      updateData.duration = duration;
+    }
+
     const { error: updateError } = await supabase
       .from('bookings')
-      .update({
-        status: 'confirmed',
-        total_price: finalPrice,
-      })
+      .update(updateData)
       .eq('id', appointmentId);
 
     if (updateError) {

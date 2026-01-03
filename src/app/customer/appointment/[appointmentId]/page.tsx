@@ -24,6 +24,166 @@ const BASE_SERVICES: Record<string, { name: string; duration: number; basePrice:
   manicure: { name: 'Manicure', duration: 30, basePrice: 25 },
 };
 
+const AVAILABLE_TIMES = [
+  '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
+];
+
+const DISPLAY_TIMES = [
+  '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM',
+];
+
+// Helper function to check if there are enough consecutive available slots
+function hasEnoughConsecutiveSlots(
+  startTime: string,
+  durationMinutes: number,
+  timeSlotsForDate: Array<{ time: string; available: boolean; reason: string | null }>
+): boolean {
+  const startIndex = AVAILABLE_TIMES.indexOf(startTime);
+  if (startIndex === -1) return false;
+
+  const slotsNeeded = Math.ceil(durationMinutes / 30);
+
+  for (let i = 0; i < slotsNeeded; i++) {
+    const slotIndex = startIndex + i;
+    if (slotIndex >= AVAILABLE_TIMES.length) return false;
+
+    const slotTime = AVAILABLE_TIMES[slotIndex];
+    const slot = timeSlotsForDate.find((s) => s.time === slotTime);
+    if (!slot || !slot.available) return false;
+  }
+
+  return true;
+}
+
+// Calendar component
+function CalendarComponent({ 
+  selectedDate, 
+  onDateSelect, 
+  availableTimeSlotsMap,
+  serviceType,
+  duration
+}: { 
+  selectedDate: string; 
+  onDateSelect: (date: string) => void;
+  availableTimeSlotsMap: { [date: string]: Array<{ time: string; available: boolean; reason: string | null }> };
+  serviceType: string;
+  duration: number;
+}) {
+  const [displayMonth, setDisplayMonth] = useState(0);
+
+  const now = new Date();
+  const startDate = new Date(now);
+  
+  const availableDates = new Set<string>();
+  for (let i = 0; i < 60; i++) {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + i);
+    const dateString = date.toISOString().split('T')[0];
+    availableDates.add(dateString);
+  }
+
+  const displayDate = new Date(now);
+  displayDate.setMonth(displayDate.getMonth() + displayMonth);
+  const year = displayDate.getFullYear();
+  const month = displayDate.getMonth();
+  
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDayOfWeek = firstDay.getDay();
+  
+  const monthName = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  
+  const days = [];
+  for (let i = 0; i < startingDayOfWeek; i++) {
+    days.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(i);
+  }
+
+  const canGoPrev = displayMonth > 0;
+  const canGoNext = displayMonth < 2;
+
+  return (
+    <div className="bg-black p-4 rounded-lg border-2 border-gray-700">
+      <div className="flex items-center justify-between mb-4">
+        <button
+          type="button"
+          onClick={() => setDisplayMonth(displayMonth - 1)}
+          disabled={!canGoPrev}
+          className={`px-2 py-1 text-lg font-bold transition ${
+            canGoPrev
+              ? 'text-gray-400 hover:text-gray-300 cursor-pointer'
+              : 'text-gray-700 cursor-not-allowed'
+          }`}
+        >
+          &lt;
+        </button>
+        <h3 className="text-lg font-semibold text-white flex-1 text-center">{monthName}</h3>
+        <button
+          type="button"
+          onClick={() => setDisplayMonth(displayMonth + 1)}
+          disabled={!canGoNext}
+          className={`px-2 py-1 text-lg font-bold transition ${
+            canGoNext
+              ? 'text-gray-400 hover:text-gray-300 cursor-pointer'
+              : 'text-gray-700 cursor-not-allowed'
+          }`}
+        >
+          &gt;
+        </button>
+      </div>
+      
+      <div className="grid grid-cols-7 gap-2 mb-3">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+          <div key={day} className="text-center font-semibold text-gray-400 text-sm">
+            {day}
+          </div>
+        ))}
+      </div>
+      
+      <div className="grid grid-cols-7 gap-2">
+        {days.map((day, index) => {
+          if (day === null) {
+            return <div key={`empty-${index}`} />;
+          }
+          
+          const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const isWithin60Days = availableDates.has(dateString);
+          const isSelected = selectedDate === dateString;
+          
+          const timeSlotsForDate = availableTimeSlotsMap[dateString];
+          const hasAvailableTimes = timeSlotsForDate ? timeSlotsForDate.some((slot) => slot.available) : isWithin60Days;
+          const canBook = isWithin60Days && hasAvailableTimes;
+          
+          return (
+            <button
+              key={day}
+              type="button"
+              onClick={() => canBook && onDateSelect(dateString)}
+              disabled={!canBook}
+              className={`p-2 rounded-lg font-semibold text-sm transition w-full h-full flex items-center justify-center ${
+                isSelected
+                  ? 'bg-pink-500 text-white border-2 border-pink-600'
+                  : canBook
+                  ? 'bg-black text-white border-2 border-gray-700 hover:border-pink-500 hover:bg-gray-800 cursor-pointer'
+                  : 'bg-gray-900 text-gray-600 border-2 border-gray-900 cursor-not-allowed'
+              }`}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function CustomerAppointmentPage() {
   const params = useParams();
   const router = useRouter();
@@ -35,15 +195,31 @@ export default function CustomerAppointmentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [availableTimeSlotsMap, setAvailableTimeSlotsMap] = useState<{ [date: string]: Array<{ time: string; available: boolean; reason: string | null }> }>({});
+  const [timeSlotsLoading, setTimeSlotsLoading] = useState(false);
 
   // Edit form state
   const [editDate, setEditDate] = useState<string>('');
   const [editTime, setEditTime] = useState<string>('');
-  const [editDuration, setEditDuration] = useState<number>(0);
   const [editNailArtNotes, setEditNailArtNotes] = useState<string>('');
 
-  // Modal state
   const [showCancelModal, setShowCancelModal] = useState(false);
+
+  // Fetch availability on mount
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      try {
+        const response = await fetch(`/api/availability-60-days?t=${Date.now()}`);
+        const data = await response.json();
+        if (data.success && data.dates) {
+          setAvailableTimeSlotsMap(data.dates);
+        }
+      } catch (error) {
+        console.error('Failed to fetch availability:', error);
+      }
+    };
+    fetchAvailability();
+  }, []);
 
   useEffect(() => {
     const fetchAppointment = async () => {
@@ -59,7 +235,6 @@ export default function CustomerAppointmentPage() {
         setAppointment(data.appointment);
         setEditDate(data.appointment.booking_date);
         setEditTime(data.appointment.booking_time);
-        setEditDuration(data.appointment.duration);
         setEditNailArtNotes(data.appointment.nail_art_notes || '');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load appointment');
@@ -88,7 +263,6 @@ export default function CustomerAppointmentPage() {
           appointmentId,
           newDate: editDate,
           newTime: editTime,
-          newDuration: editDuration,
           nailArtNotes: editNailArtNotes,
         }),
       });
@@ -300,49 +474,61 @@ export default function CustomerAppointmentPage() {
           </div>
         ) : null}
 
-        {/* Edit Form */}
+        {/* Edit Form - Simplified Booking */}
         {isEditing && (
           <form onSubmit={handleEdit} className="bg-white rounded-lg shadow-lg p-8 mb-6">
-            <h2 className="text-2xl font-bold text-pink-600 mb-6">Edit Appointment</h2>
+            <h2 className="text-2xl font-bold text-pink-600 mb-6">Reschedule Appointment</h2>
 
             <div className="space-y-6">
-              {/* Date */}
+              {/* Service (Pre-selected, read-only) */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">New Date</label>
-                <input
-                  type="date"
-                  value={editDate}
-                  onChange={(e) => setEditDate(e.target.value)}
-                  disabled={submitting}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                <label className="block text-sm font-medium text-gray-700 mb-2">Service</label>
+                <div className="p-4 bg-gray-100 rounded-lg border border-gray-300">
+                  <p className="text-lg font-semibold text-gray-900">{serviceName}</p>
+                  <p className="text-sm text-gray-600 mt-1">Duration: {appointment.duration} minutes</p>
+                </div>
+              </div>
+
+              {/* Calendar - Date Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select New Date</label>
+                <CalendarComponent 
+                  selectedDate={editDate} 
+                  onDateSelect={setEditDate}
+                  availableTimeSlotsMap={availableTimeSlotsMap}
+                  serviceType={appointment.service_id}
+                  duration={appointment.duration}
                 />
               </div>
 
-              {/* Time */}
+              {/* Time Slots */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">New Time</label>
-                <input
-                  type="time"
-                  value={editTime}
-                  onChange={(e) => setEditTime(e.target.value)}
-                  disabled={submitting}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                />
-              </div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select New Time</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {DISPLAY_TIMES.map((time) => {
+                    const timeSlotsForDate = availableTimeSlotsMap[editDate];
+                    const hasSlots = hasEnoughConsecutiveSlots(time, appointment.duration, timeSlotsForDate || []);
+                    const isSelected = editTime === time;
 
-              {/* Duration */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
-                <input
-                  type="number"
-                  min="15"
-                  max="240"
-                  step="15"
-                  value={editDuration}
-                  onChange={(e) => setEditDuration(parseInt(e.target.value))}
-                  disabled={submitting}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                />
+                    return (
+                      <button
+                        key={time}
+                        type="button"
+                        onClick={() => hasSlots && setEditTime(time)}
+                        disabled={!hasSlots || submitting}
+                        className={`p-3 rounded-lg font-semibold text-sm transition ${
+                          isSelected
+                            ? 'bg-pink-500 text-white border-2 border-pink-600'
+                            : hasSlots
+                            ? 'bg-white text-gray-900 border-2 border-gray-300 hover:border-pink-500 hover:bg-pink-50 cursor-pointer'
+                            : 'bg-gray-100 text-gray-400 border-2 border-gray-200 cursor-not-allowed'
+                        }`}
+                      >
+                        {time}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Nail Art Notes */}
@@ -378,7 +564,7 @@ export default function CustomerAppointmentPage() {
               </button>
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || !editDate || !editTime}
                 className="px-8 py-3 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {submitting ? (
