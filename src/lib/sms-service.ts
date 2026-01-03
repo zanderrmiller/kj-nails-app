@@ -366,3 +366,20 @@ export const sendAppointmentCancelledToTechnicianSMS = async (
     body: message,
   });
 };
+
+/**
+ * Send appointment rejection notification to customer
+ */
+export const sendAppointmentRejectedSMS = async (
+  phoneNumber: string,
+  customerName: string
+): Promise<SMSResponse> => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kj-nails-app.vercel.app';
+  
+  const message = `Hi ${customerName}, sorry we're unable to confirm your appointment at this time. Please feel free to rebook at your convenience: ${baseUrl}`;
+
+  return sendSMS({
+    to: phoneNumber,
+    body: message,
+  });
+};

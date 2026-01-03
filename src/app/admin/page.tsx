@@ -1403,6 +1403,13 @@ export default function AdminPage() {
     }
 
     try {
+      // Import the rejection SMS function
+      const { sendAppointmentRejectedSMS } = await import('@/lib/sms-service');
+      
+      // Send rejection SMS to customer first
+      await sendAppointmentRejectedSMS(booking.customer_phone, booking.customer_name);
+
+      // Delete the appointment
       const response = await fetch(`/api/bookings?bookingId=${booking.id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -1411,8 +1418,52 @@ export default function AdminPage() {
       if (response.ok) {
         setBookings(bookings.filter(b => b.id !== booking.id));
         setSelectedAppointment(null);
+        setEditingBooking(null);
         setSaveMessage('Appointment rejected successfully');
         setTimeout(() => setSaveMessage(''), 2000);
+        
+        // Free up the time slots on the calendar
+        const AVAILABLE_TIMES = [
+          '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+          '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+          '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM',
+        ];
+        
+        // Calculate which times should be unlocked
+        const timeIndex = AVAILABLE_TIMES.indexOf(booking.booking_time);
+        if (timeIndex !== -1) {
+          const totalMinutesWithBuffer = booking.duration + 15;
+          const slotsNeeded = Math.ceil(totalMinutesWithBuffer / 30);
+          
+          const unlockedTimes = new Set<string>();
+          for (let i = 0; i < slotsNeeded; i++) {
+            if (timeIndex + i < AVAILABLE_TIMES.length) {
+              unlockedTimes.add(AVAILABLE_TIMES[timeIndex + i]);
+            }
+          }
+          
+          // Update availableTimeSlotsMap to unlock these times
+          setAvailableTimeSlotsMap(prevMap => {
+            const updatedMap = { ...prevMap };
+            if (updatedMap[booking.booking_date]) {
+              updatedMap[booking.booking_date] = updatedMap[booking.booking_date].map(slot => 
+                unlockedTimes.has(slot.time) ? { ...slot, available: true, reason: null } : slot
+              );
+            }
+            return updatedMap;
+          });
+        }
+        
+        // Refresh availability to ensure sync with database
+        try {
+          const availabilityResponse = await fetch(`/api/availability-60-days?t=${Date.now()}`);
+          const availabilityData = await availabilityResponse.json();
+          if (availabilityData.success && availabilityData.dates) {
+            setAvailableTimeSlotsMap(availabilityData.dates);
+          }
+        } catch (error) {
+          console.error('Error refreshing availability:', error);
+        }
       } else {
         alert('Failed to reject appointment');
       }
@@ -1903,9 +1954,10 @@ export default function AdminPage() {
                                 e.stopPropagation();
                                 handleRejectAppointment(booking);
                               }}
-                              className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-red-700 text-white hover:bg-red-600 transition text-center"
+                              className="py-2 px-3 rounded-lg font-semibold text-sm bg-red-700 text-white hover:bg-red-600 transition text-center"
+                              title="Reject appointment"
                             >
-                              Reject
+                              ✕
                             </button>
                           </div>
                         )}
@@ -2081,9 +2133,10 @@ export default function AdminPage() {
                     </button>
                     <button
                       onClick={() => handleRejectAppointment(selectedAppointment)}
-                      className="flex-1 py-3 px-4 bg-red-700 text-white rounded-lg font-bold hover:bg-red-600 transition"
+                      className="py-3 px-4 bg-red-700 text-white rounded-lg font-bold hover:bg-red-600 transition"
+                      title="Reject appointment"
                     >
-                      Reject Appointment
+                      ✕
                     </button>
                   </>
                 ) : (
