@@ -609,6 +609,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'calendar' | 'appointments' | 'gallery'>('appointments');
   const [appointmentFilter, setAppointmentFilter] = useState<'upcoming' | 'past' | 'pending'>('upcoming');
   const [selectedAppointment, setSelectedAppointment] = useState<Booking | null>(null);
+  const [confirmingAppointment, setConfirmingAppointment] = useState<{ booking: Booking | null; finalPrice: number; sendSms: boolean }>({ booking: null, finalPrice: 0, sendSms: true });
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [editTime, setEditTime] = useState('');
   const [editDate, setEditDate] = useState('');
@@ -648,9 +649,6 @@ export default function AdminPage() {
   
   // Delete confirmation modal state
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; booking: Booking | null }>({ show: false, booking: null });
-  
-  // Confirmation modal state
-  const [confirmationModal, setConfirmationModal] = useState<{ show: boolean; booking: Booking | null; finalPrice: number; sendSms: boolean }>({ show: false, booking: null, finalPrice: 0, sendSms: true });
   
   // Rejection modal state
   const [rejectionModal, setRejectionModal] = useState<{ show: boolean; booking: Booking | null; sendMessage: boolean }>({ show: false, booking: null, sendMessage: true });
@@ -1397,9 +1395,8 @@ export default function AdminPage() {
   };
 
   const handleConfirmAppointment = async (booking: Booking) => {
-    // Set the confirmation modal with SMS enabled by default
-    setConfirmationModal({
-      show: true,
+    // Enter confirmation mode in the details modal
+    setConfirmingAppointment({
       booking: booking,
       finalPrice: booking.total_price,
       sendSms: true,
@@ -1407,17 +1404,17 @@ export default function AdminPage() {
   };
 
   const handleFinalConfirmAppointment = async () => {
-    if (!confirmationModal.booking) return;
+    if (!confirmingAppointment.booking) return;
 
     try {
-      const bookingToConfirm = confirmationModal.booking;
+      const bookingToConfirm = confirmingAppointment.booking;
       const response = await fetch('/api/appointments/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           appointmentId: bookingToConfirm.id,
-          finalPrice: confirmationModal.finalPrice,
-          sendSms: confirmationModal.sendSms,
+          finalPrice: confirmingAppointment.finalPrice,
+          sendSms: confirmingAppointment.sendSms,
         }),
       });
 
@@ -1427,12 +1424,12 @@ export default function AdminPage() {
         const updatedBooking: Booking = {
           ...bookingToConfirm,
           status: 'confirmed',
-          total_price: confirmationModal.finalPrice,
+          total_price: confirmingAppointment.finalPrice,
         };
         setBookings(bookings.map(b => b.id === bookingToConfirm.id ? updatedBooking : b));
         setSelectedAppointment(null);
-        setConfirmationModal({ show: false, booking: null, finalPrice: 0, sendSms: true });
-        setSaveMessage('Appointment confirmed' + (confirmationModal.sendSms ? ' and customer notified' : ''));
+        setConfirmingAppointment({ booking: null, finalPrice: 0, sendSms: true });
+        setSaveMessage('Appointment confirmed' + (confirmingAppointment.sendSms ? ' and customer notified' : ''));
         setTimeout(() => setSaveMessage(''), 2000);
       } else {
         alert(`Failed to confirm appointment: ${responseData.error || 'Unknown error'}`);
@@ -2158,9 +2155,69 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* Confirmation Mode - Price and SMS Options */}
+              {confirmingAppointment.booking?.id === selectedAppointment.id && confirmingAppointment.booking && (
+                <div className="p-6 border-t-2 border-gray-700 bg-gray-800 space-y-4">
+                  {/* Price Section */}
+                  <div className="bg-green-900 bg-opacity-20 border-2 border-green-700 p-4 rounded-lg">
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Final Price</p>
+                    <p className="text-xs text-gray-500 mb-3">Adjust the final price if needed (will be sent to customer if SMS is enabled)</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-white">$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={confirmingAppointment.finalPrice === 0 ? '' : confirmingAppointment.finalPrice}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                            setConfirmingAppointment({ ...confirmingAppointment, finalPrice: 0 });
+                          } else {
+                            const parsed = parseFloat(value);
+                            if (!isNaN(parsed)) {
+                              setConfirmingAppointment({ ...confirmingAppointment, finalPrice: parsed });
+                            }
+                          }
+                        }}
+                        placeholder="0.00"
+                        className="flex-1 p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-green-600 text-white font-bold text-2xl bg-gray-800"
+                      />
+                    </div>
+                  </div>
+
+                  {/* SMS Checkbox */}
+                  <div className="bg-blue-900 bg-opacity-20 border-2 border-blue-700 p-4 rounded-lg">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={confirmingAppointment.sendSms}
+                        onChange={(e) => setConfirmingAppointment({ ...confirmingAppointment, sendSms: e.target.checked })}
+                        className="w-5 h-5 cursor-pointer"
+                      />
+                      <span className="text-white font-semibold">Send confirmation SMS to customer</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex gap-2 p-6 border-t-2 border-gray-700 flex-shrink-0 bg-gray-800">
-                {selectedAppointment.status === 'pending' ? (
+                {confirmingAppointment.booking?.id === selectedAppointment.id && confirmingAppointment.booking ? (
+                  <>
+                    <button
+                      onClick={() => setConfirmingAppointment({ booking: null, finalPrice: 0, sendSms: true })}
+                      className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleFinalConfirmAppointment}
+                      className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-600 transition"
+                    >
+                      Confirm
+                    </button>
+                  </>
+                ) : selectedAppointment.status === 'pending' ? (
                   <>
                     <button
                       onClick={() => handleEditBooking(selectedAppointment)}
@@ -2940,128 +2997,6 @@ export default function AdminPage() {
                   className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-600 transition disabled:opacity-50"
                 >
                   {isConfirming ? 'Confirming...' : 'Confirm & Send SMS'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Appointment Confirmation Modal - for pending appointments */}
-        {confirmationModal.show && confirmationModal.booking && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-            onClick={() => setConfirmationModal({ show: false, booking: null, finalPrice: 0, sendSms: true })}
-          >
-            <div 
-              className="bg-gray-900 rounded-lg shadow-2xl max-w-2xl w-full border-2 border-gray-700 overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="bg-gray-800 border-b-2 border-gray-700 p-6">
-                <h3 className="text-2xl font-bold text-white">Confirm Appointment</h3>
-                <p className="text-sm text-blue-400 mt-2">✓ Review details and confirm appointment</p>
-              </div>
-              
-              <div className="p-6 space-y-6">
-                {/* Customer Info */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Customer Name</p>
-                    <p className="text-lg font-bold text-white">{confirmationModal.booking.customer_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Phone Number</p>
-                    <p className="text-lg font-bold text-white">{confirmationModal.booking.customer_phone}</p>
-                  </div>
-                </div>
-
-                {/* Appointment Details */}
-                <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700">
-                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Appointment Details</p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Date</span>
-                      <span className="text-white font-semibold">
-                        {new Date(`${confirmationModal.booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Time</span>
-                      <span className="text-white font-semibold">
-                        {format24to12Hour(confirmationModal.booking.booking_time)} - {calculateEndTime(confirmationModal.booking.booking_time, confirmationModal.booking.duration)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Duration</span>
-                      <span className="text-white font-semibold">{confirmationModal.booking.duration} minutes</span>
-                    </div>
-                    <div className="flex justify-between pt-2 border-t border-gray-700">
-                      <span className="text-gray-400">Service</span>
-                      <span className="text-white font-semibold">{toReadableTitle(confirmationModal.booking.service_id)}</span>
-                    </div>
-                    {confirmationModal.booking.addons && confirmationModal.booking.addons.length > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Add-ons</span>
-                        <span className="text-white font-semibold">
-                          {Array.isArray(confirmationModal.booking.addons) ? confirmationModal.booking.addons.map(toReadableTitle).join(', ') : confirmationModal.booking.addons}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Price Section */}
-                <div className="bg-green-900 bg-opacity-20 border-2 border-green-700 p-4 rounded-lg">
-                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Final Price</p>
-                  <p className="text-xs text-gray-500 mb-3">Adjust the final price if needed (will be sent to customer if SMS is enabled)</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-white">$</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={confirmationModal.finalPrice === 0 ? '' : confirmationModal.finalPrice}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === '') {
-                          setConfirmationModal({ ...confirmationModal, finalPrice: 0 });
-                        } else {
-                          const parsed = parseFloat(value);
-                          if (!isNaN(parsed)) {
-                            setConfirmationModal({ ...confirmationModal, finalPrice: parsed });
-                          }
-                        }
-                      }}
-                      placeholder="0.00"
-                      className="flex-1 p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-green-600 text-white font-bold text-2xl bg-gray-800"
-                    />
-                  </div>
-                </div>
-
-                {/* SMS Checkbox */}
-                <div className="bg-blue-900 bg-opacity-20 border-2 border-blue-700 p-4 rounded-lg">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={confirmationModal.sendSms}
-                      onChange={(e) => setConfirmationModal({ ...confirmationModal, sendSms: e.target.checked })}
-                      className="w-5 h-5 cursor-pointer"
-                    />
-                    <span className="text-white font-semibold">Send confirmation SMS to customer</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className="bg-gray-800 p-6 border-t-2 border-gray-700 flex gap-3">
-                <button
-                  onClick={() => setConfirmationModal({ show: false, booking: null, finalPrice: 0, sendSms: true })}
-                  className="flex-1 py-3 px-4 border-2 border-gray-700 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleFinalConfirmAppointment}
-                  className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-600 transition"
-                >
-                  Confirm
                 </button>
               </div>
             </div>
