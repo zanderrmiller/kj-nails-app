@@ -1395,7 +1395,9 @@ export default function AdminPage() {
   };
 
   const handleConfirmAppointment = async (booking: Booking) => {
-    // Enter confirmation mode in the details modal
+    // Set the selected appointment to open the modal
+    setSelectedAppointment(booking);
+    // Then set confirmation mode
     setConfirmingAppointment({
       booking: booking,
       finalPrice: booking.total_price,
@@ -2157,44 +2159,45 @@ export default function AdminPage() {
 
               {/* Confirmation Mode - Price and SMS Options */}
               {confirmingAppointment.booking?.id === selectedAppointment.id && confirmingAppointment.booking && (
-                <div className="p-6 border-t-2 border-gray-700 bg-gray-800 space-y-4">
-                  {/* Price Section */}
-                  <div className="bg-green-900 bg-opacity-20 border-2 border-green-700 p-4 rounded-lg">
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Final Price</p>
-                    <p className="text-xs text-gray-500 mb-3">Adjust the final price if needed (will be sent to customer if SMS is enabled)</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-white">$</span>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={confirmingAppointment.finalPrice === 0 ? '' : confirmingAppointment.finalPrice}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value === '') {
-                            setConfirmingAppointment({ ...confirmingAppointment, finalPrice: 0 });
-                          } else {
-                            const parsed = parseFloat(value);
-                            if (!isNaN(parsed)) {
-                              setConfirmingAppointment({ ...confirmingAppointment, finalPrice: parsed });
+                <div className="px-6 py-3 border-t-2 border-gray-700 bg-gray-800 space-y-3">
+                  {/* Price Section - Compact */}
+                  <div className="bg-green-900 bg-opacity-20 border-2 border-green-700 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">Final Price:</p>
+                      <div className="flex items-center gap-1 flex-1">
+                        <span className="text-lg font-bold text-white">$</span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={confirmingAppointment.finalPrice === 0 ? '' : confirmingAppointment.finalPrice}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '') {
+                              setConfirmingAppointment({ ...confirmingAppointment, finalPrice: 0 });
+                            } else {
+                              const parsed = parseFloat(value);
+                              if (!isNaN(parsed)) {
+                                setConfirmingAppointment({ ...confirmingAppointment, finalPrice: parsed });
+                              }
                             }
-                          }
-                        }}
-                        placeholder="0.00"
-                        className="flex-1 p-3 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-green-600 text-white font-bold text-2xl bg-gray-800"
-                      />
+                          }}
+                          placeholder="0.00"
+                          className="w-20 p-2 border-2 border-gray-700 rounded focus:outline-none focus:border-green-600 text-white font-bold text-lg bg-gray-800"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* SMS Checkbox */}
-                  <div className="bg-blue-900 bg-opacity-20 border-2 border-blue-700 p-4 rounded-lg">
-                    <label className="flex items-center gap-3 cursor-pointer">
+                  {/* SMS Checkbox - Compact */}
+                  <div className="bg-blue-900 bg-opacity-20 border-2 border-blue-700 p-2 rounded-lg">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={confirmingAppointment.sendSms}
                         onChange={(e) => setConfirmingAppointment({ ...confirmingAppointment, sendSms: e.target.checked })}
-                        className="w-5 h-5 cursor-pointer"
+                        className="w-4 h-4 cursor-pointer"
                       />
-                      <span className="text-white font-semibold">Send confirmation SMS to customer</span>
+                      <span className="text-white text-sm font-semibold">Send SMS to customer</span>
                     </label>
                   </div>
                 </div>
