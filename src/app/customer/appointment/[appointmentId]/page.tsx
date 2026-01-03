@@ -86,26 +86,27 @@ function hasEnoughConsecutiveSlots(
 
   const slotsNeeded = Math.ceil(durationMinutes / 30);
 
-  // Calculate the current appointment's time range to allow all slots within it
+  // Convert current appointment time if in HH:MM format
+  let currentAppointmentTimeFormatted = currentAppointmentTime;
+  if (currentAppointmentTime && !AVAILABLE_TIMES.includes(currentAppointmentTime)) {
+    const timeParts = currentAppointmentTime.split(':');
+    if (timeParts.length >= 2) {
+      const hours = parseInt(timeParts[0]);
+      const minutes = parseInt(timeParts[1]);
+      currentAppointmentTimeFormatted = minutesToTime(hours * 60 + minutes);
+    }
+  }
+
+  // Calculate current appointment's time range
   let currentAppointmentStartMinutes = -1;
   let currentAppointmentEndMinutes = -1;
   
-  if (currentAppointmentTime && currentAppointmentDuration) {
-    // Convert appointment time to minutes if in HH:MM format
-    let appointmentTimeFormatted = currentAppointmentTime;
-    if (!AVAILABLE_TIMES.includes(currentAppointmentTime)) {
-      const timeParts = currentAppointmentTime.split(':');
-      if (timeParts.length >= 2) {
-        const hours = parseInt(timeParts[0]);
-        const minutes = parseInt(timeParts[1]);
-        appointmentTimeFormatted = minutesToTime(hours * 60 + minutes);
-      }
-    }
-    
-    currentAppointmentStartMinutes = timeToMinutes(appointmentTimeFormatted);
+  if (currentAppointmentTimeFormatted && currentAppointmentDuration) {
+    currentAppointmentStartMinutes = timeToMinutes(currentAppointmentTimeFormatted);
     currentAppointmentEndMinutes = currentAppointmentStartMinutes + currentAppointmentDuration;
   }
 
+  // Check each slot needed for the new appointment
   for (let i = 0; i < slotsNeeded; i++) {
     const slotIndex = startIndex + i;
     if (slotIndex >= AVAILABLE_TIMES.length) return false;
@@ -113,17 +114,21 @@ function hasEnoughConsecutiveSlots(
     const slotTime = AVAILABLE_TIMES[slotIndex];
     const slotTimeInMinutes = timeToMinutes(slotTime);
     
-    // If this slot falls within the current appointment's time range, it's being freed up, so allow it
-    if (currentAppointmentStartMinutes !== -1 && 
-        slotTimeInMinutes >= currentAppointmentStartMinutes && 
-        slotTimeInMinutes < currentAppointmentEndMinutes) {
-      continue; // This slot is part of the current appointment, it will be freed
+    // If this slot is within the current appointment's time window, it will be freed up, so allow it
+    if (currentAppointmentStartMinutes !== -1 && currentAppointmentEndMinutes !== -1) {
+      if (slotTimeInMinutes >= currentAppointmentStartMinutes && 
+          slotTimeInMinutes < currentAppointmentEndMinutes) {
+        // This slot is being freed, so skip the availability check
+        continue;
+      }
     }
 
-    // For slots outside the current appointment, check backend availability
+    // For all other slots (before current appointment or after it), check backend availability
     const slot = timeSlotsForDate.find((s) => s.time === slotTime);
     if (!slot || !slot.available) return false;
   }
+
+  return true;
 
   return true;
 }
