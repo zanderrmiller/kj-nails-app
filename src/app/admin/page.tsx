@@ -498,7 +498,7 @@ function AdminNavMenu({ activeTab, setActiveTab, pendingCount }: { activeTab: 'c
           >
             <Link
               href="/"
-              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition"
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-gray-300 transition"
               onClick={() => setIsOpen(false)}
             >
               Home
@@ -508,7 +508,7 @@ function AdminNavMenu({ activeTab, setActiveTab, pendingCount }: { activeTab: 'c
                 setActiveTab('appointments');
                 setIsOpen(false);
               }}
-              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition text-left"
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-gray-300 transition text-left"
             >
               Appointments
             </button>
@@ -517,7 +517,7 @@ function AdminNavMenu({ activeTab, setActiveTab, pendingCount }: { activeTab: 'c
                 setActiveTab('calendar');
                 setIsOpen(false);
               }}
-              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-pink-600 transition text-left"
+              className="text-white font-bold text-lg py-4 px-4 border-b border-gray-700 hover:text-gray-300 transition text-left"
             >
               Calendar
             </button>
@@ -526,7 +526,7 @@ function AdminNavMenu({ activeTab, setActiveTab, pendingCount }: { activeTab: 'c
                 setActiveTab('gallery');
                 setIsOpen(false);
               }}
-              className="text-white font-bold text-lg py-4 px-4 hover:text-pink-600 transition text-left"
+              className="text-white font-bold text-lg py-4 px-4 hover:text-gray-300 transition text-left"
             >
               Gallery
             </button>
@@ -1937,7 +1937,17 @@ export default function AdminPage() {
                   .map((booking) => (
                       <div
                         key={booking.id}
-                        onClick={() => setSelectedAppointment(booking)}
+                        onClick={() => {
+                          setSelectedAppointment(booking);
+                          // Auto-enter confirmation mode for pending appointments
+                          if (booking.status === 'pending') {
+                            setConfirmingAppointment({
+                              booking: booking,
+                              finalPrice: booking.total_price,
+                              sendSms: true,
+                            });
+                          }
+                        }}
                         className="border-2 border-gray-700 rounded-lg p-4 hover:border-gray-600 hover:shadow-lg hover:bg-gray-800 transition cursor-pointer bg-gray-800"
                       >
                         <div className="space-y-2">
@@ -1953,7 +1963,7 @@ export default function AdminPage() {
                           {/* Date & Time */}
                           <div>
                             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Appointment</p>
-                            <p className="text-xs font-semibold text-pink-600">
+                            <p className="text-xs font-semibold text-gray-400">
                               {new Date(`${booking.booking_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {format24to12Hour(booking.booking_time)} - {calculateEndTime(booking.booking_time, booking.duration)}
                             </p>
                           </div>
@@ -1981,7 +1991,7 @@ export default function AdminPage() {
                                 e.stopPropagation();
                                 handleConfirmAppointment(booking);
                               }}
-                              className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-green-700 text-white hover:bg-green-600 transition text-center"
+                              className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm bg-gray-700 text-white hover:bg-gray-600 transition text-center"
                             >
                               Confirm
                             </button>
@@ -1990,7 +2000,7 @@ export default function AdminPage() {
                                 e.stopPropagation();
                                 handleRejectAppointment(booking);
                               }}
-                              className="py-2 px-3 rounded-lg font-semibold text-sm bg-red-700 text-white hover:bg-red-600 transition text-center"
+                              className="py-2 px-3 rounded-lg font-semibold text-sm bg-gray-700 text-white hover:bg-gray-600 transition text-center"
                               title="Reject appointment"
                             >
                               ✕
@@ -2102,7 +2112,7 @@ export default function AdminPage() {
                             </div>
                           ))
                         ) : (
-                          <div className="font-semibold text-pink-900">
+                          <div className="font-semibold text-gray-600">
                             {typeof selectedAppointment.addons === 'string' 
                               ? selectedAppointment.addons 
                               : JSON.stringify(selectedAppointment.addons)}
@@ -2207,21 +2217,21 @@ export default function AdminPage() {
                   <>
                     <button
                       onClick={() => handleEditBooking(selectedAppointment)}
-                      className="py-3 px-4 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-600 transition"
+                      className="py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
                       title="Edit appointment"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleRejectAppointment(selectedAppointment)}
-                      className="py-3 px-4 bg-red-700 text-white rounded-lg font-bold hover:bg-red-600 transition"
+                      className="py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
                       title="Reject appointment"
                     >
                       Reject
                     </button>
                     <button
                       onClick={handleFinalConfirmAppointment}
-                      className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-600 transition"
+                      className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
                     >
                       Confirm
                     </button>
@@ -2230,20 +2240,20 @@ export default function AdminPage() {
                   <>
                     <button
                       onClick={() => handleEditBooking(selectedAppointment)}
-                      className="py-3 px-4 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-600 transition"
+                      className="py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
                       title="Edit appointment"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleConfirmAppointment(selectedAppointment)}
-                      className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-bold hover:bg-green-600 transition"
+                      className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
                     >
                       Confirm Appointment
                     </button>
                     <button
                       onClick={() => handleRejectAppointment(selectedAppointment)}
-                      className="py-3 px-4 bg-red-700 text-white rounded-lg font-bold hover:bg-red-600 transition"
+                      className="py-3 px-4 bg-gray-700 text-white rounded-lg font-bold hover:bg-gray-600 transition"
                       title="Reject appointment"
                     >
                       ✕
@@ -2861,7 +2871,7 @@ export default function AdminPage() {
                 <button
                   onClick={confirmDeleteBooking}
                   disabled={isDeleting}
-                  className="flex-1 py-3 px-4 bg-red-700 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50"
+                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition disabled:opacity-50"
                 >
                   {isDeleting ? 'Deleting...' : 'Delete'}
                 </button>
@@ -3003,7 +3013,7 @@ export default function AdminPage() {
                     }
                   }}
                   disabled={isConfirming}
-                  className="flex-1 py-3 px-4 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-600 transition disabled:opacity-50"
+                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition disabled:opacity-50"
                 >
                   {isConfirming ? 'Confirming...' : 'Confirm & Send SMS'}
                 </button>
@@ -3061,7 +3071,7 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={handleFinalRejectAppointment}
-                  className="flex-1 py-3 px-4 bg-red-700 text-white rounded-lg font-semibold hover:bg-red-600 transition"
+                  className="flex-1 py-3 px-4 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
                 >
                   Reject
                 </button>
