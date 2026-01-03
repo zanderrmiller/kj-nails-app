@@ -176,8 +176,26 @@ function formatDateForDisplay(dateString: string): string {
 }
 
 // Calendar component - shows 60 days from today with month navigation
-function Calendar({ selectedDate, onDateSelect, availableTimeSlotsMap }: { selectedDate: string; onDateSelect: (date: string) => void; availableTimeSlotsMap: { [date: string]: Array<{ time: string; available: boolean; reason: string | null }> } }) {
+function Calendar({ 
+  selectedDate, 
+  onDateSelect, 
+  availableTimeSlotsMap,
+  duration = 0,
+  hasEnoughSlots
+}: { 
+  selectedDate: string; 
+  onDateSelect: (date: string) => void; 
+  availableTimeSlotsMap: { [date: string]: Array<{ time: string; available: boolean; reason: string | null }> };
+  duration?: number;
+  hasEnoughSlots?: (time: string, duration: number, slots: Array<{ time: string; available: boolean; reason: string | null }>) => boolean;
+}) {
   const [displayMonth, setDisplayMonth] = useState(0); // 0 = current month, 1 = next month, 2 = month after, etc.
+  
+  const AVAILABLE_TIMES = [
+    '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+    '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+    '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
+  ];
 
   const now = new Date();
   const startDate = new Date(now);
@@ -271,7 +289,16 @@ function Calendar({ selectedDate, onDateSelect, availableTimeSlotsMap }: { selec
           // Check if this date has any available time slots
           const timeSlotsForDate = availableTimeSlotsMap[dateString];
           const hasAvailableTimes = timeSlotsForDate ? timeSlotsForDate.some((slot) => slot.available) : isWithin60Days;
-          const canBook = isWithin60Days && hasAvailableTimes;
+          
+          // If duration is specified, check if there's at least one time slot that can fit it
+          let hasValidSlotForDuration = true;
+          if (duration > 0 && timeSlotsForDate && hasEnoughSlots) {
+            hasValidSlotForDuration = AVAILABLE_TIMES.some(time => 
+              hasEnoughSlots(time, duration, timeSlotsForDate)
+            );
+          }
+          
+          const canBook = isWithin60Days && hasAvailableTimes && hasValidSlotForDuration;
           
           return (
             <button
@@ -746,10 +773,16 @@ export default function BookPage() {
           {selectedBase && (
             <div className="mb-4 sm:mb-8">
               <h2 className="text-lg sm:text-2xl font-semibold text-white mb-3 sm:mb-4">Select Date</h2>
-              <Calendar selectedDate={selectedDate} onDateSelect={(date) => {
-                setSelectedDate(date);
-                setSelectedTime('');
-              }} availableTimeSlotsMap={availableTimeSlotsMap} />
+              <Calendar 
+                selectedDate={selectedDate} 
+                onDateSelect={(date) => {
+                  setSelectedDate(date);
+                  setSelectedTime('');
+                }} 
+                availableTimeSlotsMap={availableTimeSlotsMap}
+                duration={totalDuration}
+                hasEnoughSlots={hasEnoughConsecutiveSlots}
+              />
               <p className="text-xs sm:text-sm text-gray-400 mt-2 sm:mt-3">Available for the next 60 days</p>
             </div>
           )}
