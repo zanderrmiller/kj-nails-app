@@ -56,65 +56,86 @@ export default function Home() {
           </div>
 
           {/* Services Table */}
-          <div className="mb-8 p-6 rounded-lg" style={{
-            backgroundImage: `linear-gradient(135deg, rgba(245,245,240,0.08) 0%, rgba(200,200,190,0.04) 100%)`,
-            border: '1px solid rgba(200,200,190,0.2)'
+          <div className="mb-8 rounded-xl overflow-hidden shadow-xl" style={{
+            backgroundColor: '#f5f5f0',
+            backgroundImage: `
+              linear-gradient(135deg, transparent 0%, rgba(100,100,100,0.05) 20%, transparent 30%, transparent 70%, rgba(80,80,80,0.05) 80%, transparent 90%),
+              linear-gradient(45deg, transparent 0%, rgba(120,120,100,0.03) 50%, transparent 100%),
+              radial-gradient(circle at 20% 80%, rgba(150,150,140,0.05) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(100,100,90,0.05) 0%, transparent 50%)
+            `
           }}>
-            <h2 className="text-2xl font-bold text-white mb-8 text-center">Services</h2>
-            <div className="space-y-3">
-              {[
-                { name: 'Acrylic Sets - Short', price: '$50' },
-                { name: 'Acrylic Sets - Long', price: '$60' },
-                { name: 'Gel Manicure', price: '$35' },
-                { name: 'Rebase', price: '$40' },
-              ].map((service) => (
-                <div
-                  key={service.name}
-                  className="flex justify-between items-center border-b pb-3"
-                  style={{ borderColor: 'rgba(200,200,190,0.2)' }}
-                >
-                  <span className="text-white text-lg">{service.name}</span>
-                  <span className="text-white font-bold text-lg">{service.price}</span>
-                </div>
-              ))}
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Services</h2>
+              <div className="space-y-3">
+                {[
+                  { name: 'Acrylic Sets - Short', price: '$50' },
+                  { name: 'Acrylic Sets - Long', price: '$60' },
+                  { name: 'Gel Manicure', price: '$35' },
+                  { name: 'Rebase', price: '$40' },
+                ].map((service) => (
+                  <div
+                    key={service.name}
+                    className="flex justify-between items-center border-b pb-3"
+                    style={{ borderColor: 'rgba(100,100,90,0.3)' }}
+                  >
+                    <span className="text-gray-900 text-lg font-medium">{service.name}</span>
+                    <span className="text-gray-900 font-bold text-lg">{service.price}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Add-ons Table */}
-          <div className="mb-12 p-6 rounded-lg" style={{
-            backgroundImage: `linear-gradient(135deg, rgba(245,245,240,0.08) 0%, rgba(200,200,190,0.04) 100%)`,
-            border: '1px solid rgba(200,200,190,0.2)'
+          <div className="mb-12 rounded-xl overflow-hidden shadow-xl" style={{
+            backgroundColor: '#f5f5f0',
+            backgroundImage: `
+              linear-gradient(135deg, transparent 0%, rgba(100,100,100,0.05) 20%, transparent 30%, transparent 70%, rgba(80,80,80,0.05) 80%, transparent 90%),
+              linear-gradient(45deg, transparent 0%, rgba(120,120,100,0.03) 50%, transparent 100%),
+              radial-gradient(circle at 20% 80%, rgba(150,150,140,0.05) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(100,100,90,0.05) 0%, transparent 50%)
+            `
           }}>
-            <h2 className="text-2xl font-bold text-white mb-8 text-center">Add Ons</h2>
-            <div className="space-y-3">
-              {[
-                { name: 'Nail Art', price: '$2-5 Per Nail' },
-                { name: 'Ombre or French', price: '$15' },
-                { name: 'Removal', price: '$20' },
-              ].map((addon) => (
-                <div
-                  key={addon.name}
-                  className="flex justify-between items-center border-b pb-3"
-                  style={{ borderColor: 'rgba(200,200,190,0.2)' }}
-                >
-                  <span className="text-white text-lg">{addon.name}</span>
-                  <span className="text-white font-bold text-lg">{addon.price}</span>
-                </div>
-              ))}
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Add Ons</h2>
+              <div className="space-y-3">
+                {[
+                  { name: 'Nail Art', price: '$2-5 Per Nail' },
+                  { name: 'Ombre or French', price: '$15' },
+                  { name: 'Removal', price: '$20' },
+                ].map((addon) => (
+                  <div
+                    key={addon.name}
+                    className="flex justify-between items-center border-b pb-3"
+                    style={{ borderColor: 'rgba(100,100,90,0.3)' }}
+                  >
+                    <span className="text-gray-900 text-lg font-medium">{addon.name}</span>
+                    <span className="text-gray-900 font-bold text-lg">{addon.price}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* About Me Section */}
-          <div className="p-6 rounded-lg" style={{
-            backgroundImage: `linear-gradient(135deg, rgba(245,245,240,0.08) 0%, rgba(200,200,190,0.04) 100%)`,
-            border: '1px solid rgba(200,200,190,0.2)'
+          <div className="rounded-xl overflow-hidden shadow-xl" style={{
+            backgroundColor: '#f5f5f0',
+            backgroundImage: `
+              linear-gradient(135deg, transparent 0%, rgba(100,100,100,0.05) 20%, transparent 30%, transparent 70%, rgba(80,80,80,0.05) 80%, transparent 90%),
+              linear-gradient(45deg, transparent 0%, rgba(120,120,100,0.03) 50%, transparent 100%),
+              radial-gradient(circle at 20% 80%, rgba(150,150,140,0.05) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(100,100,90,0.05) 0%, transparent 50%)
+            `
           }}>
-            <h2 className="text-2xl font-bold text-white mb-4 text-center">About Me</h2>
-            <p className="text-white text-lg leading-relaxed text-center">
-              I'm Kinsey, a passionate nail artist offering professional nail services from the comfort of my home studio in Evans, CO.<br /><br />
-              You'll find a full list of services and pricing above, along with examples of my work on the Gallery page. If you're interested in booking a service, head over to the Bookings page to check my calendar for availability.<br /><br />
-              I look forward to meeting you and making your nails shine!
-            </p>
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">About Me</h2>
+              <p className="text-gray-900 text-lg leading-relaxed text-center">
+                I'm Kinsey, a passionate nail artist offering professional nail services from the comfort of my home studio in Evans, CO.<br /><br />
+                You'll find a full list of services and pricing above, along with examples of my work on the Gallery page. If you're interested in booking a service, head over to the Bookings page to check my calendar for availability.<br /><br />
+                I look forward to meeting you and making your nails shine!
+              </p>
+            </div>
           </div>
         </div>
       </section>

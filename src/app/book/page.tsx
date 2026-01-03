@@ -617,22 +617,26 @@ export default function BookPage() {
       <div className="max-w-4xl mx-auto px-2 sm:px-4 lg:px-8 py-6 sm:py-12">
         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6 sm:mb-8 text-center">Book Your Appointment</h1>
 
-        <form onSubmit={handleSubmit} className="rounded-lg shadow-lg p-4 sm:p-8 border" style={{
-          backgroundImage: `linear-gradient(135deg, rgba(245,245,240,0.08) 0%, rgba(200,200,190,0.04) 100%)`,
-          borderColor: 'rgba(200,200,190,0.2)',
-          backgroundColor: '#1a1a1a'
+        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden shadow-xl p-4 sm:p-8" style={{
+          backgroundColor: '#f5f5f0',
+          backgroundImage: `
+            linear-gradient(135deg, transparent 0%, rgba(100,100,100,0.05) 20%, transparent 30%, transparent 70%, rgba(80,80,80,0.05) 80%, transparent 90%),
+            linear-gradient(45deg, transparent 0%, rgba(120,120,100,0.03) 50%, transparent 100%),
+            radial-gradient(circle at 20% 80%, rgba(150,150,140,0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(100,100,90,0.05) 0%, transparent 50%)
+          `
         }}>
           {/* Service Selection */}
           <div className="mb-4 sm:mb-6">
-            <h2 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">Select Your Nail Service</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Select Your Nail Service</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2">
               {BASE_SERVICES.map((svc) => (
                 <label
                   key={svc.id}
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     selectedBase === svc.id
-                      ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400'
+                      ? 'border-gray-400 bg-gray-300'
+                      : 'border-gray-400 hover:border-gray-600 bg-white'
                   }`}
                 >
                   <input
@@ -643,8 +647,8 @@ export default function BookPage() {
                     onChange={(e) => setSelectedBase(e.target.value)}
                     className="hidden"
                   />
-                  <div className="font-semibold text-white text-sm">{svc.name}</div>
-                  <div className="text-xs text-gray-400">${svc.basePrice} • {svc.duration}m</div>
+                  <div className="font-semibold text-gray-900 text-sm">{svc.name}</div>
+                  <div className="text-xs text-gray-600">${svc.basePrice} • {svc.duration}m</div>
                 </label>
               ))}
             </div>
@@ -652,8 +656,11 @@ export default function BookPage() {
 
           {/* Add-Ons Section (shown when base service selected) */}
           {selectedBase && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-950 rounded-lg border-2 border-gray-700">
-              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Add-Ons</h2>
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg" style={{
+              backgroundColor: 'rgba(255,255,255,0.7)',
+              border: '2px solid rgba(100,100,90,0.3)'
+            }}>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Add-Ons</h2>
 
               {/* Add-Ons Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-1 sm:gap-2 mb-4">
@@ -661,8 +668,8 @@ export default function BookPage() {
                 <label
                   className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition text-center text-xs sm:text-sm ${
                     hasRemoval
-                      ? 'border-gray-400 bg-gray-800'
-                      : 'border-gray-600 hover:border-gray-400'
+                      ? 'border-gray-600 bg-gray-300'
+                      : 'border-gray-400 hover:border-gray-600 bg-white'
                   }`}
                 >
                   <input
@@ -722,13 +729,13 @@ export default function BookPage() {
                 <div className="bg-gray-950 p-3 rounded-lg border-2 border-gray-700 space-y-3">
                   <div>
                     <label className="block">
-                      <span className="text-white font-semibold mb-2 block text-sm">Upload Inspiration Pictures</span>
+                      <span className="text-gray-900 font-semibold mb-2 block text-sm">Upload Inspiration Pictures</span>
                       <input
                         type="file"
                         multiple
                         accept="image/*"
                         onChange={(e) => setNailArtImages(Array.from(e.target.files || []))}
-                        className="w-full p-2 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-sm text-gray-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600"
+                        className="w-full p-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:border-gray-600 text-sm text-gray-600 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-300 file:text-gray-900 hover:file:bg-gray-200"
                       />
                       {nailArtImages.length > 0 && (
                         <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -737,9 +744,9 @@ export default function BookPage() {
                               <img
                                 src={URL.createObjectURL(file)}
                                 alt={`Preview ${idx + 1}`}
-                                className="w-full h-20 object-cover rounded border-2 border-gray-600"
+                                className="w-full h-20 object-cover rounded border-2 border-gray-400"
                               />
-                              <span className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                              <span className="absolute -top-2 -right-2 bg-gray-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
                                 onClick={() => setNailArtImages(nailArtImages.filter((_, i) => i !== idx))}
                               >
                                 ✕
@@ -753,19 +760,19 @@ export default function BookPage() {
 
                   <div>
                     <label className="block">
-                      <span className="text-white font-semibold mb-2 block text-sm">Nail Art Notes</span>
+                      <span className="text-gray-900 font-semibold mb-2 block text-sm">Nail Art Notes</span>
                       <textarea
                         value={nailArtNotes}
                         onChange={(e) => setNailArtNotes(e.target.value)}
                         placeholder="Describe your nail art design, style preferences, colors, patterns, or any special requests..."
-                        className="w-full p-2 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-sm resize-none text-white bg-gray-700"
+                        className="w-full p-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:border-gray-600 text-sm resize-none text-gray-900 bg-white"
                         rows={4}
                       />
                     </label>
                   </div>
 
-                  <div className="bg-gray-700 border-l-4 border-gray-500 p-2">
-                    <p className="text-xs text-gray-300">
+                  <div className="bg-gray-200 border-l-4 border-gray-500 p-2">
+                    <p className="text-xs text-gray-700">
                       <span className="font-semibold">Note:</span> Kinsey will reach out and discuss final pricing.
                     </p>
                   </div>
@@ -852,23 +859,23 @@ export default function BookPage() {
               <h2 className="text-lg sm:text-2xl font-semibold text-white mb-3 sm:mb-4">Your Information</h2>
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-white font-semibold mb-2">Name *</label>
+                  <label className="block text-gray-900 font-semibold mb-2">Name *</label>
                   <input
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Your name"
-                    className="w-full p-3 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-white bg-gray-800"
+                    className="w-full p-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:border-gray-600 text-gray-900 bg-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-white font-semibold mb-2">Phone Number *</label>
+                  <label className="block text-gray-900 font-semibold mb-2">Phone Number *</label>
                   <input
                     type="tel"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(formatPhoneNumber(e.target.value))}
                     placeholder="(555) 123-4567"
-                    className="w-full p-3 border-2 border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 text-white bg-gray-800"
+                    className="w-full p-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:border-gray-600 text-gray-900 bg-white"
                   />
                 </div>
 
