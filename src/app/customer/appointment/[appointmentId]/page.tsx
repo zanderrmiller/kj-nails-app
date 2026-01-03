@@ -278,6 +278,7 @@ export default function EditAppointmentPage() {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [initialDateSet, setInitialDateSet] = useState(false);
 
   // Fetch appointment and availability
   useEffect(() => {
@@ -306,6 +307,7 @@ export default function EditAppointmentPage() {
         
         setSelectedBase(selectedServiceId);
         setSelectedDate(appointmentData.appointment.booking_date);
+        setInitialDateSet(true);
         
         // Convert booking_time from HH:MM format to 12-hour format
         const bookingTime = appointmentData.appointment.booking_time;
@@ -348,6 +350,13 @@ export default function EditAppointmentPage() {
       fetchData();
     }
   }, [appointmentId]);
+
+  // Clear selected time when date changes away from original booking date
+  useEffect(() => {
+    if (initialDateSet && selectedDate && appointment && selectedDate !== appointment.booking_date) {
+      setSelectedTime('');
+    }
+  }, [selectedDate, initialDateSet, appointment]);
 
   const baseService = BASE_SERVICES.find((s) => s.id === selectedBase);
 
