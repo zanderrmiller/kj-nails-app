@@ -1489,39 +1489,7 @@ export default function AdminPage() {
         setSaveMessage('Appointment rejected successfully');
         setTimeout(() => setSaveMessage(''), 2000);
         
-        // Free up the time slots on the calendar
-        const AVAILABLE_TIMES = [
-          '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-          '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
-          '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM',
-        ];
-        
-        // Calculate which times should be unlocked
-        const timeIndex = AVAILABLE_TIMES.indexOf(bookingToReject.booking_time);
-        if (timeIndex !== -1) {
-          const totalMinutesWithBuffer = bookingToReject.duration + 15;
-          const slotsNeeded = Math.ceil(totalMinutesWithBuffer / 30);
-          
-          const unlockedTimes = new Set<string>();
-          for (let i = 0; i < slotsNeeded; i++) {
-            if (timeIndex + i < AVAILABLE_TIMES.length) {
-              unlockedTimes.add(AVAILABLE_TIMES[timeIndex + i]);
-            }
-          }
-          
-          // Update availableTimeSlotsMap to unlock these times
-          setAvailableTimeSlotsMap(prevMap => {
-            const updatedMap = { ...prevMap };
-            if (updatedMap[bookingToReject.booking_date]) {
-              updatedMap[bookingToReject.booking_date] = updatedMap[bookingToReject.booking_date].map(slot => 
-                unlockedTimes.has(slot.time) ? { ...slot, available: true, reason: null } : slot
-              );
-            }
-            return updatedMap;
-          });
-        }
-        
-        // Refresh availability to ensure sync with database
+        // Refresh availability to reflect the freed time slots
         try {
           const availabilityResponse = await fetch(`/api/availability-60-days?t=${Date.now()}`);
           const availabilityData = await availabilityResponse.json();
